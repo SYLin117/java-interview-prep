@@ -340,6 +340,36 @@
   .q-answer ul { padding-left: 1.3rem; margin-top: 0.5rem; }
   .q-answer li { margin-bottom: 0.4rem; }
   .q-answer em { font-style: italic; color: var(--text-dim); }
+  .q-answer .ex-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 1rem;
+    margin-bottom: 0.4rem;
+  }
+  .q-answer pre {
+    background: #0d1117;
+    border: 1px solid #21262d;
+    border-radius: 6px;
+    padding: 0.85rem 1rem;
+    margin-bottom: 0.4rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    line-height: 1.55;
+  }
+  .q-answer pre code {
+    font-family: "SF Mono", Consolas, "Liberation Mono", monospace;
+    font-size: 0.82rem;
+    background: transparent;
+    border: none;
+    padding: 0;
+    color: #e6edf3;
+    white-space: pre;
+    overflow-wrap: normal;
+    display: block;
+  }
 
   footer {
     max-width: 1200px;
@@ -444,312 +474,8 @@
   Click any question to reveal the answer · Use search to filter
 </footer>
 
+<script src="content.js"></script>
 <script>
-  const topics = [
-    {
-      id: 'core-java',
-      name: 'Core Java & OOP',
-      desc: 'Fundamentals, OOP principles, language internals',
-      questions: [
-        { d: 'easy', q: 'What is the difference between JDK, JRE, and JVM?',
-          a: '<strong>JVM</strong> (Java Virtual Machine) executes bytecode and is platform-specific. <strong>JRE</strong> (Java Runtime Environment) = JVM + core libraries needed to run Java apps. <strong>JDK</strong> (Java Development Kit) = JRE + development tools (<code>javac</code>, <code>jar</code>, <code>javadoc</code>). You need the JDK to compile, only the JRE to run.' },
-        { d: 'easy', q: 'Explain the four pillars of OOP.',
-          a: '<ul><li><strong>Encapsulation</strong> — bundling data with methods that operate on it; hiding internal state via access modifiers.</li><li><strong>Inheritance</strong> — child classes derive properties/behavior from parent (<code>extends</code>).</li><li><strong>Polymorphism</strong> — same interface, different implementations (method overriding / overloading).</li><li><strong>Abstraction</strong> — exposing only essential features via abstract classes or interfaces.</li></ul>' },
-        { d: 'easy', q: 'What is the difference between == and .equals() in Java?',
-          a: '<code>==</code> compares <strong>references</strong> (memory addresses) for objects, or primitive values directly. <code>.equals()</code> compares <strong>content/state</strong> — but only if properly overridden. Default <code>Object.equals()</code> behaves like <code>==</code>. Always override <code>equals()</code> and <code>hashCode()</code> together.' },
-        { d: 'medium', q: 'What is the difference between abstract class and interface?',
-          a: 'Abstract classes can have constructors, instance fields, and concrete methods; a class can extend only one. Interfaces support multiple inheritance, are stateless (only constants), and since Java 8 support <code>default</code> and <code>static</code> methods, since Java 9 <code>private</code> methods. Use abstract class for "is-a" with shared state; interface for capability/contract.' },
-        { d: 'medium', q: 'How does the String pool work? What\'s the difference between String literal and new String()?',
-          a: 'String literals are interned in the <strong>String Pool</strong> (part of heap since Java 7). <code>String a = "hello"</code> reuses the pooled instance; <code>String b = new String("hello")</code> always creates a new heap object. Call <code>.intern()</code> to force pool lookup. This matters for memory and for <code>==</code> behavior.' },
-        { d: 'medium', q: 'Explain method overloading vs. overriding, and what cannot be overloaded.',
-          a: '<strong>Overloading</strong> = same method name, different parameter list (compile-time polymorphism). <strong>Overriding</strong> = subclass redefines parent method with identical signature (runtime polymorphism). You cannot overload based solely on <strong>return type</strong> or <strong>throws clause</strong>. Static methods are hidden, not overridden.' },
-        { d: 'hard', q: 'Why are String objects immutable in Java? List at least three reasons.',
-          a: '<ul><li><strong>Security</strong> — used in classloading, file paths, network connections; mutability would allow tampering after validation.</li><li><strong>Caching</strong> — hashCode is cached because it can never change; enables string pool.</li><li><strong>Thread safety</strong> — immutable objects are inherently thread-safe.</li><li><strong>Class loading</strong> — class names passed as strings; mutation could load the wrong class.</li></ul>' },
-        { d: 'hard', q: 'Explain the equals/hashCode contract and what breaks when it\'s violated.',
-          a: 'Contract: (1) equal objects must have equal hashCodes; (2) unequal objects <em>should</em> have different hashCodes (not required, but improves performance); (3) both must be consistent. Violation breaks <code>HashMap</code>, <code>HashSet</code>: object stored in bucket X but searched in bucket Y → "lost" objects. Always override both together.' },
-        { d: 'hard', q: 'What is the difference between checked and unchecked exceptions? When would you create a custom one?',
-          a: '<strong>Checked</strong> (extends <code>Exception</code>): compiler enforces handling — for recoverable conditions (<code>IOException</code>). <strong>Unchecked</strong> (extends <code>RuntimeException</code>): for programming errors (<code>NullPointerException</code>, <code>IllegalArgumentException</code>). Modern Spring/REST style favors unchecked for cleaner code. Create custom when you need to carry domain-specific context for error handlers.' },
-        { d: 'hard', q: 'How does Java handle multiple inheritance, and what is the diamond problem solution since Java 8?',
-          a: 'Java disallows multiple class inheritance to avoid the diamond problem. With Java 8 default methods in interfaces, the diamond can recur. Rules: (1) class wins over interface; (2) more specific interface wins; (3) if ambiguous, the implementing class <strong>must</strong> override and can call <code>Interface.super.method()</code> explicitly.' }
-      ]
-    },
-    {
-      id: 'collections',
-      name: 'Collections & Generics',
-      desc: 'Lists, maps, sets, type erasure, internal mechanics',
-      questions: [
-        { d: 'easy', q: 'What is the difference between ArrayList and LinkedList?',
-          a: '<code>ArrayList</code>: backed by dynamic array, O(1) random access, O(n) insert/remove in middle. <code>LinkedList</code>: doubly-linked nodes, O(n) random access, O(1) add/remove at ends. ArrayList wins for most use cases due to CPU cache locality; LinkedList rarely outperforms it in practice.' },
-        { d: 'easy', q: 'When would you use HashSet vs. TreeSet vs. LinkedHashSet?',
-          a: '<code>HashSet</code> — unordered, O(1) operations, fastest. <code>LinkedHashSet</code> — preserves insertion order, slight memory overhead. <code>TreeSet</code> — sorted (natural order or Comparator), O(log n), backed by Red-Black tree. Pick by ordering need.' },
-        { d: 'easy', q: 'What is the difference between List, Set, and Map?',
-          a: '<code>List</code> — ordered, allows duplicates, index-based. <code>Set</code> — no duplicates, generally unordered. <code>Map</code> — key→value pairs, keys unique. Map is not part of <code>Collection</code> hierarchy.' },
-        { d: 'medium', q: 'Explain how HashMap works internally.',
-          a: 'Backed by an array of buckets (default 16). Key\'s <code>hashCode()</code> determines bucket via <code>(n-1) & hash</code>. Collisions are stored in a linked list within the bucket; since Java 8, when a bucket exceeds 8 entries (and table ≥64), it converts to a <strong>balanced tree</strong> (Red-Black) — O(log n) instead of O(n). Resizes when load factor (default 0.75) is exceeded.' },
-        { d: 'medium', q: 'Why must HashMap keys override equals() and hashCode()?',
-          a: '<code>hashCode()</code> selects the bucket; <code>equals()</code> resolves collisions within that bucket. If two equal keys have different hashCodes, they go to different buckets and the second insert becomes a duplicate. If hashCodes match but equals returns false inconsistently, lookups fail. This is why immutable keys are strongly recommended.' },
-        { d: 'medium', q: 'What is the difference between fail-fast and fail-safe iterators?',
-          a: '<strong>Fail-fast</strong> (most <code>java.util</code> — ArrayList, HashMap): throw <code>ConcurrentModificationException</code> if collection is modified during iteration via mod-count tracking. <strong>Fail-safe</strong> (<code>java.util.concurrent</code> — CopyOnWriteArrayList, ConcurrentHashMap): iterate over a snapshot or with weak consistency, no exception but may miss recent updates.' },
-        { d: 'hard', q: 'Explain type erasure and its implications.',
-          a: 'Generics are a compile-time feature. The compiler replaces type parameters with their bounds (usually <code>Object</code>) and inserts casts. At runtime, <code>List&lt;String&gt;</code> and <code>List&lt;Integer&gt;</code> are both just <code>List</code>. Implications: cannot do <code>new T[]</code>, cannot use <code>instanceof T</code>, cannot overload methods that erase to the same signature, and reflection cannot see generic types from instances.' },
-        { d: 'hard', q: 'Explain PECS — Producer Extends, Consumer Super.',
-          a: 'For a parameterized type T: use <code>&lt;? extends T&gt;</code> when the collection <strong>produces</strong> T (you read from it); use <code>&lt;? super T&gt;</code> when the collection <strong>consumes</strong> T (you write to it). Example: <code>Collections.copy(List&lt;? super T&gt; dest, List&lt;? extends T&gt; src)</code>. This maximizes API flexibility while preserving type safety.' },
-        { d: 'hard', q: 'How does ConcurrentHashMap achieve thread safety without locking the whole map?',
-          a: 'Java 7 used segment-based locking (16 segments, each with its own lock). Java 8 replaced segments with a single array using <strong>CAS</strong> operations for insertion and <strong>synchronized blocks on the bucket head</strong> for collision handling. Reads are typically lock-free. Tree-bin conversion preserved. Result: much higher concurrency than <code>Hashtable</code> or <code>Collections.synchronizedMap</code>.' },
-        { d: 'hard', q: 'What is the difference between Comparable and Comparator? When to use each?',
-          a: '<code>Comparable&lt;T&gt;</code> defines the <strong>natural ordering</strong> via <code>compareTo()</code> — single ordering baked into the class. <code>Comparator&lt;T&gt;</code> is an external strategy — multiple orderings, no source access needed, composable via <code>thenComparing()</code>. Modern code uses Comparator lambdas: <code>Comparator.comparing(User::getName).reversed()</code>.' }
-      ]
-    },
-    {
-      id: 'multithreading',
-      name: 'Multithreading & Concurrency',
-      desc: 'Threads, locks, executors, memory model',
-      questions: [
-        { d: 'easy', q: 'What is the difference between a process and a thread?',
-          a: 'A <strong>process</strong> is an independent program with its own memory space. A <strong>thread</strong> is a unit of execution within a process, sharing heap memory but having its own stack. Threads are lighter to create and switch between, but require synchronization for shared state.' },
-        { d: 'easy', q: 'What are the ways to create a thread in Java?',
-          a: '<ul><li><code>extends Thread</code> — limited because Java has single inheritance.</li><li><code>implements Runnable</code> — preferred, separates task from worker.</li><li><code>Callable&lt;V&gt;</code> + <code>ExecutorService.submit()</code> — returns a result via <code>Future</code>.</li><li>Java 21 <code>Thread.ofVirtual().start(runnable)</code> — virtual threads.</li></ul>' },
-        { d: 'easy', q: 'What is the difference between synchronized method and synchronized block?',
-          a: 'Synchronized method locks the <strong>entire</strong> object (instance for non-static, class object for static). Synchronized block locks only a specific section on a chosen monitor: <code>synchronized(lockObj) { ... }</code>. Blocks are more granular, reduce contention, and allow finer-grained locking strategies.' },
-        { d: 'medium', q: 'What is the volatile keyword? When is it sufficient and when is it not?',
-          a: '<code>volatile</code> guarantees <strong>visibility</strong> — writes are flushed to main memory, reads come from main memory — and prevents instruction reordering around it. It does <strong>not</strong> guarantee atomicity for compound operations (<code>i++</code> is read+modify+write). Sufficient for flags and single-writer patterns; use <code>AtomicInteger</code> or locks for compound operations.' },
-        { d: 'medium', q: 'Explain the producer-consumer pattern using BlockingQueue.',
-          a: '<code>BlockingQueue</code> (e.g., <code>ArrayBlockingQueue</code>, <code>LinkedBlockingQueue</code>) provides thread-safe handoff. Producers call <code>put()</code> which blocks if full; consumers call <code>take()</code> which blocks if empty. Eliminates manual wait/notify, prevents busy-waiting, and naturally backpressures producers when consumers are slow.' },
-        { d: 'medium', q: 'What is the difference between ExecutorService and ForkJoinPool?',
-          a: '<code>ExecutorService</code> (typically <code>ThreadPoolExecutor</code>) runs independent tasks from a shared queue — best for I/O-bound or unrelated tasks. <code>ForkJoinPool</code> uses <strong>work-stealing</strong>: each thread has its own deque, idle threads steal from others — optimized for recursive divide-and-conquer (e.g., parallel streams).' },
-        { d: 'hard', q: 'Explain the Java Memory Model (JMM) and the happens-before relationship.',
-          a: 'JMM defines how threads interact through memory. <strong>Happens-before</strong> guarantees that if action A happens-before B, A\'s effects are visible to B. Established by: program order within a thread, monitor lock release→acquire, volatile write→read, thread start/join, constructor completion→finalizer. Without happens-before, threads may observe stale or reordered writes.' },
-        { d: 'hard', q: 'What are the differences between ReentrantLock and synchronized?',
-          a: '<ul><li><code>ReentrantLock</code> supports <strong>tryLock</strong> (timeout), <strong>interruptible</strong> acquisition, <strong>fair</strong> mode, and multiple <code>Condition</code> objects.</li><li>Synchronized is JVM-level, simpler, auto-released on exception; ReentrantLock requires explicit <code>unlock()</code> in <code>finally</code>.</li><li>Performance is comparable since Java 6 due to biased/lightweight locking optimizations.</li></ul>' },
-        { d: 'hard', q: 'What is a deadlock? How do you prevent and detect it?',
-          a: 'Deadlock requires four conditions: mutual exclusion, hold-and-wait, no preemption, circular wait. <strong>Prevention</strong>: acquire locks in a globally consistent order; use <code>tryLock()</code> with timeout; minimize lock scope; use lock-free structures. <strong>Detection</strong>: thread dump (<code>jstack</code>, <code>jconsole</code>) — JVM identifies cycles automatically. Watch for nested synchronized blocks across multiple objects.' },
-        { d: 'hard', q: 'What are virtual threads (Project Loom) and how do they differ from platform threads?',
-          a: 'Virtual threads (stable in Java 21) are lightweight, JVM-managed threads multiplexed onto a small pool of platform (OS) threads via continuation-style suspension. Millions can coexist. They unblock when I/O is waiting, returning the carrier thread to the pool. Same <code>Thread</code> API, but much cheaper — kills the need for reactive frameworks in many I/O-heavy scenarios. Caveat: pinning via <code>synchronized</code> on I/O still blocks the carrier (improving in Java 22+).' }
-      ]
-    },
-    {
-      id: 'jvm',
-      name: 'JVM Internals & Performance',
-      desc: 'Memory model, GC, classloading, tuning',
-      questions: [
-        { d: 'easy', q: 'What are the main memory areas of the JVM?',
-          a: '<ul><li><strong>Heap</strong> — objects, shared across threads. Divided into Young (Eden, S0, S1) and Old generations.</li><li><strong>Stack</strong> — per-thread, method frames, local variables.</li><li><strong>Metaspace</strong> — class metadata (replaced PermGen in Java 8), native memory.</li><li><strong>PC register</strong> — per-thread, current instruction.</li><li><strong>Native method stack</strong> — for JNI calls.</li></ul>' },
-        { d: 'easy', q: 'What is the difference between stack and heap memory?',
-          a: 'Stack is per-thread, holds primitives and references, automatically reclaimed when method exits. Heap is shared across threads, holds objects, reclaimed by the garbage collector. Stack is fast (LIFO, contiguous); heap is slower but flexible. <code>StackOverflowError</code> vs <code>OutOfMemoryError: Java heap space</code>.' },
-        { d: 'easy', q: 'What does the garbage collector actually do?',
-          a: 'GC reclaims memory by identifying unreachable objects from <strong>GC roots</strong> (local vars on stack, static fields, JNI references, active threads). Anything reachable is live; anything else is collectable. The collector then frees space and (often) compacts to reduce fragmentation.' },
-        { d: 'medium', q: 'Explain the generational hypothesis and how it shapes GC design.',
-          a: 'Most objects die young. So JVM splits heap into Young Gen (Eden + 2 Survivor spaces) and Old Gen. Allocations go to Eden; survivors of a Minor GC are copied to a Survivor space and aged. After enough cycles they get <strong>tenured</strong> to Old Gen. Major/Full GC cleans Old Gen — slower and rarer. This makes Minor GC extremely fast since most Eden is dead.' },
-        { d: 'medium', q: 'Compare G1, ZGC, and Shenandoah.',
-          a: '<ul><li><strong>G1</strong> (default since Java 9): region-based, predictable pause targets, good for medium heaps. Concurrent marking, parallel evacuation.</li><li><strong>ZGC</strong>: sub-millisecond pauses, scales to TB heaps, colored pointers, concurrent everything. Slightly higher throughput cost.</li><li><strong>Shenandoah</strong> (Red Hat): also ultra-low pause via concurrent compaction with Brooks pointers. Similar niche to ZGC.</li></ul>' },
-        { d: 'medium', q: 'What are strong, soft, weak, and phantom references?',
-          a: '<strong>Strong</strong> — normal reference, prevents GC. <strong>Soft</strong> — collected only when JVM is near OOM; good for memory-sensitive caches. <strong>Weak</strong> — collected at the next GC if no strong refs exist (used in <code>WeakHashMap</code>, listeners). <strong>Phantom</strong> — never returns the object; used with <code>ReferenceQueue</code> for cleanup actions, modern alternative to <code>finalize()</code>.' },
-        { d: 'hard', q: 'How does the JIT compiler work? What is C1 vs C2?',
-          a: 'JVM starts in interpreter mode. Hot methods (identified by invocation/loop counters) are JIT-compiled. <strong>C1</strong> (client) — fast compilation, simple optimizations, gathers profiling. <strong>C2</strong> (server) — aggressive optimization (inlining, escape analysis, loop unrolling) using C1\'s profile data. Tiered compilation uses both. Deoptimization happens when assumptions break (e.g., a new subclass loaded).' },
-        { d: 'hard', q: 'What is escape analysis and what optimizations does it enable?',
-          a: 'JIT analyzes whether an object\'s reference "escapes" its method scope. If it doesn\'t escape: <strong>stack allocation</strong> (sometimes called scalar replacement) — object fields become stack variables, no heap allocation. Also enables <strong>lock elision</strong> — synchronized blocks on non-escaping objects can be removed entirely. Massive win for short-lived objects.' },
-        { d: 'hard', q: 'How would you diagnose a production OutOfMemoryError?',
-          a: '<ul><li>Add <code>-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/path</code> to capture a dump.</li><li>Analyze with Eclipse MAT or VisualVM — look for dominator tree and largest retained heap.</li><li>Check GC logs (<code>-Xlog:gc*</code>) for frequency and pattern.</li><li>Common culprits: unbounded caches, ThreadLocal leaks, classloader leaks (after redeploys), large session objects.</li><li>Use <code>jmap -histo</code> and <code>jstat</code> for live inspection.</li></ul>' },
-        { d: 'hard', q: 'Explain class loading and the parent delegation model.',
-          a: 'Three default loaders: <strong>Bootstrap</strong> (JDK core), <strong>Platform/Extension</strong> (java.* extensions), <strong>Application</strong> (classpath). Parent delegation: a loader first asks its parent before loading itself — prevents core class spoofing. Tomcat/Spring Boot inverts this for app isolation (WebAppClassLoader loads itself first). Steps: Loading → Linking (verify, prepare, resolve) → Initialization (run <code>&lt;clinit&gt;</code>).' }
-      ]
-    },
-    {
-      id: 'spring-core',
-      name: 'Spring Core & IoC',
-      desc: 'Beans, DI, lifecycle, configuration',
-      questions: [
-        { d: 'easy', q: 'What is Inversion of Control (IoC) and Dependency Injection (DI)?',
-          a: '<strong>IoC</strong> — instead of objects creating their dependencies, an external container provides them. <strong>DI</strong> is one implementation of IoC: the container "injects" dependencies via constructor, setter, or field. Spring\'s <code>ApplicationContext</code> is the IoC container. Result: loose coupling, easier testing, configurable wiring.' },
-        { d: 'easy', q: 'What are the main bean scopes in Spring?',
-          a: '<ul><li><code>singleton</code> (default) — one instance per container.</li><li><code>prototype</code> — new instance every <code>getBean()</code> call.</li><li><code>request</code>, <code>session</code>, <code>application</code> — web-aware scopes.</li><li><code>websocket</code> — per WS session.</li></ul>' },
-        { d: 'easy', q: 'What is the difference between @Component, @Service, @Repository, @Controller?',
-          a: 'All are <code>@Component</code> specializations — same registration behavior but different <strong>semantic intent</strong>. <code>@Repository</code> adds exception translation for persistence (converts vendor exceptions to <code>DataAccessException</code>). <code>@Controller</code> marks web controllers for handler mapping. <code>@Service</code> is purely semantic. Use the most specific one.' },
-        { d: 'medium', q: 'Compare constructor injection, setter injection, and field injection. Which is preferred?',
-          a: '<strong>Constructor</strong> — preferred: enables immutability (<code>final</code> fields), fails fast if a dep is missing, no proxy issues, easy to test without Spring. <strong>Setter</strong> — for optional or reconfigurable deps. <strong>Field</strong> (<code>@Autowired</code> on field) — terse but hides dependencies, requires reflection in tests, and prevents <code>final</code>. Modern Spring recommends constructor injection exclusively.' },
-        { d: 'medium', q: 'Explain the Spring bean lifecycle.',
-          a: '<ul><li>Instantiate → populate properties (DI) → call <code>*Aware</code> setters → <code>BeanPostProcessor.before</code> → <code>@PostConstruct</code> → <code>InitializingBean.afterPropertiesSet</code> → custom <code>init-method</code> → <code>BeanPostProcessor.after</code></li><li>Bean is ready.</li><li>On shutdown: <code>@PreDestroy</code> → <code>DisposableBean.destroy</code> → custom <code>destroy-method</code>.</li></ul>' },
-        { d: 'medium', q: 'What is the difference between BeanFactory and ApplicationContext?',
-          a: '<code>BeanFactory</code> — basic IoC, lazy initialization. <code>ApplicationContext</code> extends it with: eager singleton pre-instantiation, event publication, internationalization, resource loading, AOP integration, and environment abstraction. In practice, you always use <code>ApplicationContext</code> (typically <code>AnnotationConfigApplicationContext</code> or <code>WebApplicationContext</code>).' },
-        { d: 'hard', q: 'How does Spring resolve circular dependencies?',
-          a: 'Spring resolves them for <strong>singleton beans with setter/field injection</strong> via a three-level cache: singletons → early references → factory objects. When bean A needs B and B needs A, Spring exposes a partially constructed A through the early-reference cache, lets B inject it, then completes A. <strong>Constructor injection</strong> cannot be resolved this way — Spring throws <code>BeanCurrentlyInCreationException</code>. Refactor or use <code>@Lazy</code>.' },
-        { d: 'hard', q: 'What happens when you inject a prototype bean into a singleton?',
-          a: 'By default, the prototype is injected <strong>once</strong> at singleton creation and remains the same instance — defeating the purpose. Fixes: (1) inject <code>ObjectProvider&lt;T&gt;</code> or <code>Provider&lt;T&gt;</code> and call <code>get()</code> each time; (2) use <code>@Lookup</code> method injection — Spring overrides the method to return a fresh prototype; (3) inject the <code>ApplicationContext</code> and call <code>getBean()</code>.' },
-        { d: 'hard', q: 'What is the difference between @Configuration and @Component for defining beans?',
-          a: 'Both can declare <code>@Bean</code> methods. <code>@Configuration</code> classes are wrapped by a <strong>CGLIB proxy</strong> so that intra-class <code>@Bean</code> calls return the singleton from the container (not a new instance each call). <code>@Component</code> classes don\'t proxy — calling <code>@Bean</code> methods creates new objects each time. Use <code>@Configuration</code> for config classes; <code>@Component</code> elsewhere.' },
-        { d: 'hard', q: 'Explain how Spring AOP works under the hood.',
-          a: 'Spring AOP uses <strong>runtime proxies</strong>: JDK dynamic proxies (if target implements an interface) or CGLIB subclass proxies (otherwise). When you call a proxied method, the proxy intercepts, runs the advice chain (around, before, after-returning, after-throwing), then delegates to the target. Limitations: only public method calls go through proxy; <strong>self-invocation</strong> (calling another method on <code>this</code>) bypasses advice. Use <code>AspectJ</code> compile-time weaving for full power.' }
-      ]
-    },
-    {
-      id: 'spring-boot',
-      name: 'Spring Boot & Auto-config',
-      desc: 'Starters, auto-configuration, profiles, properties',
-      questions: [
-        { d: 'easy', q: 'What problem does Spring Boot solve compared to plain Spring?',
-          a: 'Boilerplate elimination: (1) <strong>starter dependencies</strong> bundle compatible jar versions; (2) <strong>auto-configuration</strong> creates sensible default beans; (3) <strong>embedded server</strong> — runnable JAR with Tomcat/Jetty/Undertow; (4) <strong>opinionated defaults</strong> for properties, logging, health checks. Result: production-ready apps in minutes, not weeks of XML.' },
-        { d: 'easy', q: 'What is a Spring Boot starter?',
-          a: 'A curated dependency aggregator. <code>spring-boot-starter-web</code> pulls in Spring MVC, Jackson, Tomcat, validation, logging — all version-aligned. You add one dependency instead of managing dozens. Custom starters follow the <code>*-spring-boot-starter</code> naming convention.' },
-        { d: 'easy', q: 'How do you externalize configuration in Spring Boot?',
-          a: 'Property sources in priority order (highest first): command-line args → JNDI → system properties → environment variables → profile-specific <code>application-{profile}.properties</code> → <code>application.properties</code> → <code>@PropertySource</code> → defaults. Bind via <code>@Value</code> or type-safe <code>@ConfigurationProperties</code>.' },
-        { d: 'medium', q: 'How does @SpringBootApplication work?',
-          a: 'Meta-annotation combining <code>@Configuration</code> + <code>@EnableAutoConfiguration</code> + <code>@ComponentScan</code>. <code>@EnableAutoConfiguration</code> triggers auto-config loading from <code>META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports</code> (or legacy <code>spring.factories</code>). Scan starts from the package containing the main class — place it at the root.' },
-        { d: 'medium', q: 'How does Spring Boot auto-configuration actually decide what to configure?',
-          a: 'Each auto-config class is gated by <strong>conditional annotations</strong>: <code>@ConditionalOnClass</code> (jar present), <code>@ConditionalOnMissingBean</code> (let user override), <code>@ConditionalOnProperty</code> (toggle via config), <code>@ConditionalOnWebApplication</code>, etc. Run with <code>--debug</code> to see the auto-config report showing matched and non-matched conditions.' },
-        { d: 'medium', q: 'How do you use Spring profiles?',
-          a: 'Annotate beans with <code>@Profile("dev")</code> or define <code>application-dev.properties</code>. Activate via <code>spring.profiles.active=dev,monitoring</code> as property, env var (<code>SPRING_PROFILES_ACTIVE</code>), or CLI flag. Multiple profiles can be active. Use for environment-specific datasources, mocking external services, or feature toggles.' },
-        { d: 'hard', q: 'How would you write a custom auto-configuration?',
-          a: '<ul><li>Create a <code>@Configuration</code> class with conditional annotations.</li><li>Add it to <code>META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports</code>.</li><li>Define <code>@ConfigurationProperties</code> for type-safe config.</li><li>Use <code>@ConditionalOnMissingBean</code> so users can override.</li><li>Order with <code>@AutoConfigureAfter</code> / <code>@AutoConfigureBefore</code>.</li><li>Package as a standalone JAR for reuse.</li></ul>' },
-        { d: 'hard', q: 'What is Spring Boot Actuator and what are its critical production endpoints?',
-          a: 'Provides production-ready monitoring/management. Key endpoints: <code>/health</code> (liveness/readiness probes), <code>/metrics</code> (Micrometer — exports to Prometheus, Datadog), <code>/info</code>, <code>/loggers</code> (runtime log level changes), <code>/threaddump</code>, <code>/heapdump</code>, <code>/env</code>. <strong>Security warning</strong>: most should not be publicly exposed — limit via <code>management.endpoints.web.exposure.include</code> and a separate management port.' },
-        { d: 'hard', q: 'How does Spring Boot handle graceful shutdown?',
-          a: 'Set <code>server.shutdown=graceful</code>. On SIGTERM, the server stops accepting new requests, waits up to <code>spring.lifecycle.timeout-per-shutdown-phase</code> (default 30s) for in-flight requests, then closes. Critical for Kubernetes rolling deploys. Combine with <code>preStop</code> hook delays so the load balancer removes the pod before shutdown begins.' },
-        { d: 'hard', q: 'How would you optimize Spring Boot startup time?',
-          a: '<ul><li>Use <strong>AOT compilation + GraalVM native image</strong> — sub-100ms startup.</li><li>Lazy initialization: <code>spring.main.lazy-initialization=true</code>.</li><li>Trim auto-configuration: exclude unused (<code>@SpringBootApplication(exclude={...})</code>).</li><li>Use <code>spring-context-indexer</code> to skip classpath scanning.</li><li>Profile with <code>-Dspring.context.indexer.enabled=true</code> and Spring Startup endpoint.</li><li>Reduce dependencies; avoid heavy starters in microservices.</li></ul>' }
-      ]
-    },
-    {
-      id: 'spring-mvc',
-      name: 'Spring MVC & REST APIs',
-      desc: 'Controllers, mapping, validation, exceptions',
-      questions: [
-        { d: 'easy', q: 'What is the difference between @Controller and @RestController?',
-          a: '<code>@Controller</code> — returns view names resolved by a <code>ViewResolver</code> (for server-rendered HTML). <code>@RestController</code> = <code>@Controller</code> + <code>@ResponseBody</code> on every method — return values are serialized directly (usually to JSON via Jackson). Use <code>@RestController</code> for REST APIs.' },
-        { d: 'easy', q: 'What does @RequestMapping do? Compare to @GetMapping, @PostMapping, etc.',
-          a: '<code>@RequestMapping</code> is the generic mapping — supports all methods, configurable via <code>method</code> attribute. The HTTP-specific ones (<code>@GetMapping</code>, <code>@PostMapping</code>, <code>@PutMapping</code>, <code>@DeleteMapping</code>, <code>@PatchMapping</code>) are shortcuts introduced in Spring 4.3. Prefer the specific ones — clearer intent, less verbose.' },
-        { d: 'easy', q: 'How do you extract path variables, query params, and request body?',
-          a: '<ul><li><code>@PathVariable</code> — URI template segment: <code>/users/{id}</code>.</li><li><code>@RequestParam</code> — query string or form: <code>?page=1</code>.</li><li><code>@RequestBody</code> — deserializes request body (e.g., JSON) into an object.</li><li><code>@RequestHeader</code> — header values.</li><li><code>@CookieValue</code> — cookie values.</li></ul>' },
-        { d: 'medium', q: 'How do you implement validation in a REST controller?',
-          a: 'Annotate DTO fields with Bean Validation (<code>@NotNull</code>, <code>@Email</code>, <code>@Size</code>, <code>@Min</code>, etc.). Add <code>@Valid</code> on the <code>@RequestBody</code> parameter. Spring throws <code>MethodArgumentNotValidException</code> on failure. Handle globally with <code>@RestControllerAdvice</code> + <code>@ExceptionHandler</code> to return structured 400 responses. For custom rules: implement <code>ConstraintValidator</code>.' },
-        { d: 'medium', q: 'How do you implement global exception handling?',
-          a: 'Create a class annotated with <code>@RestControllerAdvice</code> (or <code>@ControllerAdvice</code>). Add methods with <code>@ExceptionHandler(SomeException.class)</code> that return <code>ResponseEntity</code>. You can scope advice with <code>basePackages</code> or <code>assignableTypes</code>. Since Spring 6, prefer <code>ProblemDetail</code> (RFC 7807) for error responses.' },
-        { d: 'medium', q: 'What is HATEOAS? Should you use it?',
-          a: 'Hypermedia As The Engine Of Application State — responses include links to related actions/resources, enabling clients to navigate the API dynamically. Spring HATEOAS adds <code>EntityModel</code>, <code>RepresentationModel</code>, <code>Link</code>. <strong>Pragmatic view</strong>: full HATEOAS is rare in practice — most teams ship simpler JSON. Use when API discoverability matters (e.g., a developer portal) or when implementing HAL/JSON-API specs.' },
-        { d: 'hard', q: 'Explain the full DispatcherServlet request flow.',
-          a: '<ul><li>Request → <code>DispatcherServlet</code> (front controller).</li><li><code>HandlerMapping</code> resolves to handler (controller method).</li><li><code>HandlerAdapter</code> invokes the handler; <code>HandlerInterceptor.preHandle</code> runs.</li><li>Arguments resolved by <code>HandlerMethodArgumentResolver</code>; return value handled by <code>HandlerMethodReturnValueHandler</code>.</li><li>Response written via <code>HttpMessageConverter</code> (e.g., <code>MappingJackson2HttpMessageConverter</code>).</li><li><code>postHandle</code> → view resolution if applicable → <code>afterCompletion</code>.</li></ul>' },
-        { d: 'hard', q: 'How does content negotiation work in Spring?',
-          a: 'Spring picks an <code>HttpMessageConverter</code> based on the <code>Accept</code> header. Default strategy checks (1) URL suffix (<code>.json</code>, deprecated in 5.3+), (2) <code>Accept</code> header, (3) <code>format</code> query param if configured. Configure with <code>ContentNegotiationConfigurer</code>. Same applies to <code>Content-Type</code> for incoming requests via <code>consumes</code> attribute.' },
-        { d: 'hard', q: 'How do you implement pagination and sorting in a REST API?',
-          a: 'Accept a <code>Pageable</code> parameter — Spring binds from <code>?page=0&size=20&sort=createdAt,desc</code>. Repository methods accept <code>Pageable</code> and return <code>Page&lt;T&gt;</code>. Response can use <code>PagedModel</code> (Spring HATEOAS) or a custom envelope: <code>{"content":[...], "totalElements":N, "totalPages":N, "page":N}</code>. Always cap max page size to prevent abuse.' },
-        { d: 'hard', q: 'How do you handle file uploads and streaming responses?',
-          a: '<strong>Upload</strong>: <code>@RequestPart("file") MultipartFile file</code> or <code>@RequestParam</code>. Configure <code>spring.servlet.multipart.max-file-size</code>. <strong>Streaming</strong>: return <code>StreamingResponseBody</code>, <code>ResponseEntity&lt;Resource&gt;</code> (e.g., <code>InputStreamResource</code>), or <code>SseEmitter</code> for server-sent events. For very large files use chunked transfer; consider WebFlux for high-concurrency streaming.' }
-      ]
-    },
-    {
-      id: 'data-jpa',
-      name: 'Spring Data JPA & Hibernate',
-      desc: 'Repositories, queries, transactions, performance',
-      questions: [
-        { d: 'easy', q: 'What is the difference between JPA, Hibernate, and Spring Data JPA?',
-          a: '<strong>JPA</strong> — specification (interfaces, annotations). <strong>Hibernate</strong> — most popular JPA implementation, plus extra features. <strong>Spring Data JPA</strong> — Spring layer on top: repository abstraction, derived queries, pagination, auditing. You write interfaces, Spring generates implementations at runtime.' },
-        { d: 'easy', q: 'What does the @Entity annotation require?',
-          a: 'A no-arg constructor (any access level), a primary key field marked with <code>@Id</code>, and a non-final class. Optional: <code>@Table</code> for custom table name. Should override <code>equals()</code>/<code>hashCode()</code> based on a business key (not <code>@Id</code> if it\'s auto-generated, to avoid identity issues with transient entities).' },
-        { d: 'easy', q: 'How do you define a derived query method?',
-          a: 'By method naming convention on a <code>JpaRepository</code> interface: <code>List&lt;User&gt; findByLastNameAndAgeGreaterThan(String lastName, int age)</code>. Supported keywords: <code>findBy</code>, <code>And</code>, <code>Or</code>, <code>Between</code>, <code>LessThan</code>, <code>Like</code>, <code>OrderBy</code>, <code>Top</code>, <code>Distinct</code>. For complex queries use <code>@Query</code>.' },
-        { d: 'medium', q: 'Explain the JPA entity lifecycle states.',
-          a: '<ul><li><strong>Transient/New</strong> — created with <code>new</code>, not associated with persistence context.</li><li><strong>Managed/Persistent</strong> — attached, changes auto-tracked and flushed.</li><li><strong>Detached</strong> — was managed but context closed; changes not tracked. Reattach with <code>merge()</code>.</li><li><strong>Removed</strong> — marked for deletion, will be DELETE on flush.</li></ul>' },
-        { d: 'medium', q: 'What is the N+1 query problem and how do you fix it?',
-          a: 'Lazy-loading a collection: 1 query for parents, then N queries for each child collection. Example: <code>orders.forEach(o -&gt; o.getItems().size())</code> on 100 orders → 101 queries. <strong>Fixes</strong>: (1) <code>JOIN FETCH</code> in JPQL; (2) <code>@EntityGraph</code> on repository method; (3) <code>FetchType.EAGER</code> (avoid as default — too eager); (4) Hibernate <code>@BatchSize</code>; (5) DTO projection that queries only needed fields.' },
-        { d: 'medium', q: 'What is the difference between save(), saveAndFlush(), and persist()?',
-          a: '<code>save()</code> — Spring Data: <code>merge()</code> if entity has an ID (detached check), else <code>persist()</code>. Returns possibly new instance. <code>saveAndFlush()</code> — same plus immediate <code>flush()</code> to DB (useful for triggers, returning generated values). <code>persist()</code> — JPA: makes transient entity managed; fails if already detached.' },
-        { d: 'hard', q: 'Explain @Transactional propagation levels.',
-          a: '<ul><li><code>REQUIRED</code> (default) — join existing or start new.</li><li><code>REQUIRES_NEW</code> — always start a new transaction, suspending the outer one.</li><li><code>SUPPORTS</code> — join if exists, run non-transactionally otherwise.</li><li><code>MANDATORY</code> — fail if no transaction.</li><li><code>NEVER</code> — fail if transaction exists.</li><li><code>NESTED</code> — savepoint within outer (Spring JDBC, not all JPA providers).</li></ul>' },
-        { d: 'hard', q: 'Why doesn\'t self-invocation of @Transactional methods work?',
-          a: 'Spring AOP uses a proxy. External callers go through the proxy → advice → target. But calling <code>this.someMethod()</code> within the same class bypasses the proxy entirely, so the transactional advice never runs. <strong>Fixes</strong>: (1) inject self via <code>@Autowired</code> and call through it; (2) move the transactional method to another bean; (3) use AspectJ weaving instead of proxy-based AOP.' },
-        { d: 'hard', q: 'What is optimistic vs pessimistic locking?',
-          a: '<strong>Optimistic</strong> — <code>@Version</code> field; on update, JPA adds <code>WHERE version = ?</code>; failure throws <code>OptimisticLockException</code>. No DB locks held. Best for low contention. <strong>Pessimistic</strong> — <code>SELECT ... FOR UPDATE</code> via <code>@Lock(LockModeType.PESSIMISTIC_WRITE)</code>; DB-level row locks; safe under heavy contention but reduces throughput and can deadlock.' },
-        { d: 'hard', q: 'How would you optimize a slow Spring Data JPA query?',
-          a: '<ul><li>Enable SQL logging: <code>spring.jpa.show-sql=true</code> + <code>logging.level.org.hibernate.SQL=DEBUG</code>.</li><li>Check execution plan with <code>EXPLAIN ANALYZE</code> — verify indexes.</li><li>Replace lazy iteration with <code>JOIN FETCH</code> or <code>@EntityGraph</code>.</li><li>Use DTO projection (constructor expression or interface) — fewer columns, no entity overhead.</li><li>Add pagination — never load unbounded result sets.</li><li>Enable second-level cache or query cache for hot reads.</li><li>For bulk operations: <code>JdbcTemplate</code> batch update bypasses persistence context.</li></ul>' }
-      ]
-    },
-    {
-      id: 'security',
-      name: 'Spring Security',
-      desc: 'Authentication, authorization, JWT, OAuth2',
-      questions: [
-        { d: 'easy', q: 'What is the difference between authentication and authorization?',
-          a: '<strong>Authentication</strong> — who are you? (verifying identity via password, token, certificate). <strong>Authorization</strong> — what are you allowed to do? (role/permission check). Spring Security: <code>AuthenticationManager</code> handles the first, <code>AccessDecisionManager</code>/<code>AuthorizationManager</code> the second.' },
-        { d: 'easy', q: 'What is the role of SecurityFilterChain?',
-          a: 'A chain of servlet filters applied to every request before reaching the controller. Each filter handles a concern: CSRF, CORS, authentication, authorization, exception translation. The filter order matters — Spring Security provides sensible defaults. Customize via <code>SecurityFilterChain</code> bean in modern (5.7+) config.' },
-        { d: 'easy', q: 'How do you hash passwords in Spring Security?',
-          a: 'Use <code>PasswordEncoder</code>. Default and recommended: <code>BCryptPasswordEncoder</code> — adaptive, salted. Modern alternative: <code>Argon2PasswordEncoder</code>. Never store plaintext or use MD5/SHA-1. Use <code>DelegatingPasswordEncoder</code> (default in Boot) which encodes a prefix like <code>{bcrypt}</code> in the hash — enables algorithm migration.' },
-        { d: 'medium', q: 'Explain stateless JWT authentication flow.',
-          a: '<ul><li>Client posts credentials → server validates → returns signed JWT.</li><li>Client stores JWT (memory, httpOnly cookie); sends as <code>Authorization: Bearer ...</code> on each request.</li><li>Server validates signature + expiration on every request — no session needed.</li><li>Stateless: any node can handle any request. Trade-off: revocation is hard (use short expiry + refresh tokens, or maintain a blocklist).</li></ul>' },
-        { d: 'medium', q: 'What is CSRF and how does Spring Security protect against it?',
-          a: 'Cross-Site Request Forgery — malicious site triggers a state-changing request using the victim\'s session cookie. Spring Security generates a token, embeds it in forms (<code>_csrf</code>), and validates on POST/PUT/DELETE. <strong>Stateless JWT APIs</strong> can disable CSRF — no session cookie means no automatic credential replay. Keep enabled for browser-based session apps.' },
-        { d: 'medium', q: 'How do you implement role and permission-based authorization?',
-          a: 'At URL level: <code>http.authorizeHttpRequests(a -&gt; a.requestMatchers("/admin/**").hasRole("ADMIN"))</code>. At method level: <code>@PreAuthorize("hasRole(\'ADMIN\')")</code> or <code>@PreAuthorize("hasAuthority(\'USER_DELETE\')")</code>. Enable with <code>@EnableMethodSecurity</code>. Roles are authorities prefixed with <code>ROLE_</code>. Prefer fine-grained permissions for flexibility.' },
-        { d: 'hard', q: 'Walk through the Spring Security authentication architecture.',
-          a: '<ul><li>Request hits <code>UsernamePasswordAuthenticationFilter</code> (or <code>BearerTokenAuthenticationFilter</code> for JWT).</li><li>Filter creates an unauthenticated <code>Authentication</code> object.</li><li>Passes to <code>AuthenticationManager</code> (usually <code>ProviderManager</code>).</li><li>Provider iterates <code>AuthenticationProvider</code>s — e.g., <code>DaoAuthenticationProvider</code> loads via <code>UserDetailsService</code>, checks password via <code>PasswordEncoder</code>.</li><li>On success, returns authenticated <code>Authentication</code> → stored in <code>SecurityContextHolder</code>.</li><li>On failure, <code>AuthenticationEntryPoint</code> handles the response (401, redirect to login).</li></ul>' },
-        { d: 'hard', q: 'What\'s the difference between OAuth2 and OpenID Connect?',
-          a: '<strong>OAuth2</strong> — authorization framework: grants access tokens for delegated access to resources. Doesn\'t define identity. <strong>OIDC</strong> — identity layer on top of OAuth2: adds <code>id_token</code> (JWT), <code>userinfo</code> endpoint, standard claims (sub, email, name). Use OIDC when you need to know <em>who</em> the user is; OAuth2 alone when you only need API access.' },
-        { d: 'hard', q: 'How would you implement refresh tokens with Spring Security?',
-          a: '<ul><li>Issue both at login: short-lived access token (5–15 min), long-lived refresh token (days).</li><li>Store refresh token server-side (DB or Redis) — must be revocable.</li><li>Client calls <code>/refresh</code> endpoint with refresh token → server validates, issues new pair (rotation prevents reuse).</li><li>Add device/IP binding and revocation on suspicious activity.</li><li>Detect reuse — if a revoked refresh token is presented, revoke entire family (token theft signal).</li></ul>' },
-        { d: 'hard', q: 'How do you secure a microservices architecture with Spring Security?',
-          a: '<ul><li><strong>Gateway pattern</strong>: API Gateway authenticates JWT, propagates user context downstream via headers.</li><li><strong>Service-to-service</strong>: mTLS or signed JWTs (OAuth2 client credentials flow).</li><li>Each service validates JWT signature locally using JWKS from auth server — no auth server round-trips.</li><li>Use OAuth2 resource server config: <code>http.oauth2ResourceServer(o -&gt; o.jwt())</code>.</li><li>Centralize policies via OPA or dedicated authz service for complex rules.</li><li>Service mesh (Istio) can offload TLS/authn entirely.</li></ul>' }
-      ]
-    },
-    {
-      id: 'microservices',
-      name: 'Microservices Patterns',
-      desc: 'Service discovery, resilience, distributed tx',
-      questions: [
-        { d: 'easy', q: 'What are microservices and what problem do they solve?',
-          a: 'Architectural style: an app is a suite of small, independently deployable services, each owning a business capability and its data. Solves monolith pain: long build/deploy cycles, single tech stack, scaling bottlenecks, team coordination. Trade-off: massive operational complexity — only worth it past a certain team/system scale.' },
-        { d: 'easy', q: 'What is service discovery?',
-          a: 'Mechanism for services to find each other dynamically (no hardcoded URLs). Two styles: <strong>client-side</strong> (Netflix Eureka — client queries registry, picks instance); <strong>server-side</strong> (Kubernetes Service, AWS ELB — client calls a fixed endpoint, infra routes). Kubernetes DNS + Service is now the dominant pattern.' },
-        { d: 'easy', q: 'What is an API Gateway?',
-          a: 'Single entry point for client traffic. Handles: routing, authentication, rate limiting, request/response transformation, aggregation across services, SSL termination, logging. Examples: Spring Cloud Gateway, Kong, AWS API Gateway, Envoy. Prevents clients from knowing every service URL and centralizes cross-cutting concerns.' },
-        { d: 'medium', q: 'Explain the circuit breaker pattern.',
-          a: 'Wraps remote calls to prevent cascading failures. States: <strong>Closed</strong> (calls pass through, errors counted) → <strong>Open</strong> (after threshold, calls fail fast for a cooldown) → <strong>Half-Open</strong> (trial calls; on success → Closed, on failure → Open). Implementation: <strong>Resilience4j</strong> (Spring Cloud Circuit Breaker). Combine with timeouts, retries, and fallbacks.' },
-        { d: 'medium', q: 'How do you handle distributed transactions across microservices?',
-          a: 'Avoid two-phase commit — too brittle. Use the <strong>Saga pattern</strong>: a sequence of local transactions, each publishing an event that triggers the next. On failure, run compensating transactions to undo previous steps. Two flavors: <strong>Choreography</strong> (events, no central coordinator) and <strong>Orchestration</strong> (central orchestrator — e.g., Camunda, Temporal). Orchestration is easier to debug.' },
-        { d: 'medium', q: 'What is the outbox pattern and what problem does it solve?',
-          a: 'Solves the <strong>dual-write problem</strong>: writing to the DB and publishing to a message broker atomically. Solution: write the message to an <strong>outbox</strong> table in the <em>same DB transaction</em> as the business data. A separate process (CDC like Debezium, or polling) reads the outbox and publishes to the broker, then marks as sent. Guarantees at-least-once delivery without distributed transactions.' },
-        { d: 'hard', q: 'How would you design distributed tracing?',
-          a: 'Each request gets a <code>traceId</code> (entire journey) and per-hop <code>spanId</code>. Propagate via headers (W3C Trace Context: <code>traceparent</code>). Instrument with <strong>Micrometer Tracing</strong> (Spring Boot 3) → exports to <strong>Zipkin/Jaeger/Tempo</strong>. View as a flame graph showing where latency lives. Critical for diagnosing performance in multi-hop calls. Pair with correlation IDs in logs.' },
-        { d: 'hard', q: 'How do you handle eventual consistency in a microservices system?',
-          a: '<ul><li><strong>Accept it.</strong> Strong consistency across services is rarely worth the cost.</li><li>Use event-driven updates — services subscribe to changes they care about.</li><li>Idempotent consumers — same event arriving twice has no side effect (dedup table or natural idempotency).</li><li>Read models / CQRS — denormalized views per use case, eventually consistent.</li><li>Compensating actions for inevitable conflicts (e.g., refund if double-charged).</li><li>UX: surface "processing" states, optimistic updates.</li></ul>' },
-        { d: 'hard', q: 'When would you choose synchronous (REST/gRPC) vs asynchronous (messaging) communication?',
-          a: '<strong>Sync</strong> — query operations needing immediate response, tight coupling acceptable, simple flows. Risk: latency adds up, failures cascade. <strong>Async</strong> — fire-and-forget, fan-out events, long-running work, services with independent SLAs, smoothing load spikes. Costs: harder to reason about, requires idempotency and event versioning. In practice: hybrid — sync for reads, async for state changes that fan out.' },
-        { d: 'hard', q: 'What is the bulkhead pattern?',
-          a: 'Isolate resources so a failure in one area doesn\'t exhaust shared resources elsewhere — like watertight compartments in a ship. <strong>Thread pool bulkhead</strong>: separate executor per downstream service (slow service A doesn\'t starve service B). <strong>Semaphore bulkhead</strong>: cap concurrent calls per dependency. Resilience4j supports both. Combine with circuit breakers and timeouts for full resilience.' }
-      ]
-    }
-  ];
-
-  const extras = {
-    id: 'extras',
-    name: 'Extras — MQ, Redis, Docker, K8s',
-    desc: 'Adjacent systems Java engineers are expected to know',
-    questions: [
-      { d: 'easy', q: '[Redis] What data types does Redis support and when would you use each?',
-        a: '<ul><li><strong>String</strong> — caching, counters, session data.</li><li><strong>List</strong> — queues, recent items (capped lists).</li><li><strong>Hash</strong> — object fields without serializing whole object.</li><li><strong>Set</strong> — unique items, tags, membership tests.</li><li><strong>Sorted Set (ZSet)</strong> — leaderboards, time-series, priority queues.</li><li><strong>Stream</strong> — event log with consumer groups (Kafka-lite).</li><li><strong>Bitmap, HyperLogLog, Geo</strong> — specialized use cases.</li></ul>' },
-      { d: 'easy', q: '[MQ] What are the differences between Kafka and RabbitMQ?',
-        a: '<strong>Kafka</strong> — distributed log, partitioned, retains messages (days/forever), pull-based, optimized for high throughput and replayability. Consumers track offsets. <strong>RabbitMQ</strong> — traditional message broker (AMQP), push-based, routes via exchanges, deletes after ack, rich routing rules. Use Kafka for event streaming/analytics/event sourcing; RabbitMQ for task queues, RPC, complex routing.' },
-      { d: 'easy', q: '[Docker] What is the difference between an image and a container?',
-        a: '<strong>Image</strong> — immutable template, layered filesystem, built from a Dockerfile. <strong>Container</strong> — running instance of an image with its own writable layer, isolated namespaces (PID, network, mount). Many containers from one image. Images are versioned/tagged; containers are ephemeral.' },
-      { d: 'medium', q: '[Redis] Explain cache patterns: cache-aside, write-through, write-behind.',
-        a: '<ul><li><strong>Cache-aside (lazy)</strong> — app reads cache; on miss, reads DB and populates cache. App writes go to DB; cache is invalidated. Most common.</li><li><strong>Write-through</strong> — app writes to cache, cache writes synchronously to DB. Slower writes, consistent reads.</li><li><strong>Write-behind (write-back)</strong> — app writes to cache; cache flushes to DB async. Fast but risk of data loss on cache crash.</li></ul>' },
-      { d: 'medium', q: '[Redis] How do you prevent cache penetration, breakdown, and avalanche?',
-        a: '<ul><li><strong>Penetration</strong> (queries for non-existent keys hit DB): cache null values briefly; use Bloom filter to pre-check existence.</li><li><strong>Breakdown</strong> (hot key expires → thundering herd to DB): mutex/lock around DB load; logical expiration (refresh in background).</li><li><strong>Avalanche</strong> (many keys expire simultaneously): randomize TTLs; use a multi-tier cache; circuit breaker on DB.</li></ul>' },
-      { d: 'medium', q: '[MQ] What is the difference between at-most-once, at-least-once, and exactly-once delivery?',
-        a: '<strong>At-most-once</strong> — fire-and-forget, may lose messages. Fast, simple. <strong>At-least-once</strong> — retry until acked, may duplicate. Most common; requires idempotent consumers. <strong>Exactly-once</strong> — no loss, no duplicates. Achieved by combining at-least-once + idempotency (transactional outbox + consumer dedup, or Kafka transactional producer + EOS).' },
-      { d: 'medium', q: '[K8s] What are Pods, Deployments, and Services?',
-        a: '<strong>Pod</strong> — smallest deployable unit, one or more containers sharing network/storage. <strong>Deployment</strong> — manages ReplicaSets which manage Pods; handles rolling updates and rollbacks. <strong>Service</strong> — stable network endpoint (ClusterIP/NodePort/LoadBalancer) that load-balances to Pods matched by labels. Pods come and go; Services are the address.' },
-      { d: 'hard', q: '[Kafka] How do you ensure ordering and exactly-once processing in Kafka?',
-        a: '<ul><li><strong>Ordering</strong>: guaranteed within a partition only. Use a partition key (e.g., userId) so all related messages land in the same partition. Single consumer per partition.</li><li><strong>EOS (exactly-once semantics)</strong>: producer-side <code>enable.idempotence=true</code> + transactional writes; consumer-side <code>isolation.level=read_committed</code>. For Kafka Streams: <code>processing.guarantee=exactly_once_v2</code>.</li><li>Cross-system EOS still needs idempotent sinks.</li></ul>' },
-      { d: 'hard', q: '[Redis] How would you implement a distributed lock with Redis? What are the pitfalls?',
-        a: 'Basic: <code>SET key value NX PX 30000</code> — atomic set-if-not-exists with TTL. Release with a Lua script checking value matches. <strong>Pitfalls</strong>: (1) TTL too short → another holder thinks lock is free; (2) clock skew between nodes; (3) GC pause holding lock past expiration. <strong>Redlock</strong> (Antirez): acquire on majority of N independent Redis nodes. Controversial — Martin Kleppmann argues fencing tokens are needed. For critical correctness, use Zookeeper/etcd instead.' },
-      { d: 'hard', q: '[K8s] Explain liveness, readiness, and startup probes.',
-        a: '<ul><li><strong>Liveness</strong> — is the app alive? Fail → kubelet restarts the container. Use for deadlock detection. Conservative thresholds.</li><li><strong>Readiness</strong> — is the app ready to serve traffic? Fail → Pod removed from Service endpoints (no restart). Use for warm-up, dependency checks.</li><li><strong>Startup</strong> — for slow-starting apps. Disables liveness/readiness until success. Prevents premature restarts during boot. Spring Boot 2.3+ exposes <code>/actuator/health/liveness</code> and <code>/readiness</code> natively.</li></ul>' },
-      { d: 'hard', q: '[System] How would you design a high-throughput rate limiter?',
-        a: '<ul><li><strong>Algorithms</strong>: token bucket (smooth bursts), leaky bucket (constant rate), fixed window (simple, edge bursts), sliding window log/counter (accurate, more memory).</li><li><strong>Storage</strong>: Redis with Lua scripts for atomic check-and-decrement — sub-millisecond. Local cache for read-heavy keys.</li><li><strong>Distribution</strong>: per-user limits via key hashing; global limits via centralized counter.</li><li><strong>Failure</strong>: fail open or fail closed? Usually fail open for non-critical limits.</li><li>Surface limits via <code>X-RateLimit-Remaining</code> headers; respond 429 with <code>Retry-After</code>.</li></ul>' },
-      { d: 'hard', q: '[System] How would you design a notification system handling 100M users?',
-        a: '<ul><li><strong>Ingest</strong>: REST + Kafka topic per channel (email/push/SMS).</li><li><strong>Fan-out</strong>: worker pool per channel, scales horizontally on consumer groups.</li><li><strong>Templating + personalization</strong>: separate service; cache user preferences in Redis.</li><li><strong>Provider abstraction</strong>: pluggable adapters (SES, SNS, FCM, Twilio); circuit breakers per provider.</li><li><strong>Idempotency</strong>: dedup by (userId, notificationId) in Redis with TTL.</li><li><strong>Throttling</strong>: per-user, per-channel, and global; respect quiet hours.</li><li><strong>Delivery tracking</strong>: webhook receivers update status; analytics via separate pipeline.</li><li><strong>Backpressure</strong>: DLQ for failed sends; retry with exponential backoff.</li></ul>' }
-    ]
-  };
-
   const allTopics = [...topics, extras];
 
   document.getElementById('topic-count').textContent = allTopics.length;
