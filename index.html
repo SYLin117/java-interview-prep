@@ -791,7 +791,8 @@
   });
 
   document.querySelectorAll('.q-row.q-data').forEach(row => {
-    row.addEventListener('click', () => {
+    row.addEventListener('click', (e) => {
+      if (e.target.closest('.q-answer')) return;
       row.classList.toggle('expanded');
     });
   });
