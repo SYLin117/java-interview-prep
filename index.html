@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Java & Spring Boot Interview Prep</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <style>
   :root {
     --bg: #ffffff;
@@ -360,8 +365,11 @@
     line-height: 1.55;
   }
   .q-answer pre code {
-    font-family: "SF Mono", Consolas, "Liberation Mono", monospace;
+    font-family: "JetBrains Mono", "SF Mono", Consolas, "Liberation Mono", monospace;
     font-size: 0.82rem;
+    font-variant-ligatures: contextual;
+    -webkit-font-feature-settings: "calt" 1;
+    font-feature-settings: "calt" 1;
     background: transparent;
     border: none;
     padding: 0;
@@ -369,6 +377,10 @@
     white-space: pre;
     overflow-wrap: normal;
     display: block;
+  }
+  .q-answer pre code.hljs {
+    background: transparent;
+    padding: 0;
   }
 
   footer {
@@ -627,6 +639,16 @@
     sideLinks.forEach(l => l.classList.toggle('active', l.dataset.target === activeId));
   }, { rootMargin: '-100px 0px -55% 0px', threshold: 0 });
   document.querySelectorAll('.topic-section').forEach(s => sectionObserver.observe(s));
+
+  if (window.hljs) {
+    document.querySelectorAll('.q-answer pre code').forEach(b => window.hljs.highlightElement(b));
+  } else {
+    window.addEventListener('load', () => {
+      if (window.hljs) {
+        document.querySelectorAll('.q-answer pre code').forEach(b => window.hljs.highlightElement(b));
+      }
+    });
+  }
 
   const searchInput = document.getElementById('search');
   searchInput.addEventListener('input', (e) => {
