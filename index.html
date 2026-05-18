@@ -609,6 +609,45 @@
   }
   #chat-form button:disabled { opacity: 0.55; cursor: wait; }
 
+  .chat-source-tag {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    margin-bottom: 0.4rem;
+  }
+  .chat-source-q {
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+    line-height: 1.35;
+  }
+  .chat-source-link {
+    display: inline-block;
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .chat-source-link:hover { text-decoration: underline; }
+  .chat-msg ul { padding-left: 1.1rem; margin: 0.3rem 0; }
+  .chat-msg li { margin-bottom: 0.25rem; }
+  .chat-msg .ex-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 0.6rem;
+    margin-bottom: 0.25rem;
+  }
+
   @media (max-width: 480px) {
     #chat-panel { width: calc(100vw - 1rem); right: 0.5rem; bottom: 5rem; height: 75vh; }
     #chat-toggle { bottom: 1rem; right: 1rem; }
@@ -856,8 +895,53 @@
   const chatSubmit   = chatForm.querySelector('button[type=submit]');
   const chatStatus   = document.getElementById('chat-status');
 
+  // Pre-built index of all 242 questions for instant on-site lookup before
+  // hitting the LLM. Cheap keyword overlap against question text — high
+  // precision means we only short-circuit on confident matches.
+  const CHAT_STOPWORDS = new Set(('the a an is are was were be been being to of in on at by for with about ' +
+    'from and or but what how why when where which who whose do does did can could should would will it its ' +
+    'that this these those my mine your you we us our they them their if as have has had use uses using used ' +
+    'into than then there here just only also some any all not so very much more most less few many own').split(' '));
+  function chatTokenize(s) {
+    const m = String(s).toLowerCase().match(/[a-z][a-z0-9]+/g);
+    return m ? m.filter(t => t.length > 2 && !CHAT_STOPWORDS.has(t)) : [];
+  }
+  const qbIndex = [];
+  allTopics.forEach(t => {
+    t.questions.forEach((q, qi) => {
+      qbIndex.push({
+        topicId: t.id,
+        topicName: t.name,
+        question: q.q,
+        answer: q.a,
+        tokens: new Set(chatTokenize(q.q)),
+      });
+    });
+  });
+  function findQbMatch(query) {
+    const qTokens = chatTokenize(query);
+    if (qTokens.length < 2) return null;
+    let best = { score: 0, overlap: 0, entry: null };
+    for (const entry of qbIndex) {
+      let overlap = 0;
+      for (const t of qTokens) if (entry.tokens.has(t)) overlap++;
+      const score = overlap / qTokens.length;
+      if (overlap > best.overlap || (overlap === best.overlap && score > best.score)) {
+        best = { score, overlap, entry };
+      }
+    }
+    // Confident only: ≥60% of significant query tokens AND ≥2 absolute matches
+    if (best.score >= 0.6 && best.overlap >= 2) return best.entry;
+    return null;
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c =>
+      ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+  }
+
   const chatHistory = [];
   let chatGreeted = false;
+  let chatAbort = null;   // tracks the in-flight fetch so we can cancel it
 
   chatToggle.addEventListener('click', () => {
     chatPanel.hidden = false;
@@ -871,6 +955,7 @@
     chatInput.focus();
   });
   chatClose.addEventListener('click', () => {
+    if (chatAbort) { chatAbort.abort(); chatAbort = null; }
     chatPanel.hidden = true;
     chatToggle.style.display = '';
   });
@@ -892,14 +977,45 @@
     chatSubmit.disabled = true;
     chatStatus.hidden = true;
     const bubble = addChatMsg('assistant', '');
+
+    // Pre-match against the on-site question bank. If we have a confident hit,
+    // render that answer locally and skip the LLM call entirely.
+    const match = findQbMatch(text);
+    if (match) {
+      bubble.innerHTML =
+        '<div class="chat-source-tag">📚 From your notes</div>' +
+        '<div class="chat-source-q">' + escapeHtml(match.question) + '</div>' +
+        match.answer +
+        '<a class="chat-source-link" href="#' + encodeURIComponent(match.topicId) +
+        '">See ' + escapeHtml(match.topicName) + ' →</a>';
+      bubble.querySelectorAll('pre code').forEach(b => {
+        if (window.hljs) window.hljs.highlightElement(b);
+      });
+      // Store a plain-text snapshot so follow-up questions have context
+      chatHistory.push({
+        role: 'assistant',
+        content: match.answer.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 600),
+      });
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      chatSubmit.disabled = false;
+      chatInput.focus();
+      return;
+    }
+
     bubble.classList.add('streaming');
     let acc = '';
+
+    // Cancel any prior in-flight request before starting a new one
+    if (chatAbort) chatAbort.abort();
+    chatAbort = new AbortController();
+    const signal = chatAbort.signal;
 
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ messages: chatHistory }),
+        signal,
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: 'HTTP ' + res.status }));
@@ -938,9 +1054,14 @@
       chatHistory.push({ role: 'assistant', content: acc });
       chatMessages.scrollTop = chatMessages.scrollHeight;
     } catch (err) {
-      bubble.remove();
-      showChatError(err.message || 'Network error');
+      if (err.name === 'AbortError') {
+        bubble.remove();   // user cancelled — silently drop the in-progress bubble
+      } else {
+        bubble.remove();
+        showChatError(err.message || 'Network error');
+      }
     } finally {
+      if (chatAbort && chatAbort.signal === signal) chatAbort = null;
       chatSubmit.disabled = false;
       chatInput.focus();
     }

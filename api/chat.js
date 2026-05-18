@@ -10,25 +10,13 @@ export const config = { runtime: 'edge' };
 // Alternatives: 'llama-3.1-8b-instant' (faster, smaller), 'gemma2-9b-it'.
 const MODEL = 'llama-3.3-70b-versatile';
 
-const SYSTEM_PROMPT = `You are an interview prep assistant for a Java & Spring Boot study site. The user is preparing for technical interviews.
-
-Be concise: 1-3 short paragraphs unless the user explicitly asks for depth. Use inline \`code\` for class/method/keyword names. Use fenced \`\`\`java blocks for short code samples (≤ 15 lines).
-
-Stay focused on the topics in the user's question bank:
-- Core Java & OOP (final/finally/finalize, ==/equals, String pool, OOP pillars, exceptions)
-- Collections & Generics (HashMap internals, PECS, ConcurrentHashMap, Comparable/Comparator)
-- Multithreading & Concurrency (volatile, synchronized, ExecutorService, virtual threads, JMM, locks)
-- JVM Internals & Performance (heap/stack, GC algorithms, JIT, escape analysis, OOM diagnosis)
-- Spring Core & IoC (beans, scopes, DI, AOP, circular dependencies, bean lifecycle)
-- Spring Boot & Auto-config (starters, profiles, actuator, properties, conditional auto-config)
-- Spring MVC & REST APIs (mappings, validation, exception handling, content negotiation, async controllers)
-- Spring Data JPA & Hibernate (entity lifecycle, N+1, @Transactional propagation, locking, dirty checking)
-- Spring Security (filter chain, JWT, OAuth2/OIDC, CSRF, method security, password encoding)
-- Multithreading in Spring (@Async, @Scheduled, virtual threads in Boot 3.2+, async controllers, TaskDecorator)
-- Microservices Patterns (circuit breaker, saga, outbox, distributed tracing, bulkhead, idempotency)
-- Extras (Kafka, RabbitMQ, Redis, Docker, Kubernetes)
-
-If asked about something off-topic, kindly say it's outside this study guide and offer to help with a related interview topic instead.`;
+const SYSTEM_PROMPT =
+  "Interview prep assistant for a Java & Spring Boot study site " +
+  "(core Java, Collections, Concurrency, JVM, Spring Core/Boot/MVC/Data JPA/Security, " +
+  "microservices patterns, Kafka, Redis, Docker, K8s). " +
+  "Be concise: 1-3 short paragraphs. Inline `code` for identifiers; fenced ```java " +
+  "blocks for short samples (≤15 lines). If asked something off-topic, say it's outside " +
+  "the guide and offer a related Java/Spring topic instead.";
 
 // Per-instance in-memory rate limit. Edge instances are ephemeral and there can
 // be several, so this is a soft deterrent only. For strict global limits, swap
@@ -76,7 +64,7 @@ export default async function handler(req) {
     return jsonError(400, 'Invalid JSON body');
   }
 
-  const messages = Array.isArray(body.messages) ? body.messages.slice(-20) : null;
+  const messages = Array.isArray(body.messages) ? body.messages.slice(-8) : null;
   if (!messages || messages.length === 0) return jsonError(400, 'messages array required');
 
   // Groq uses the OpenAI chat-completion schema: system message goes first.
@@ -99,7 +87,7 @@ export default async function handler(req) {
       body: JSON.stringify({
         model: MODEL,
         messages: chatMessages,
-        max_tokens: 500,
+        max_tokens: 350,
         temperature: 0.7,
         stream: true,
       }),
