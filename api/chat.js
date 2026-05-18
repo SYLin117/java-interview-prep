@@ -1,9 +1,12 @@
-// Vercel Edge function — proxies chat to Anthropic and streams back.
-// Requires env var ANTHROPIC_API_KEY (set in Vercel Project → Settings → Environment Variables).
+// Vercel Edge function — proxies chat to Google Gemini and streams normalized
+// text deltas back to the client as { text: "chunk" } SSE events.
+//
+// Requires env var GEMINI_API_KEY (free tier — get one at https://aistudio.google.com/apikey).
+// Set it in Vercel Project → Settings → Environment Variables.
 
 export const config = { runtime: 'edge' };
 
-const MODEL = 'claude-haiku-4-5-20251001';
+const MODEL = 'gemini-2.0-flash';
 
 const SYSTEM_PROMPT = `You are an interview prep assistant for a Java & Spring Boot study site. The user is preparing for technical interviews.
 
@@ -25,9 +28,9 @@ Stay focused on the topics in the user's question bank:
 
 If asked about something off-topic, kindly say it's outside this study guide and offer to help with a related interview topic instead.`;
 
-// Per-instance in-memory rate limit. Edge instances are ephemeral and there can be
-// several, so this is a soft deterrent — not a hard guarantee. For strict global
-// limits, swap for Vercel KV or Upstash Redis.
+// Per-instance in-memory rate limit. Edge instances are ephemeral and there can
+// be several, so this is a soft deterrent only. For strict global limits, swap
+// for Vercel KV or Upstash Redis.
 const buckets = new Map();
 const DAILY_LIMIT = 10;
 
@@ -59,9 +62,9 @@ export default async function handler(req) {
     return jsonError(429, 'Daily message limit reached. Try again tomorrow.');
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    return jsonError(503, 'Chatbot not configured — admin needs to set ANTHROPIC_API_KEY.');
+    return jsonError(503, 'Chatbot not configured — admin needs to set GEMINI_API_KEY.');
   }
 
   let body;
@@ -74,27 +77,28 @@ export default async function handler(req) {
   const messages = Array.isArray(body.messages) ? body.messages.slice(-20) : null;
   if (!messages || messages.length === 0) return jsonError(400, 'messages array required');
 
-  // Sanitize: cap each turn, normalize roles
-  const trimmed = messages.map((m) => ({
-    role: m.role === 'assistant' ? 'assistant' : 'user',
-    content: String(m.content || '').slice(0, 2000),
+  // Gemini uses { role: 'user' | 'model', parts: [{ text }] }
+  const contents = messages.map((m) => ({
+    role: m.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: String(m.content || '').slice(0, 2000) }],
   }));
+
+  const url =
+    `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:streamGenerateContent` +
+    `?alt=sse&key=${encodeURIComponent(apiKey)}`;
 
   let upstream;
   try {
-    upstream = await fetch('https://api.anthropic.com/v1/messages', {
+    upstream = await fetch(url, {
       method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
+      headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        model: MODEL,
-        max_tokens: 500,
-        system: SYSTEM_PROMPT,
-        messages: trimmed,
-        stream: true,
+        system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+        contents,
+        generationConfig: {
+          maxOutputTokens: 500,
+          temperature: 0.7,
+        },
       }),
     });
   } catch (e) {
@@ -103,10 +107,47 @@ export default async function handler(req) {
 
   if (!upstream.ok) {
     const detail = await upstream.text().catch(() => '');
-    return jsonError(502, `Anthropic returned ${upstream.status}: ${detail.slice(0, 300)}`);
+    return jsonError(502, `Gemini returned ${upstream.status}: ${detail.slice(0, 300)}`);
   }
 
-  return new Response(upstream.body, {
+  // Transform Gemini's SSE into a simple { text: "..." } SSE stream for the client.
+  // This keeps the browser code provider-agnostic.
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      const reader = upstream.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      try {
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const data = line.slice(6).trim();
+            if (!data) continue;
+            try {
+              const evt = JSON.parse(data);
+              const text = evt?.candidates?.[0]?.content?.parts?.[0]?.text;
+              if (text) {
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text })}\n\n`));
+              }
+            } catch {
+              // ignore malformed lines
+            }
+          }
+        }
+        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
     headers: {
       'content-type': 'text/event-stream',
       'cache-control': 'no-cache',

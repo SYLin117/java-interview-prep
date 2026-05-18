@@ -908,8 +908,8 @@
           if (!data || data === '[DONE]') continue;
           try {
             const evt = JSON.parse(data);
-            if (evt.type === 'content_block_delta' && evt.delta && evt.delta.type === 'text_delta') {
-              acc += evt.delta.text;
+            if (evt.text) {
+              acc += evt.text;
               bubble.textContent = acc;
               chatMessages.scrollTop = chatMessages.scrollHeight;
             }

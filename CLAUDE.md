@@ -18,13 +18,15 @@ The split was made deliberately so content can be edited without touching markup
 
 ## Chat assistant
 
-The floating 💬 button in the bottom-right opens a chat panel that calls `/api/chat`. The function proxies to **Anthropic Claude Haiku 4.5** with a system prompt grounded in the site's topic list. Hard caps: `max_tokens=500` per response, per-turn input clipped to 2000 chars, last 20 turns of history sent.
+The floating 💬 button in the bottom-right opens a chat panel that calls `/api/chat`. The function proxies to **Google Gemini 2.0 Flash** (free tier) with a system prompt grounded in the site's topic list. Hard caps: `maxOutputTokens=500` per response, per-turn input clipped to 2000 chars, last 20 turns of history sent.
 
-**Required env var on Vercel:** `ANTHROPIC_API_KEY`. Without it the function returns 503 and the chat shows "Chatbot not configured". Set it in Vercel Project → Settings → Environment Variables (Production + Preview), then redeploy.
+**Wire format between function and client:** the function normalizes Gemini's SSE into simple `data: {"text": "chunk"}\n\n` events. The client just appends `evt.text` chunks. This keeps the browser code provider-agnostic — to swap providers, only `api/chat.js` needs to change.
 
-**Rate limiting** is per-instance in-memory (`DAILY_LIMIT = 10` messages per IP per day). Edge instances are ephemeral and there can be several, so it's a soft deterrent only. For strict global limits, swap for Vercel KV or Upstash Redis. The real cost guard is `max_tokens=500`.
+**Required env var on Vercel:** `GEMINI_API_KEY`. Get a free key at https://aistudio.google.com/apikey (no credit card required). Set it in Vercel Project → Settings → Environment Variables (Production + Preview), then redeploy. Without it the function returns 503 and the chat shows "Chatbot not configured".
 
-Model id, system prompt, and token caps live at the top of `api/chat.js` — edit there.
+**Rate limiting** is per-instance in-memory (`DAILY_LIMIT = 10` messages per IP per day). Edge instances are ephemeral and there can be several, so it's a soft deterrent only. For strict global limits, swap for Vercel KV or Upstash Redis. The real cost guard is `maxOutputTokens=500` plus the free tier's own quota (~1M tokens/day on Gemini Flash).
+
+Model id, system prompt, and token caps live at the top of `api/chat.js` — edit there. To switch providers later, replace the `fetch(...)` + the response-stream transform; the client doesn't need changes.
 
 ## Adding or editing a question
 
