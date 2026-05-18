@@ -18,15 +18,17 @@ The split was made deliberately so content can be edited without touching markup
 
 ## Chat assistant
 
-The floating 💬 button in the bottom-right opens a chat panel that calls `/api/chat`. The function proxies to **Google Gemini 2.0 Flash** (free tier) with a system prompt grounded in the site's topic list. Hard caps: `maxOutputTokens=500` per response, per-turn input clipped to 2000 chars, last 20 turns of history sent.
+The floating 💬 button in the bottom-right opens a chat panel that calls `/api/chat`. The function proxies to **Groq Llama 3.3 70B Versatile** (free tier — OpenAI-compatible API) with a system prompt grounded in the site's topic list. Hard caps: `max_tokens=500` per response, per-turn input clipped to 2000 chars, last 20 turns of history sent.
 
-**Wire format between function and client:** the function normalizes Gemini's SSE into simple `data: {"text": "chunk"}\n\n` events. The client just appends `evt.text` chunks. This keeps the browser code provider-agnostic — to swap providers, only `api/chat.js` needs to change.
+**Wire format between function and client:** the function normalizes Groq's OpenAI-style SSE into simple `data: {"text": "chunk"}\n\n` events. The client just appends `evt.text` chunks. This keeps the browser code provider-agnostic — to swap providers, only `api/chat.js` needs to change.
 
-**Required env var on Vercel:** `GEMINI_API_KEY`. Get a free key at https://aistudio.google.com/apikey (no credit card required). Set it in Vercel Project → Settings → Environment Variables (Production + Preview), then redeploy. Without it the function returns 503 and the chat shows "Chatbot not configured".
+**Required env var on Vercel:** `GROQ_API_KEY`. Get a free key at https://console.groq.com (no credit card required). Set it in Vercel Project → Settings → Environment Variables (Production + Preview), then redeploy. Without it the function returns 503 and the chat shows "Chatbot not configured".
 
-**Rate limiting** is per-instance in-memory (`DAILY_LIMIT = 10` messages per IP per day). Edge instances are ephemeral and there can be several, so it's a soft deterrent only. For strict global limits, swap for Vercel KV or Upstash Redis. The real cost guard is `maxOutputTokens=500` plus the free tier's own quota (~1M tokens/day on Gemini Flash).
+**Provider history (why Groq):** the chat was originally wired to Anthropic Claude Haiku 4.5 (best quality, paid), then switched to Google Gemini 2.0 Flash (free tier), which started returning 429 "project quota exhausted" on a fresh key — likely a Google Cloud project-quota issue. Groq's free tier is more reliable in practice (14,400 requests/day on Llama 3.3 70B, no card required), so the chat now uses Groq. The system prompt and rate-limit logic are unchanged; only the upstream URL, auth header, request body shape, and SSE parser differ. If you ever want to swap back or try a different provider, follow the same pattern.
 
-Model id, system prompt, and token caps live at the top of `api/chat.js` — edit there. To switch providers later, replace the `fetch(...)` + the response-stream transform; the client doesn't need changes.
+**Rate limiting** is per-instance in-memory (`DAILY_LIMIT = 10` messages per IP per day). Edge instances are ephemeral and there can be several, so it's a soft deterrent only. For strict global limits, swap for Vercel KV or Upstash Redis. The real cost guard is `max_tokens=500` plus Groq's free-tier daily quota.
+
+Model id, system prompt, and token caps live at the top of `api/chat.js` — edit there.
 
 ## Adding or editing a question
 

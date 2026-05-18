@@ -1,12 +1,14 @@
-// Vercel Edge function — proxies chat to Google Gemini and streams normalized
-// text deltas back to the client as { text: "chunk" } SSE events.
+// Vercel Edge function — proxies chat to Groq and streams normalized text
+// deltas back to the client as { text: "chunk" } SSE events.
 //
-// Requires env var GEMINI_API_KEY (free tier — get one at https://aistudio.google.com/apikey).
+// Requires env var GROQ_API_KEY (free tier — get one at https://console.groq.com).
 // Set it in Vercel Project → Settings → Environment Variables.
 
 export const config = { runtime: 'edge' };
 
-const MODEL = 'gemini-2.0-flash';
+// Llama 3.3 70B on Groq — high quality, free tier, very fast.
+// Alternatives: 'llama-3.1-8b-instant' (faster, smaller), 'gemma2-9b-it'.
+const MODEL = 'llama-3.3-70b-versatile';
 
 const SYSTEM_PROMPT = `You are an interview prep assistant for a Java & Spring Boot study site. The user is preparing for technical interviews.
 
@@ -62,9 +64,9 @@ export default async function handler(req) {
     return jsonError(429, 'Daily message limit reached. Try again tomorrow.');
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
-    return jsonError(503, 'Chatbot not configured — admin needs to set GEMINI_API_KEY.');
+    return jsonError(503, 'Chatbot not configured — admin needs to set GROQ_API_KEY.');
   }
 
   let body;
@@ -77,28 +79,29 @@ export default async function handler(req) {
   const messages = Array.isArray(body.messages) ? body.messages.slice(-20) : null;
   if (!messages || messages.length === 0) return jsonError(400, 'messages array required');
 
-  // Gemini uses { role: 'user' | 'model', parts: [{ text }] }
-  const contents = messages.map((m) => ({
-    role: m.role === 'assistant' ? 'model' : 'user',
-    parts: [{ text: String(m.content || '').slice(0, 2000) }],
-  }));
-
-  const url =
-    `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:streamGenerateContent` +
-    `?alt=sse&key=${encodeURIComponent(apiKey)}`;
+  // Groq uses the OpenAI chat-completion schema: system message goes first.
+  const chatMessages = [
+    { role: 'system', content: SYSTEM_PROMPT },
+    ...messages.map((m) => ({
+      role: m.role === 'assistant' ? 'assistant' : 'user',
+      content: String(m.content || '').slice(0, 2000),
+    })),
+  ];
 
   let upstream;
   try {
-    upstream = await fetch(url, {
+    upstream = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: {
+        'content-type': 'application/json',
+        'authorization': `Bearer ${apiKey}`,
+      },
       body: JSON.stringify({
-        system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-        contents,
-        generationConfig: {
-          maxOutputTokens: 500,
-          temperature: 0.7,
-        },
+        model: MODEL,
+        messages: chatMessages,
+        max_tokens: 500,
+        temperature: 0.7,
+        stream: true,
       }),
     });
   } catch (e) {
@@ -107,11 +110,11 @@ export default async function handler(req) {
 
   if (!upstream.ok) {
     const detail = await upstream.text().catch(() => '');
-    return jsonError(502, `Gemini returned ${upstream.status}: ${detail.slice(0, 300)}`);
+    return jsonError(502, `Groq returned ${upstream.status}: ${detail.slice(0, 300)}`);
   }
 
-  // Transform Gemini's SSE into a simple { text: "..." } SSE stream for the client.
-  // This keeps the browser code provider-agnostic.
+  // Transform Groq's SSE (OpenAI-compatible) into a simple { text: "..." }
+  // SSE stream for the client. Keeps the browser code provider-agnostic.
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
@@ -129,9 +132,13 @@ export default async function handler(req) {
             if (!line.startsWith('data: ')) continue;
             const data = line.slice(6).trim();
             if (!data) continue;
+            if (data === '[DONE]') {
+              controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+              continue;
+            }
             try {
               const evt = JSON.parse(data);
-              const text = evt?.candidates?.[0]?.content?.parts?.[0]?.text;
+              const text = evt?.choices?.[0]?.delta?.content;
               if (text) {
                 controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text })}\n\n`));
               }
@@ -140,7 +147,6 @@ export default async function handler(req) {
             }
           }
         }
-        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
       } finally {
         controller.close();
       }
