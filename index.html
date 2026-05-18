@@ -488,6 +488,35 @@
     overflow: hidden;
   }
   #chat-panel[hidden] { display: none; }
+  .chat-resize-handle {
+    display: none;          /* hidden on touch/small screens — see media query below */
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 16px;
+    height: 16px;
+    cursor: nwse-resize;
+    z-index: 5;
+    border-top-left-radius: 12px;
+    touch-action: none;
+  }
+  .chat-resize-handle::before {
+    content: '';
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    width: 5px;
+    height: 5px;
+    border-top: 2px solid var(--text-faint);
+    border-left: 2px solid var(--text-faint);
+    opacity: 0.55;
+    transition: opacity 0.12s;
+  }
+  .chat-resize-handle:hover::before,
+  .chat-resize-handle.dragging::before { opacity: 1; border-color: var(--accent); }
+  @media (pointer: fine) and (min-width: 768px) {
+    .chat-resize-handle { display: block; }
+  }
   .chat-head {
     padding: 0.75rem 1rem;
     background: var(--bg-soft);
@@ -753,6 +782,7 @@
 
 <button id="chat-toggle" aria-label="Open chat">💬</button>
 <div id="chat-panel" hidden role="dialog" aria-label="Interview prep chat assistant">
+  <div class="chat-resize-handle" id="chat-resize" aria-label="Resize chat" title="Drag to resize"></div>
   <div class="chat-head">
     <span>Interview Prep Assistant</span>
     <button id="chat-close" aria-label="Close chat">×</button>
@@ -942,6 +972,59 @@
   const chatHistory = [];
   let chatGreeted = false;
   let chatAbort = null;   // tracks the in-flight fetch so we can cancel it
+
+  // ─── Resize (desktop only — the handle is hidden via CSS on touch devices) ───
+  const chatResizeHandle = document.getElementById('chat-resize');
+  let chatResize = null;
+  const CHAT_MIN_W = 280, CHAT_MIN_H = 360;
+  const chatMaxW = () => Math.min(720, window.innerWidth - 32);
+  const chatMaxH = () => Math.max(CHAT_MIN_H, window.innerHeight - 80);
+
+  // Restore the user's last size
+  try {
+    const saved = JSON.parse(localStorage.getItem('chatPanelSize') || 'null');
+    if (saved && typeof saved.w === 'number' && typeof saved.h === 'number') {
+      chatPanel.style.width  = Math.min(chatMaxW(), Math.max(CHAT_MIN_W, saved.w)) + 'px';
+      chatPanel.style.height = Math.min(chatMaxH(), Math.max(CHAT_MIN_H, saved.h)) + 'px';
+    }
+  } catch { /* ignore localStorage errors (Safari private, etc.) */ }
+
+  chatResizeHandle.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'touch') return;   // mouse / pen only
+    e.preventDefault();
+    chatResizeHandle.setPointerCapture(e.pointerId);
+    chatResizeHandle.classList.add('dragging');
+    const r = chatPanel.getBoundingClientRect();
+    chatResize = {
+      pointerId: e.pointerId,
+      startX: e.clientX,
+      startY: e.clientY,
+      startW: r.width,
+      startH: r.height,
+    };
+  });
+  chatResizeHandle.addEventListener('pointermove', (e) => {
+    if (!chatResize || e.pointerId !== chatResize.pointerId) return;
+    // Anchored bottom-right: dragging UP/LEFT (negative deltas) grows the panel
+    const dx = chatResize.startX - e.clientX;
+    const dy = chatResize.startY - e.clientY;
+    const newW = Math.min(chatMaxW(), Math.max(CHAT_MIN_W, chatResize.startW + dx));
+    const newH = Math.min(chatMaxH(), Math.max(CHAT_MIN_H, chatResize.startH + dy));
+    chatPanel.style.width  = newW + 'px';
+    chatPanel.style.height = newH + 'px';
+  });
+  const endChatResize = (e) => {
+    if (!chatResize || e.pointerId !== chatResize.pointerId) return;
+    try { chatResizeHandle.releasePointerCapture(e.pointerId); } catch {}
+    chatResizeHandle.classList.remove('dragging');
+    try {
+      const r = chatPanel.getBoundingClientRect();
+      localStorage.setItem('chatPanelSize', JSON.stringify({ w: r.width, h: r.height }));
+    } catch {}
+    chatResize = null;
+  };
+  chatResizeHandle.addEventListener('pointerup', endChatResize);
+  chatResizeHandle.addEventListener('pointercancel', endChatResize);
 
   chatToggle.addEventListener('click', () => {
     chatPanel.hidden = false;
