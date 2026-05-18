@@ -712,6 +712,20 @@
   Click any question to reveal the answer · Use search to filter
 </footer>
 
+<button id="chat-toggle" aria-label="Open chat">💬</button>
+<div id="chat-panel" hidden role="dialog" aria-label="Interview prep chat assistant">
+  <div class="chat-head">
+    <span>Interview Prep Assistant</span>
+    <button id="chat-close" aria-label="Close chat">×</button>
+  </div>
+  <div id="chat-messages"></div>
+  <div id="chat-status" hidden></div>
+  <form id="chat-form">
+    <textarea id="chat-input" placeholder="Ask about any topic… (Enter to send)" rows="2"></textarea>
+    <button type="submit">Send</button>
+  </form>
+</div>
+
 <script src="content.js"></script>
 <script>
   const allTopics = [...topics, extras];
@@ -958,20 +972,6 @@
     return s;
   }
 </script>
-
-<button id="chat-toggle" aria-label="Open chat">💬</button>
-<div id="chat-panel" hidden role="dialog" aria-label="Interview prep chat assistant">
-  <div class="chat-head">
-    <span>Interview Prep Assistant</span>
-    <button id="chat-close" aria-label="Close chat">×</button>
-  </div>
-  <div id="chat-messages"></div>
-  <div id="chat-status" hidden></div>
-  <form id="chat-form">
-    <textarea id="chat-input" placeholder="Ask about any topic… (Enter to send)" rows="2"></textarea>
-    <button type="submit">Send</button>
-  </form>
-</div>
 
 </body>
 </html>
