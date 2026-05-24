@@ -1109,9 +1109,7 @@
   }
 
   // ─────── LeetCode view — render rows + click-to-expand ───────
-  const escapeHtml = (s) => String(s)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
+  // escapeHtml() is defined further down (chat widget) — hoisted, safe to call.
   const lcTable = document.getElementById('leetcode-table');
 
   let lcRowsHTML = `
