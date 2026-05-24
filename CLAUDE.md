@@ -10,7 +10,7 @@ Static study site for Java / Spring Boot interview prep, served on Vercel. Hand-
 
 - `index.html` — markup, CSS, render logic, the chat widget, and the view toggle (Topics ↔ LeetCode).
 - `content.js` — `const topics = [...]` and `const extras = {...}` for the interview-topic question bank.
-- `leetcode.js` — `const leetcode = [...]` with the 50 popular LeetCode problems (title, difficulty, category, URL, approach hint, complexity, Java solution).
+- `leetcode.js` — `const leetcode = [...]` with the 100 popular LeetCode problems (title, difficulty, bucket, category, URL, approach hint, complexity, Java solution). Entries are pre-sorted by `bucket` (15 buckets in display order) and `num` is 1..100 in that order.
 - `api/chat.js` — Vercel **Edge** serverless function that proxies chat to Groq and streams the response back. Auto-discovered by Vercel from the `api/` folder; no `vercel.json` needed.
 
 All three JS files are classic (non-module) scripts. `content.js` and `leetcode.js` are loaded via `<script src="...">` before the inline script; the inline script then reads `topics` / `extras` / `leetcode` from the shared script realm. Don't change any to `type="module"` — would break the cross-script reference.
@@ -55,13 +55,18 @@ Each entry in `leetcode.js`:
 { num: 1,
   title: 'Two Sum',
   d: 'easy' | 'medium' | 'hard',
-  category: 'Array · Hash Map',
+  bucket: 'Arrays & Hashing',          // one of the 15 high-level groups
+  category: 'Array · Hash Map',        // per-row tag shown in the table
   url: 'https://leetcode.com/problems/two-sum/',
   approach: 'One-sentence-ish explanation of the technique.',
   complexity: 'O(n) time · O(n) space',
   code: `public int[] twoSum(...) { ... }`   // template literal — multiline OK
 }
 ```
+
+The renderer groups consecutive entries by their `bucket` field, inserting a styled section header before each new group. **Keep entries pre-sorted by bucket** in the array — the grouping logic relies on consecutive entries sharing a bucket. The 15 buckets, in display order:
+
+1. Arrays & Hashing · 2. Two Pointers · 3. Sliding Window · 4. Stack · 5. Binary Search · 6. Linked List · 7. Trees · 8. Tries · 9. Heap / Priority Queue · 10. Backtracking · 11. Graphs · 12. Advanced Graphs · 13. Dynamic Programming - 1D · 14. Dynamic Programming - 2D · 15. Greedy
 
 Different from the topic answers: `approach`, `complexity`, and `code` are HTML-escaped at render time, so you can write `<`, `>`, `&` as-is inside the Java code (template literals make multi-line Java solutions readable). The renderer also re-runs highlight.js the first time a row is expanded — `pre code` blocks pick up JetBrains-Mono syntax coloring automatically.
 

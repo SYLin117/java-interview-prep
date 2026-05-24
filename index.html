@@ -881,7 +881,27 @@
     display: block;
   }
   .lc-detail pre code.hljs { background: transparent; padding: 0; }
-  .lc-row.lc-data.hidden { display: none; }
+  .lc-row.hidden { display: none; }
+  .lc-row.lc-bucket {
+    grid-template-columns: 1fr;
+    background: var(--bg-soft);
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  .lc-row.lc-bucket > div {
+    padding: 0.7rem 1rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+  }
+  .lc-row.lc-bucket .lc-bucket-count {
+    color: var(--text-faint);
+    font-weight: 500;
+    margin-left: 0.5rem;
+  }
+  .lc-row.lc-bucket:first-child { border-top: none; }
 
   @media (max-width: 1024px) {
     .lc-row { grid-template-columns: 50px 90px 1fr 60px 50px; }
@@ -912,7 +932,7 @@
     </div>
     <div class="view-toggle" role="tablist" aria-label="Section">
       <button class="view-btn active" data-view="topics" role="tab" aria-selected="true">Topics</button>
-      <button class="view-btn" data-view="leetcode" role="tab" aria-selected="false">LeetCode 50</button>
+      <button class="view-btn" data-view="leetcode" role="tab" aria-selected="false">LeetCode 100</button>
     </div>
     <div class="search-box">
       <input type="text" id="search" placeholder="Search questions..." autocomplete="off">
@@ -969,14 +989,14 @@
 
 <div id="leetcode-view" hidden>
   <section class="hero">
-    <div class="hero-label lc-hero-label">LeetCode · Top 50 Most-Asked</div>
+    <div class="hero-label lc-hero-label">LeetCode · Top 100 Most-Asked</div>
     <h1 class="hero-title">Popular LeetCode Problems</h1>
     <p class="hero-subtitle">
-      Curated set of the 50 most-asked problems across the major patterns —
-      arrays, two pointers, sliding window, stack, binary search, linked lists,
-      trees, graphs, backtracking, and dynamic programming. Each problem links
-      to LeetCode and ships with an approach hint, complexity, and a clean
-      idiomatic Java solution.
+      Curated set of the 100 most-asked problems grouped by pattern — arrays
+      &amp; hashing, two pointers, sliding window, stack, binary search, linked
+      lists, trees, tries, heap, backtracking, graphs, and dynamic programming.
+      Each problem links to LeetCode and ships with an approach hint, time/space
+      complexity, and a clean idiomatic Java solution.
     </p>
   </section>
 
@@ -1112,6 +1132,10 @@
   // escapeHtml() is defined further down (chat widget) — hoisted, safe to call.
   const lcTable = document.getElementById('leetcode-table');
 
+  // Count problems per bucket so the header shows "(N)" next to each group.
+  const bucketCounts = {};
+  for (const p of leetcode) bucketCounts[p.bucket] = (bucketCounts[p.bucket] || 0) + 1;
+
   let lcRowsHTML = `
     <div class="lc-row lc-head">
       <div>#</div>
@@ -1122,11 +1146,20 @@
       <div></div>
     </div>
   `;
+  let prevBucket = null;
   for (const p of leetcode) {
-    const search = (p.title + ' ' + p.category + ' ' + p.approach)
+    if (p.bucket !== prevBucket) {
+      lcRowsHTML += `
+        <div class="lc-row lc-bucket" data-bucket="${escapeHtml(p.bucket).toLowerCase()}">
+          <div>${escapeHtml(p.bucket)}<span class="lc-bucket-count">${bucketCounts[p.bucket]} problem${bucketCounts[p.bucket] === 1 ? '' : 's'}</span></div>
+        </div>
+      `;
+      prevBucket = p.bucket;
+    }
+    const search = (p.title + ' ' + p.category + ' ' + p.bucket + ' ' + p.approach)
       .toLowerCase().replace(/"/g, '&quot;');
     lcRowsHTML += `
-      <div class="lc-row lc-data" data-q="${search}">
+      <div class="lc-row lc-data" data-q="${search}" data-bucket="${escapeHtml(p.bucket).toLowerCase()}">
         <div class="lc-num">${String(p.num).padStart(2, '0')}</div>
         <div class="lc-diff ${p.d}"><span class="pill">${p.d}</span></div>
         <div class="lc-title">${escapeHtml(p.title)}</div>
@@ -1221,9 +1254,18 @@
   searchInput.addEventListener('input', (e) => {
     const term = e.target.value.toLowerCase().trim();
     if (!leetView.hidden) {
+      // Filter data rows by query, then hide bucket headers that have nothing visible.
+      const visibleByBucket = {};
       lcTable.querySelectorAll('.lc-row.lc-data').forEach(row => {
         const q = row.dataset.q || '';
-        row.classList.toggle('hidden', !!term && !q.includes(term));
+        const matches = !term || q.includes(term);
+        row.classList.toggle('hidden', !matches);
+        const b = row.dataset.bucket;
+        if (matches) visibleByBucket[b] = (visibleByBucket[b] || 0) + 1;
+      });
+      lcTable.querySelectorAll('.lc-row.lc-bucket').forEach(header => {
+        const b = header.dataset.bucket;
+        header.classList.toggle('hidden', term && !visibleByBucket[b]);
       });
     } else {
       document.querySelectorAll('.topic-section').forEach(section => {
