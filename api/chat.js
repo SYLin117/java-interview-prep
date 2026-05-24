@@ -24,6 +24,18 @@ const SYSTEM_PROMPT =
 const buckets = new Map();
 const DAILY_LIMIT = 10;
 
+/**
+ * Soft per-IP daily counter held in this Edge instance's memory.
+ *
+ * Bumps the counter for `${ip}:${today}` and returns whether the caller is
+ * still under the daily cap. Because Vercel may spin up several Edge instances
+ * for the same function, the true global count can be a multiple of what's
+ * tracked here — treat it as a deterrent, not a hard quota. The map self-prunes
+ * when it grows beyond 10k entries to bound memory.
+ *
+ * @param {string} ip - Client IP address (already extracted from forwarding headers).
+ * @returns {boolean} true if this request is within the daily limit.
+ */
 function rateLimit(ip) {
   const day = Math.floor(Date.now() / 86_400_000);
   const key = `${ip}:${day}`;
@@ -33,6 +45,15 @@ function rateLimit(ip) {
   return count <= DAILY_LIMIT;
 }
 
+/**
+ * Build a JSON error response. Used for every non-streaming failure path so the
+ * client always sees a parseable `{ error: "..." }` body with a meaningful HTTP
+ * status code.
+ *
+ * @param {number} status - HTTP status code (4xx or 5xx).
+ * @param {string} message - User-facing error message (surfaced in the chat UI).
+ * @returns {Response} A standard Fetch Response with content-type application/json.
+ */
 function jsonError(status, message) {
   return new Response(JSON.stringify({ error: message }), {
     status,
@@ -40,6 +61,33 @@ function jsonError(status, message) {
   });
 }
 
+/**
+ * Edge function entry point — proxies a chat request to Groq and streams the
+ * normalized response back to the caller.
+ *
+ * Request body shape (POST):
+ *   { messages: [{ role: 'user' | 'assistant', content: string }, ...] }
+ *
+ * Response: an `text/event-stream` of SSE events of the form
+ *   data: {"text": "chunk"}\n\n
+ *   ...
+ *   data: [DONE]\n\n
+ *
+ * Both the request and the response are intentionally provider-agnostic — to
+ * swap Groq for another model, you only need to change the upstream URL, auth
+ * header, request body, and the JSON path used to extract the delta text. The
+ * client never has to know.
+ *
+ * Failure modes (all return JSON errors via jsonError()):
+ *   405 - non-POST method
+ *   429 - per-IP daily limit reached
+ *   503 - GROQ_API_KEY env var not set
+ *   400 - malformed body or missing messages
+ *   502 - upstream fetch failed or Groq returned non-2xx
+ *
+ * @param {Request} req - Incoming Fetch Request (Vercel Edge runtime).
+ * @returns {Promise<Response>} JSON error on failure, or a streaming SSE response on success.
+ */
 export default async function handler(req) {
   if (req.method !== 'POST') return jsonError(405, 'Method not allowed');
 
@@ -103,6 +151,18 @@ export default async function handler(req) {
 
   // Transform Groq's SSE (OpenAI-compatible) into a simple { text: "..." }
   // SSE stream for the client. Keeps the browser code provider-agnostic.
+  //
+  // Groq emits chunks like:
+  //   data: {"id":"...","choices":[{"delta":{"content":"hello"},...}]}
+  //   data: [DONE]
+  //
+  // We pull out choices[0].delta.content per chunk and re-emit as:
+  //   data: {"text": "hello"}
+  //   data: [DONE]
+  //
+  // The reader-loop handles arbitrary chunk boundaries — Edge fetch may split
+  // SSE events anywhere, so we accumulate a buffer and only process up to the
+  // last complete line each iteration.
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {

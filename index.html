@@ -1163,6 +1163,22 @@
   const leetView   = document.getElementById('leetcode-view');
   const searchInput = document.getElementById('search');
 
+  /**
+   * Switch between the Topics and LeetCode views.
+   *
+   * Toggles the [hidden] attribute on each view's wrapper div, updates the
+   * active state of the toggle buttons (visually + ARIA), swaps the search
+   * placeholder, toggles `body.view-leetcode` so desktop layout can drop the
+   * side-nav padding, clears the search input (different views index different
+   * content), and scrolls to top.
+   *
+   * URL hash is kept in sync via `history.replaceState` — `#leetcode` for the
+   * LeetCode view, no hash for the Topics view. Pass `pushHash: false` to skip
+   * this (used on initial load + on hashchange to avoid loops).
+   *
+   * @param {'topics'|'leetcode'} view - Which view to show.
+   * @param {{pushHash?: boolean}} [opts] - Optional flags. pushHash defaults to true.
+   */
   function setView(view, opts = {}) {
     const isLc = view === 'leetcode';
     topicsView.hidden = isLc;
@@ -1243,6 +1259,17 @@
     'from and or but what how why when where which who whose do does did can could should would will it its ' +
     'that this these those my mine your you we us our they them their if as have has had use uses using used ' +
     'into than then there here just only also some any all not so very much more most less few many own').split(' '));
+  /**
+   * Tokenize a string into significant search terms.
+   *
+   * Lowercases, splits on non-alphanumerics, drops tokens shorter than 3 chars,
+   * and drops common stopwords (the/a/is/of/...). Used by both the index builder
+   * and the query side of the local Q&A match — must stay symmetric so the same
+   * normalization applies to both.
+   *
+   * @param {string} s - Arbitrary text (question, query, etc.).
+   * @returns {string[]} Significant lowercase tokens.
+   */
   function chatTokenize(s) {
     const m = String(s).toLowerCase().match(/[a-z][a-z0-9]+/g);
     return m ? m.filter(t => t.length > 2 && !CHAT_STOPWORDS.has(t)) : [];
@@ -1259,6 +1286,22 @@
       });
     });
   });
+  /**
+   * Look up the user's query in the on-site Q&A index using token overlap.
+   *
+   * Scores each indexed question by how many of the query's significant tokens
+   * it contains, then returns the best match — but ONLY if it clears two bars:
+   *   - score >= 0.6: at least 60% of the user's tokens are present in the question
+   *   - overlap >= 2: at least 2 tokens match in absolute terms
+   *
+   * Both bars together mean we only short-circuit on confident matches. This
+   * saves LLM tokens (and latency) when the user asks something canonical that's
+   * already in the bank — the chat widget renders the local answer and skips
+   * the network call entirely.
+   *
+   * @param {string} query - The user's chat input.
+   * @returns {{topicId, topicName, question, answer, tokens}|null} Matched entry, or null if no confident hit.
+   */
   function findQbMatch(query) {
     const qTokens = chatTokenize(query);
     if (qTokens.length < 2) return null;
@@ -1275,6 +1318,21 @@
     if (best.score >= 0.6 && best.overlap >= 2) return best.entry;
     return null;
   }
+  /**
+   * Escape HTML-significant characters so a raw string can be safely embedded
+   * inside template-string HTML (innerHTML).
+   *
+   * Replaces &, <, >, ", and ' with their named entity equivalents. Used by
+   * both the chat widget (when rendering retrieved Q&A and LLM responses) and
+   * the LeetCode renderer (because Java code stored as plain strings contains
+   * angle brackets in generics).
+   *
+   * Function declaration (not const) so it's hoisted — the LeetCode renderer
+   * earlier in the script depends on this.
+   *
+   * @param {string} s - Untrusted input.
+   * @returns {string} HTML-safe text.
+   */
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, c =>
       ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
@@ -1461,6 +1519,18 @@
     }
   });
 
+  /**
+   * Append a new bubble to the chat scroll area and return its DOM node.
+   * Uses .textContent (not innerHTML) so any user-typed HTML is rendered as
+   * literal text — defense against accidental markup in user input.
+   *
+   * Caller mutates the returned node directly for streaming responses (e.g.,
+   * swapping textContent → innerHTML once the final markdown is ready).
+   *
+   * @param {'user'|'assistant'} role - Determines styling (bubble color/side).
+   * @param {string} text - Initial text content for the bubble.
+   * @returns {HTMLDivElement} The created message element.
+   */
   function addChatMsg(role, text) {
     const div = document.createElement('div');
     div.className = 'chat-msg ' + role;
@@ -1469,11 +1539,38 @@
     chatMessages.scrollTop = chatMessages.scrollHeight;
     return div;
   }
+
+  /**
+   * Surface a non-fatal error to the user via the chat status strip
+   * (e.g., "Daily limit reached", "Network error"). Doesn't dismiss
+   * automatically — the next send clears it.
+   *
+   * @param {string} msg - User-facing error text.
+   */
   function showChatError(msg) {
     chatStatus.textContent = msg;
     chatStatus.hidden = false;
   }
-  // Minimal Markdown: escape HTML, render fenced/inline code, soften newlines.
+
+  /**
+   * Convert a small Markdown subset into safe HTML for the chat bubbles.
+   *
+   * Supports: fenced code blocks (```), inline backticks, line breaks.
+   * Doesn't support: headers, lists, bold/italic, links, tables, images.
+   * That's intentional — keeping the parser tiny avoids pulling in a full
+   * Markdown library, and the LLM is instructed to stay concise with code-y
+   * formatting anyway.
+   *
+   * Algorithm:
+   *   1. Escape all HTML first (so user/LLM output can never inject markup).
+   *   2. Stash fenced blocks behind placeholders before any other rewriting
+   *      (so inline backticks don't munge the contents of a fenced block).
+   *   3. Convert inline `code` and \n → <br>.
+   *   4. Restore the placeholders.
+   *
+   * @param {string} text - Raw assistant response (typically with Markdown).
+   * @returns {string} HTML-safe string ready for innerHTML.
+   */
   function renderChatMd(text) {
     let s = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const blocks = [];
