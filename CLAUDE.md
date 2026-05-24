@@ -8,11 +8,16 @@ Static study site for Java / Spring Boot interview prep, served on Vercel. Hand-
 
 ## File layout
 
-- `index.html` — markup, CSS, render logic, and the chat widget. Edit for styling, layout, click behavior, or chat UI.
-- `content.js` — `const topics = [...]` and `const extras = {...}`. Edit for adding, editing, or reordering topics and questions.
-- `api/chat.js` — Vercel **Edge** serverless function that proxies chat to the Anthropic API and streams the response back. Auto-discovered by Vercel from the `api/` folder; no `vercel.json` needed.
+- `index.html` — markup, CSS, render logic, the chat widget, and the view toggle (Topics ↔ LeetCode).
+- `content.js` — `const topics = [...]` and `const extras = {...}` for the interview-topic question bank.
+- `leetcode.js` — `const leetcode = [...]` with the 50 popular LeetCode problems (title, difficulty, category, URL, approach hint, complexity, Java solution).
+- `api/chat.js` — Vercel **Edge** serverless function that proxies chat to Groq and streams the response back. Auto-discovered by Vercel from the `api/` folder; no `vercel.json` needed.
 
-`index.html` and `content.js` are classic (non-module) scripts. `content.js` is loaded first via `<script src="content.js"></script>`; the inline script in `index.html` then reads `topics` / `extras` from the shared script realm. Don't change either to `type="module"` — would break the cross-script reference.
+All three JS files are classic (non-module) scripts. `content.js` and `leetcode.js` are loaded via `<script src="...">` before the inline script; the inline script then reads `topics` / `extras` / `leetcode` from the shared script realm. Don't change any to `type="module"` — would break the cross-script reference.
+
+## Page views
+
+There are two top-level views, toggled by buttons in the header: **Topics** (the interview question bank — `<div id="topics-view">`) and **LeetCode 50** (`<div id="leetcode-view">`). The toggle uses the `[hidden]` attribute so only one view is in the layout at a time. URL hash routing: `#leetcode` (or `#lc`) opens the LeetCode view on load; clicking a topic-anchor link (`#core-java`, etc.) auto-switches back to the topics view. The search box and its placeholder swap behavior based on the active view.
 
 The split was made deliberately so content can be edited without touching markup. Keep it that way; don't move questions back inline.
 
@@ -41,6 +46,24 @@ Each entry in `content.js`:
 ```
 
 The `a:` field is rendered via `innerHTML`. Inline HTML is allowed; angle brackets inside the content must be HTML entities (`&lt;` / `&gt;`).
+
+## Adding or editing a LeetCode problem
+
+Each entry in `leetcode.js`:
+
+```js
+{ num: 1,
+  title: 'Two Sum',
+  d: 'easy' | 'medium' | 'hard',
+  category: 'Array · Hash Map',
+  url: 'https://leetcode.com/problems/two-sum/',
+  approach: 'One-sentence-ish explanation of the technique.',
+  complexity: 'O(n) time · O(n) space',
+  code: `public int[] twoSum(...) { ... }`   // template literal — multiline OK
+}
+```
+
+Different from the topic answers: `approach`, `complexity`, and `code` are HTML-escaped at render time, so you can write `<`, `>`, `&` as-is inside the Java code (template literals make multi-line Java solutions readable). The renderer also re-runs highlight.js the first time a row is expanded — `pre code` blocks pick up JetBrains-Mono syntax coloring automatically.
 
 ## Code examples in answers
 

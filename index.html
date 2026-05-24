@@ -685,6 +685,7 @@
   @media (min-width: 1280px) {
     .side-nav { display: block; }
     body { padding-left: 220px; }
+    body.view-leetcode { padding-left: 0; }
   }
 
   @media (max-width: 768px) {
@@ -716,6 +717,189 @@
     h1.hero-title { font-size: 1.55rem; }
     .hero-subtitle { font-size: 0.95rem; }
   }
+
+  /* ─── View toggle (Topics ↔ LeetCode) ─── */
+  .view-toggle {
+    display: flex;
+    gap: 2px;
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 2px;
+    flex-shrink: 0;
+  }
+  .view-btn {
+    background: transparent;
+    color: var(--text-dim);
+    border: none;
+    padding: 0.4rem 0.85rem;
+    border-radius: 4px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.12s, background 0.12s, box-shadow 0.12s;
+    font-family: inherit;
+    white-space: nowrap;
+  }
+  .view-btn:hover { color: var(--text); }
+  .view-btn.active {
+    background: white;
+    color: var(--text);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  }
+
+  /* ─── LeetCode rows ─── */
+  .lc-hero-label { color: #ffa116; }    /* LeetCode orange */
+  .lc-table {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--bg-card);
+    overflow: hidden;
+  }
+  .lc-row {
+    display: grid;
+    grid-template-columns: 55px 100px 1fr 220px 60px 50px;
+    border-bottom: 1px solid var(--line-soft);
+    transition: background 0.12s;
+  }
+  .lc-row:last-child { border-bottom: none; }
+  .lc-row.lc-data:hover { background: var(--bg-soft); }
+  .lc-row.lc-head {
+    background: var(--bg-soft);
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    font-weight: 600;
+  }
+  .lc-row.lc-head > div { padding: 0.7rem 1rem; }
+  .lc-row.lc-data > div:not(.lc-detail) {
+    padding: 0.85rem 1rem;
+    display: flex;
+    align-items: center;
+  }
+  .lc-num { font-size: 0.9rem; color: var(--text-faint); justify-content: center; font-weight: 500; }
+  .lc-diff { font-size: 0.75rem; font-weight: 600; }
+  .lc-diff .pill {
+    padding: 0.2rem 0.55rem;
+    border-radius: 12px;
+    text-transform: capitalize;
+  }
+  .lc-diff.easy .pill   { color: var(--easy); background: var(--easy-bg); }
+  .lc-diff.medium .pill { color: var(--med);  background: var(--med-bg); }
+  .lc-diff.hard .pill   { color: var(--hard); background: var(--hard-bg); }
+  .lc-title {
+    font-size: 0.95rem;
+    color: var(--text);
+    line-height: 1.4;
+    cursor: pointer;
+    overflow-wrap: break-word;
+    min-width: 0;
+  }
+  .lc-cat-cell {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    overflow-wrap: break-word;
+    min-width: 0;
+  }
+  .lc-link-cell { justify-content: center; }
+  .lc-link-cell a {
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 0.78rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.3rem 0.55rem;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    transition: background 0.12s, border-color 0.12s;
+  }
+  .lc-link-cell a:hover {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+  }
+  .lc-toggle {
+    color: var(--text-faint);
+    cursor: pointer;
+    justify-content: center;
+    font-size: 1.3rem;
+    user-select: none;
+    font-weight: 300;
+    transition: color 0.15s, transform 0.2s;
+  }
+  .lc-row.expanded .lc-toggle {
+    color: var(--accent);
+    transform: rotate(45deg);
+  }
+  .lc-detail {
+    display: none;
+    grid-column: 1 / -1;
+    padding: 0 1.5rem 1.5rem 1.5rem;
+    background: var(--bg-soft);
+    border-top: 1px solid var(--line-soft);
+    font-size: 0.93rem;
+    color: var(--text);
+    line-height: 1.65;
+    overflow-wrap: break-word;
+    min-width: 0;
+  }
+  .lc-row.expanded .lc-detail {
+    display: block;
+    padding-top: 1rem;
+  }
+  .lc-detail .lbl {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 0.9rem;
+    margin-bottom: 0.3rem;
+  }
+  .lc-detail .lbl:first-child { margin-top: 0; }
+  .lc-detail pre {
+    background: #0d1117;
+    border: 1px solid #21262d;
+    border-radius: 6px;
+    padding: 0.85rem 1rem;
+    margin-top: 0.3rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    line-height: 1.55;
+  }
+  .lc-detail pre code {
+    font-family: "JetBrains Mono", "SF Mono", Consolas, "Liberation Mono", monospace;
+    font-size: 0.82rem;
+    font-variant-ligatures: contextual;
+    font-feature-settings: "calt" 1;
+    background: transparent;
+    border: none;
+    padding: 0;
+    color: #e6edf3;
+    white-space: pre;
+    overflow-wrap: normal;
+    display: block;
+  }
+  .lc-detail pre code.hljs { background: transparent; padding: 0; }
+  .lc-row.lc-data.hidden { display: none; }
+
+  @media (max-width: 1024px) {
+    .lc-row { grid-template-columns: 50px 90px 1fr 60px 50px; }
+    .lc-row .lc-cat-cell { display: none; }
+  }
+  @media (max-width: 768px) {
+    .view-btn { padding: 0.35rem 0.65rem; font-size: 0.78rem; }
+    .lc-row { grid-template-columns: 40px 80px 1fr 50px 40px; }
+    .lc-row.lc-data > div:not(.lc-detail) { padding: 0.7rem 0.5rem; font-size: 0.88rem; }
+    .lc-row.lc-head > div { padding: 0.55rem 0.5rem; font-size: 0.7rem; }
+    .lc-link-cell a { padding: 0.25rem 0.4rem; font-size: 0.72rem; }
+    .lc-detail { padding: 0 1rem 1.2rem 1rem; font-size: 0.88rem; }
+  }
+  @media (max-width: 480px) {
+    .lc-row { grid-template-columns: 32px 65px 1fr 40px 32px; }
+    .lc-row.lc-data > div:not(.lc-detail) { padding: 0.65rem 0.35rem; font-size: 0.85rem; }
+    .lc-link-cell a { padding: 0.2rem 0.35rem; font-size: 0.68rem; }
+  }
 </style>
 </head>
 <body>
@@ -726,6 +910,10 @@
       <span class="icon">J</span>
       <span>Interview Prep</span>
     </div>
+    <div class="view-toggle" role="tablist" aria-label="Section">
+      <button class="view-btn active" data-view="topics" role="tab" aria-selected="true">Topics</button>
+      <button class="view-btn" data-view="leetcode" role="tab" aria-selected="false">LeetCode 50</button>
+    </div>
     <div class="search-box">
       <input type="text" id="search" placeholder="Search questions..." autocomplete="off">
     </div>
@@ -735,6 +923,8 @@
     </div>
   </div>
 </header>
+
+<div id="topics-view">
 
 <aside class="side-nav" id="side-nav" aria-label="Topic navigation">
   <div class="side-nav-title">Topics</div>
@@ -775,6 +965,26 @@
 
 <main id="content"></main>
 
+</div><!-- /#topics-view -->
+
+<div id="leetcode-view" hidden>
+  <section class="hero">
+    <div class="hero-label lc-hero-label">LeetCode · Top 50 Most-Asked</div>
+    <h1 class="hero-title">Popular LeetCode Problems</h1>
+    <p class="hero-subtitle">
+      Curated set of the 50 most-asked problems across the major patterns —
+      arrays, two pointers, sliding window, stack, binary search, linked lists,
+      trees, graphs, backtracking, and dynamic programming. Each problem links
+      to LeetCode and ships with an approach hint, complexity, and a clean
+      idiomatic Java solution.
+    </p>
+  </section>
+
+  <main class="section">
+    <div class="lc-table" id="leetcode-table"></div>
+  </main>
+</div><!-- /#leetcode-view -->
+
 <footer>
   Built for senior-track interview prep · Java 17+ · Spring Boot 3.x<br>
   Click any question to reveal the answer · Use search to filter
@@ -796,6 +1006,7 @@
 </div>
 
 <script src="content.js"></script>
+<script src="leetcode.js"></script>
 <script>
   const allTopics = [...topics, extras];
 
@@ -897,22 +1108,124 @@
     });
   }
 
+  // ─────── LeetCode view — render rows + click-to-expand ───────
+  const escapeHtml = (s) => String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  const lcTable = document.getElementById('leetcode-table');
+
+  let lcRowsHTML = `
+    <div class="lc-row lc-head">
+      <div>#</div>
+      <div>Level</div>
+      <div>Problem</div>
+      <div class="lc-cat-cell">Category</div>
+      <div class="lc-link-cell"></div>
+      <div></div>
+    </div>
+  `;
+  for (const p of leetcode) {
+    const search = (p.title + ' ' + p.category + ' ' + p.approach)
+      .toLowerCase().replace(/"/g, '&quot;');
+    lcRowsHTML += `
+      <div class="lc-row lc-data" data-q="${search}">
+        <div class="lc-num">${String(p.num).padStart(2, '0')}</div>
+        <div class="lc-diff ${p.d}"><span class="pill">${p.d}</span></div>
+        <div class="lc-title">${escapeHtml(p.title)}</div>
+        <div class="lc-cat-cell">${escapeHtml(p.category)}</div>
+        <div class="lc-link-cell"><a href="${p.url}" target="_blank" rel="noopener">LeetCode ↗</a></div>
+        <div class="lc-toggle">+</div>
+        <div class="lc-detail">
+          <div class="lbl">Approach</div>
+          <div>${escapeHtml(p.approach)}</div>
+          <div class="lbl">Complexity</div>
+          <div>${escapeHtml(p.complexity)}</div>
+          <div class="lbl">Java</div>
+          <pre><code>${escapeHtml(p.code)}</code></pre>
+        </div>
+      </div>
+    `;
+  }
+  lcTable.innerHTML = lcRowsHTML;
+
+  lcTable.querySelectorAll('.lc-row.lc-data').forEach(row => {
+    row.addEventListener('click', (e) => {
+      if (e.target.closest('.lc-detail')) return;     // let users select / copy detail
+      if (e.target.closest('.lc-link-cell a')) return; // let link click fall through
+      row.classList.toggle('expanded');
+      if (row.classList.contains('expanded') && window.hljs) {
+        row.querySelectorAll('pre code:not(.hljs)').forEach(b => window.hljs.highlightElement(b));
+      }
+    });
+  });
+
+  // ─────── View toggle (Topics ↔ LeetCode) with URL-hash routing ───────
+  const viewBtns  = document.querySelectorAll('.view-btn');
+  const topicsView = document.getElementById('topics-view');
+  const leetView   = document.getElementById('leetcode-view');
   const searchInput = document.getElementById('search');
+
+  function setView(view, opts = {}) {
+    const isLc = view === 'leetcode';
+    topicsView.hidden = isLc;
+    leetView.hidden   = !isLc;
+    viewBtns.forEach(b => {
+      const active = b.dataset.view === view;
+      b.classList.toggle('active', active);
+      b.setAttribute('aria-selected', String(active));
+    });
+    searchInput.placeholder = isLc ? 'Search problems...' : 'Search questions...';
+    document.body.classList.toggle('view-leetcode', isLc);
+    if (opts.pushHash !== false) {
+      const hash = isLc ? '#leetcode' : '';
+      const target = hash || location.pathname + location.search;
+      if (location.hash !== hash) history.replaceState(null, '', target);
+    }
+    if (searchInput.value) {
+      searchInput.value = '';
+      searchInput.dispatchEvent(new Event('input'));
+    }
+    window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+  }
+  viewBtns.forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+
+  // Initial view from URL hash
+  if (location.hash === '#leetcode' || location.hash === '#lc') {
+    setView('leetcode', { pushHash: false });
+  }
+  // Hashchange — clicking a topic-card anchor should auto-switch back to topics view
+  window.addEventListener('hashchange', () => {
+    if (location.hash === '#leetcode' || location.hash === '#lc') {
+      setView('leetcode', { pushHash: false });
+    } else if (location.hash) {
+      const target = document.getElementById(location.hash.slice(1));
+      if (target && target.closest('#topics-view')) setView('topics', { pushHash: false });
+    }
+  });
+
+  // ─────── Search — view-aware ───────
   searchInput.addEventListener('input', (e) => {
     const term = e.target.value.toLowerCase().trim();
-    document.querySelectorAll('.topic-section').forEach(section => {
-      const rows = section.querySelectorAll('.q-row.q-data');
-      let visibleCount = 0;
-      rows.forEach(row => {
+    if (!leetView.hidden) {
+      lcTable.querySelectorAll('.lc-row.lc-data').forEach(row => {
         const q = row.dataset.q || '';
-        const a = row.dataset.a || '';
-        const topicMatch = section.dataset.topicName.includes(term);
-        const matches = !term || q.includes(term) || a.includes(term) || topicMatch;
-        row.classList.toggle('hidden', !matches);
-        if (matches) visibleCount++;
+        row.classList.toggle('hidden', !!term && !q.includes(term));
       });
-      section.classList.toggle('hidden', term && visibleCount === 0);
-    });
+    } else {
+      document.querySelectorAll('.topic-section').forEach(section => {
+        const rows = section.querySelectorAll('.q-row.q-data');
+        let visibleCount = 0;
+        rows.forEach(row => {
+          const q = row.dataset.q || '';
+          const a = row.dataset.a || '';
+          const topicMatch = section.dataset.topicName.includes(term);
+          const matches = !term || q.includes(term) || a.includes(term) || topicMatch;
+          row.classList.toggle('hidden', !matches);
+          if (matches) visibleCount++;
+        });
+        section.classList.toggle('hidden', term && visibleCount === 0);
+      });
+    }
   });
 
   // ─────── Chat widget ───────
