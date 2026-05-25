@@ -379,6 +379,31 @@
     z-index: 200;
     transition: transform 0.15s, box-shadow 0.15s;
   }
+  /* Mirror of chat-toggle, anchored bottom-left. Pill shape since it has text. */
+  #lc-export-btn {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 1.5rem;
+    background: #1f8a3b;             /* GitHub-green accent for "save" semantics */
+    color: white;
+    border: none;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0.7rem 1.1rem;
+    border-radius: 999px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+    z-index: 200;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  #lc-export-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.22);
+  }
+  @media (max-width: 768px) {
+    #lc-export-btn { bottom: 1rem; left: 1rem; padding: 0.6rem 0.9rem; font-size: 0.78rem; }
+  }
   #chat-toggle:hover { transform: scale(1.06); box-shadow: 0 6px 16px rgba(0,0,0,0.24); }
 
   #chat-panel {
@@ -1118,6 +1143,7 @@
   Click any question to reveal the answer · Use search to filter
 </footer>
 
+<button id="lc-export-btn" type="button" hidden title="Download user-overrides.js with your current edits — commit it to GitHub to make these edits permanent">📥 Export edits</button>
 <button id="chat-toggle" aria-label="Open chat">💬</button>
 <div id="chat-panel" hidden role="dialog" aria-label="Interview prep chat assistant">
   <div class="chat-resize-handle" id="chat-resize" aria-label="Resize chat" title="Drag to resize"></div>
@@ -1137,6 +1163,7 @@
 <script src="leetcode.js"></script>
 <script src="descriptions.js"></script>
 <script src="algorithms.js"></script>
+<script src="user-overrides.js"></script>
 <script>
   const allTopics = [...topics, extras];
 
@@ -1299,6 +1326,10 @@
     const search = (p.title + ' ' + p.category + ' ' + p.bucket + ' ' + p.approach)
       .toLowerCase().replace(/"/g, '&quot;');
     const companiesAttr = (p.companies || []).map(c => c.toLowerCase()).join(',');
+    // user-overrides.js (committed personal edits) takes precedence over the canonical code
+    const baseCode = (typeof leetcodeUserOverrides !== 'undefined' && leetcodeUserOverrides[p.num] != null)
+      ? leetcodeUserOverrides[p.num]
+      : p.code;
     lcRowsHTML += `
       <div class="lc-row lc-data" data-q="${search}" data-bucket="${escapeHtml(p.bucket).toLowerCase()}" data-companies="${companiesAttr}">
         <div class="lc-num">${String(p.num).padStart(2, '0')}</div>
@@ -1330,7 +1361,7 @@
           <div class="lbl">Complexity</div>
           <div>${escapeHtml(p.complexity)}</div>
           <div class="lbl lc-code-lbl">Java<button class="lc-code-reset" data-lc-num="${p.num}" type="button" hidden>Reset to original</button></div>
-          <pre><code data-lc-num="${p.num}">${escapeHtml(p.code)}</code></pre>
+          <pre><code data-lc-num="${p.num}">${escapeHtml(baseCode)}</code></pre>
         </div>
       </div>
     `;
@@ -1352,6 +1383,19 @@
   }
 
   /**
+   * The base code to display / compare against. Precedence:
+   *   committed override (user-overrides.js)  >  canonical leetcode.js code.
+   * Local edits (localStorage) layer on top of this at runtime.
+   */
+  function lcBaseCode(num) {
+    if (typeof leetcodeUserOverrides !== 'undefined' && leetcodeUserOverrides[num] != null) {
+      return leetcodeUserOverrides[num];
+    }
+    const entry = (typeof leetcode !== 'undefined') ? leetcode.find(p => p.num === num) : null;
+    return entry ? entry.code : '';
+  }
+
+  /**
    * Make a LeetCode solution code block editable: restore any saved edit,
    * enable contenteditable, run hljs, wire up debounced auto-save + re-highlight.
    * Idempotent — guarded by the `editable-init` class so multiple expands are safe.
@@ -1361,12 +1405,10 @@
     block.classList.add('editable-init');
     const num = +block.dataset.lcNum;
     const key = 'lc_code_' + num;
-    const original = (typeof leetcode !== 'undefined')
-      ? (leetcode.find(p => p.num === num) || {}).code
-      : null;
+    const base = lcBaseCode(num);
     const resetBtn = row.querySelector('.lc-code-reset[data-lc-num="' + num + '"]');
 
-    // Restore any saved edit BEFORE first highlight
+    // Restore any saved local edit BEFORE first highlight
     let saved = null;
     try { saved = localStorage.getItem(key); } catch {}
     if (saved !== null) {
@@ -1384,7 +1426,8 @@
       saveTimer = setTimeout(() => {
         const text = block.textContent;
         try {
-          if (original !== null && text === original) {
+          if (text === base) {
+            // Edits match the base again — clear the local override
             localStorage.removeItem(key);
             if (resetBtn) resetBtn.hidden = true;
           } else {
@@ -1392,6 +1435,7 @@
             if (resetBtn) resetBtn.hidden = false;
           }
         } catch { /* localStorage full or private-mode */ }
+        updateExportButton();
       }, 400);
     });
 
@@ -1414,21 +1458,95 @@
     });
   });
 
-  // Reset button — delegated so it works regardless of when the row was first opened
+  // ─────── Export edits → downloadable user-overrides.js ───────
+  const lcExportBtn = document.getElementById('lc-export-btn');
+
+  /** Returns the set of problem nums whose code is currently saved in localStorage. */
+  function getLocalEditNums() {
+    const nums = [];
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('lc_code_')) {
+          const n = parseInt(k.slice(8), 10);
+          if (Number.isFinite(n)) nums.push(n);
+        }
+      }
+    } catch { /* private mode */ }
+    return nums.sort((a, b) => a - b);
+  }
+
+  /** Show/hide the floating export button + update its label with the edit count. */
+  function updateExportButton() {
+    if (!lcExportBtn) return;
+    const count = getLocalEditNums().length;
+    if (count === 0) {
+      lcExportBtn.hidden = true;
+    } else {
+      lcExportBtn.hidden = false;
+      lcExportBtn.textContent = '📥 Export ' + count + ' edit' + (count === 1 ? '' : 's');
+    }
+  }
+
+  /**
+   * Escape a string so it can sit inside a JS template literal — handles
+   * the three sequences that would close it or interpolate: backslash, backtick,
+   * and ${. Order matters: backslash MUST come first.
+   */
+  function escapeForTemplateLiteral(s) {
+    return String(s)
+      .replace(/\\/g, '\\\\')
+      .replace(/`/g, '\\`')
+      .replace(/\$\{/g, '\\${');
+  }
+
+  /**
+   * Build a user-overrides.js file from (existing overrides + current local edits)
+   * and trigger a browser download. Local edits take precedence over existing overrides.
+   */
+  function exportEditsToFile() {
+    const merged = (typeof leetcodeUserOverrides !== 'undefined') ? { ...leetcodeUserOverrides } : {};
+    for (const n of getLocalEditNums()) {
+      const text = localStorage.getItem('lc_code_' + n);
+      if (text !== null) merged[n] = text;
+    }
+    const header = `// Your committed LeetCode solution overrides — replace the canonical code\n// from leetcode.js for the listed problems. Generated by the "Export edits"\n// button on the live site (bottom-left of the LeetCode view).\n//\n// Workflow:\n//   1. Save this file into the project root (replacing the existing user-overrides.js)\n//   2. git add user-overrides.js && git commit -m "Update notes" && git push\n//   3. Redeploy so everyone (including other devices) sees the updates\n\nconst leetcodeUserOverrides = {`;
+    const sortedNums = Object.keys(merged).map(Number).sort((a, b) => a - b);
+    const body = sortedNums.length === 0
+      ? '}'
+      : '\n' + sortedNums.map(n => '  ' + n + ': `' + escapeForTemplateLiteral(merged[n]) + '`,').join('\n') + '\n}';
+    const content = header + body + ';\n';
+
+    const blob = new Blob([content], { type: 'text/javascript' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'user-overrides.js';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  if (lcExportBtn) {
+    lcExportBtn.addEventListener('click', exportEditsToFile);
+    updateExportButton();   // show on load if there are pre-existing local edits
+  }
+
+  // Reset button — delegated so it works regardless of when the row was first opened.
+  // Reverts to the BASE (committed override → canonical), wiping the local edit.
   lcTable.addEventListener('click', (e) => {
     const btn = e.target.closest('.lc-code-reset');
     if (!btn) return;
     e.stopPropagation();
     const num = +btn.dataset.lcNum;
     const block = lcTable.querySelector('pre code[data-lc-num="' + num + '"]');
-    const original = (typeof leetcode !== 'undefined')
-      ? (leetcode.find(p => p.num === num) || {}).code
-      : null;
-    if (!block || original == null) return;
-    block.textContent = original;
+    if (!block) return;
+    block.textContent = lcBaseCode(num);
     try { localStorage.removeItem('lc_code_' + num); } catch {}
     btn.hidden = true;
     rehighlight(block);
+    updateExportButton();
   });
 
   // ─────── LeetCode filter chips (category + tag) ───────
