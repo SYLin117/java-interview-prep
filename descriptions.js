@@ -45,8 +45,8 @@ const leetcodeDescriptions = {
   33: 'Design a stack supporting <code>push</code>, <code>pop</code>, <code>top</code>, and <code>getMin</code>, each in O(1) time.',
   34: 'Given an array of tokens representing an arithmetic expression in Reverse Polish (postfix) notation, evaluate the expression and return its integer value.',
   35: 'Given an integer array <code>temperatures</code>, return an array <code>answer</code> where <code>answer[i]</code> is the number of days until a warmer temperature, or 0 if no future day is warmer.',
-  36: 'Given an encoded string of the form <code>k[encoded_string]</code> (the inner string repeated <em>k</em> times), return the decoded string. The encoding can be nested.',
-  37: 'Given an integer array <code>heights</code> representing histogram bar heights (width 1 each), return the area of the largest rectangle that fits inside.',
+  36: 'Given an integer array <code>heights</code> representing histogram bar heights (width 1 each), return the area of the largest rectangle that fits inside.',
+  37: 'Given an encoded string of the form <code>k[encoded_string]</code> (the inner string repeated <em>k</em> times), return the decoded string. The encoding can be nested.',
 
   // ── Binary Search ──
   38: 'Given a sorted integer array <code>nums</code> and a <code>target</code>, return the index of <code>target</code> or -1 if absent. O(log n) required.',
