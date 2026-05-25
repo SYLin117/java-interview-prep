@@ -977,15 +977,41 @@
     display: block;
   }
   .lc-detail pre code.hljs { background: transparent; padding: 0; }
-  /* Editable Java code: subtle text cursor + focus ring; reset button when changed */
+  /* Editable Java code: hover hint, text caret, focus ring, reset button when changed */
   .lc-detail pre code[contenteditable="true"] {
     outline: none;
     cursor: text;
     caret-color: var(--accent);
+    transition: border-color 0.15s;
+  }
+  /* Subtle hover indicator on the <pre> so it's obvious the code is editable */
+  .lc-detail pre:hover {
+    border-color: #4a78c4;
   }
   .lc-detail pre:has(code[contenteditable="true"]:focus) {
     box-shadow: inset 0 0 0 1px var(--accent);
+    border-color: var(--accent);
   }
+  /* "✎ editable" badge in the bottom-right corner of editable code blocks */
+  .lc-detail pre {
+    position: relative;
+  }
+  .lc-detail pre:has(code[contenteditable="true"])::after {
+    content: '✎ editable';
+    position: absolute;
+    bottom: 0.3rem;
+    right: 0.5rem;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 0.62rem;
+    font-weight: 500;
+    color: #7d8896;
+    letter-spacing: 0.04em;
+    pointer-events: none;
+    opacity: 0.55;
+    transition: opacity 0.15s;
+  }
+  .lc-detail pre:hover::after,
+  .lc-detail pre:has(code[contenteditable="true"]:focus)::after { opacity: 1; }
   .lc-detail .lc-code-lbl {
     display: flex;
     align-items: center;
@@ -1416,9 +1442,13 @@
       if (resetBtn) resetBtn.hidden = false;
     }
 
-    block.contentEditable = 'true';
     block.spellcheck = false;
+    // Run hljs FIRST (it rewrites innerHTML), then set contentEditable so the
+    // attribute can't be stripped by the highlighter's DOM rewrite.
     if (window.hljs) window.hljs.highlightElement(block);
+    block.contentEditable = 'true';
+    block.setAttribute('contenteditable', 'true');   // belt-and-suspenders
+    block.title = 'Click to edit — your changes are saved automatically';
 
     let saveTimer = null;
     block.addEventListener('input', () => {
