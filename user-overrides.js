@@ -3,14 +3,60 @@
 // button on the live site (bottom-left of the LeetCode view).
 //
 // Workflow:
-//   1. Edit a problem's Java code on the page (click into the code, type)
-//   2. Click the floating "Export N edits" button at the bottom-left
-//   3. Save the downloaded user-overrides.js into the project root
-//      (replacing this file)
-//   4. git add user-overrides.js && git commit && git push
-//   5. Vercel redeploys; everyone sees your edits going forward
-//
-// Empty by default — the renderer falls back to leetcode.js when a problem
-// has no override.
+//   1. Save this file into the project root (replacing the existing user-overrides.js)
+//   2. git add user-overrides.js && git commit -m "Update notes" && git push
+//   3. Redeploy so everyone (including other devices) sees the updates
 
-const leetcodeUserOverrides = {};
+const leetcodeUserOverrides = {
+  16: `// example: [[1, 3], [2, 6], [8, 10], [15, 18]] -> [[1, 6], [8, 10], [15, 18]]
+public int[][] merge(int[][] intervals) {
+  // Sort by start time — overlapping intervals will be adjacent
+  Arrays.sort(intervals, (a, b) -> a[0] - b[0]);
+  List<int[]> merged = new ArrayList<>();
+  for (int[] cur : intervals) {
+    // first interval or no overlap with the last group → start a new one
+    if (merged.isEmpty() || merged.get(merged.size() - 1)[1] < cur[0]) {
+      merged.add(cur);
+    } else {
+      // Overlap → extend the last group's END (could be nested, take max)
+      merged.get(merged.size() - 1)[1] = Math.max(merged.get(merged.size() - 1)[1], cur[1]);
+    }
+  }
+  return merged.toArray(new int[0][]);
+}
+
+`,
+  18: `public void rotate(int[][] matrix) {
+  int n = matrix.length;
+  // Step 1: transpose — swap matrix[i][j] with matrix[j][i] for i < j
+  for (int i = 0; i < n; i++) {
+    for (int j = i + 1; j < n; j++) {
+      int tmp = matrix[i][j]; matrix[i][j] = matrix[j][i]; matrix[j][i] = tmp;
+    }
+  }
+  // Step 2: reverse each row in place — combined with the transpose, that's a 90° clockwise rotation
+  for (int[] row : matrix) {
+    int l = 0, r = n - 1;
+    while (l < r) {
+      int tmp = row[l]; 
+      row[l++] = row[r]; 
+      row[r--] = tmp;
+    }
+  }
+}`,
+  30: `public int subarraySum(int[] nums, int k) {
+  // Map: prefix sum → how many times we've seen it
+  // e.g. if perfixCount.get(1) = 2, means at two place the prefix sum is 1
+  Map<Integer, Integer> prefixCount = new HashMap<>();
+  prefixCount.put(0, 1);   // the empty prefix has sum 0
+  int sum = 0, count = 0;
+  for (int n : nums) {
+    sum += n;
+    // Each earlier prefix equal to (sum - k) gives one valid subarray ending at this index
+    count += prefixCount.getOrDefault(sum - k, 0);
+    // Integer::sum is equal to (oldValue, newValue) -> oldValue + newValue
+    prefixCount.merge(sum, 1, Integer::sum);
+  }
+  return count;
+}`,
+};
