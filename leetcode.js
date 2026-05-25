@@ -847,32 +847,56 @@ public List<String> decode(String s) {
     num: 37, title: 'Decode String', d: 'medium', companies: ['Temu'],
     bucket: 'Stack', category: 'String',
     url: 'https://leetcode.com/problems/decode-string/',
-    approach: 'Two parallel stacks (counts and prefix-strings) plus a running buffer. On "[", push state; on "]", pop and repeat-concatenate.',
-    complexity: 'O(n · max_k) time · O(depth) space',
-    code: `public String decodeString(String s) {
-  // Stacks for the counts and the prefix strings before each '['
+    approach: 'Two parallel stacks (counts + prefix-strings) plus a running buffer. Walk the input one char at a time: digits build the current count (shift-and-add for multi-digit numbers); "[" snapshots the count + prefix-so-far onto the stacks and resets the inner state to empty; "]" pops the matching count and prefix and appends the inner segment that many times to the prefix; letters extend the current buffer. The dual stacks naturally handle arbitrary nesting because each "[" pushes a frame and each "]" pops back to the parent level.',
+    complexity: 'O(n · max_k) time · O(depth) space (one stack frame per nesting level)',
+    code: `// Worked trace for input "3[a2[c]]":
+//
+//   char  k  counts    strs       current      action
+//   ─────────────────────────────────────────────────────────────────
+//    3    3  []        []         ""           digit → k = k*10 + 3
+//    [    0  [3]       [""]       ""           push k & current, reset
+//    a    0  [3]       [""]       "a"          letter → current += 'a'
+//    2    2  [3]       [""]       "a"          digit → k = 2
+//    [    0  [3, 2]    ["", "a"]  ""           push k & current, reset
+//    c    0  [3, 2]    ["", "a"]  "c"          letter → current += 'c'
+//    ]    0  [3]       [""]       "acc"        pop times=2, prev="a"; prev += current·2
+//    ]    0  []        []         "accaccacc"  pop times=3, prev=""; prev += current·3
+//
+// Returns "accaccacc"
+
+public String decodeString(String s) {
+  // Two stacks growing in lockstep — every '[' pushes both, every ']' pops both.
+  //   counts: how many times to repeat the segment opened by each '['
+  //   strs:   the prefix string that existed BEFORE that '[' opened
   Deque<Integer> counts = new ArrayDeque<>();
   Deque<StringBuilder> strs = new ArrayDeque<>();
+
+  // The string we're actively building at the CURRENT nesting depth
   StringBuilder current = new StringBuilder();
+  // Accumulates the digits of the current count; reset after '['
   int k = 0;
+
   for (char c : s.toCharArray()) {
     if (Character.isDigit(c)) {
-      // Handle multi-digit counts like "100[a]"
+      // Multi-digit support: "100" arrives as 1 → 10 → 100 via shift-and-add
       k = k * 10 + (c - '0');
     } else if (c == '[') {
-      // Save the count and the prefix string; reset for the inner segment
+      // Entering a nested segment — snapshot the count + prefix-so-far,
+      // then start the inner level fresh
       counts.push(k);
       strs.push(current);
       k = 0;
       current = new StringBuilder();
     } else if (c == ']') {
-      // Repeat the inner segment 'times' times, then prepend the saved prefix
+      // Closing the segment — pop the matching count and prefix, then
+      // append the inner segment 'times' times to form the new current
       int times = counts.pop();
       StringBuilder prev = strs.pop();
       for (int i = 0; i < times; i++) prev.append(current);
       current = prev;
     } else {
-      current.append(c);   // ordinary letter — extend the current segment
+      // Ordinary letter — extend the current segment in place
+      current.append(c);
     }
   }
   return current.toString();
