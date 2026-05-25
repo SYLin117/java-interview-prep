@@ -749,16 +749,17 @@
   .filter-bar {
     position: sticky;
     top: 57px;                                  /* sits flush under the sticky header */
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.97);      /* near-opaque so content under doesn't bleed through */
     -webkit-backdrop-filter: blur(8px);
     backdrop-filter: blur(8px);
     border-bottom: 1px solid var(--line);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);  /* subtle lift so content underneath reads as separate */
     z-index: 50;
   }
   .filter-bar-inner {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0.7rem 1.5rem;
+    padding: 1rem 1.5rem 1.1rem;                /* extra bottom padding so chips don't crowd the edge */
   }
   .filter-bar .lc-filters { margin-bottom: 0; }   /* bar provides outer spacing */
 
@@ -821,7 +822,7 @@
   /* Header wraps on mobile → filter bar drops further down to clear it */
   @media (max-width: 768px) {
     .filter-bar { top: 102px; }
-    .filter-bar-inner { padding: 0.55rem 1rem; }
+    .filter-bar-inner { padding: 0.75rem 1rem 0.85rem; }
   }
   .lc-toggle {
     color: var(--text-faint);
