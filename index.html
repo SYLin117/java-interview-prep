@@ -866,6 +866,19 @@
     display: block;
     padding-top: 1rem;
   }
+  .lc-detail .lc-problem {
+    color: var(--text);
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 0.7rem 0.9rem;
+    margin-top: 0.3rem;
+    font-size: 0.92rem;
+  }
+  .lc-detail .lc-problem code {
+    font-size: 0.85em;
+    background: var(--bg-soft);
+  }
   .lc-detail .lbl {
     font-size: 0.7rem;
     font-weight: 600;
@@ -1047,6 +1060,7 @@
 
 <script src="content.js"></script>
 <script src="leetcode.js"></script>
+<script src="descriptions.js"></script>
 <script>
   const allTopics = [...topics, extras];
 
@@ -1191,6 +1205,9 @@
         <div class="lc-link-cell"><a href="${p.url}" target="_blank" rel="noopener">LeetCode ↗</a></div>
         <div class="lc-toggle">+</div>
         <div class="lc-detail">
+          ${typeof leetcodeDescriptions !== 'undefined' && leetcodeDescriptions[p.num]
+            ? `<div class="lbl">Problem</div><div class="lc-problem">${leetcodeDescriptions[p.num]}</div>`
+            : ''}
           <div class="lbl">Approach</div>
           <div>${escapeHtml(p.approach)}</div>
           <div class="lbl">Complexity</div>
