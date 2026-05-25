@@ -837,6 +837,62 @@
     text-transform: uppercase;
     line-height: 1.2;
   }
+  /* ─── LeetCode filter chips (category + tag) ─── */
+  .lc-filters {
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .lc-filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  .lc-filter-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-faint);
+    margin-right: 0.3rem;
+    flex-shrink: 0;
+  }
+  .lc-chip {
+    display: inline-block;
+    padding: 0.3rem 0.7rem;
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: color 0.12s, background 0.12s, border-color 0.12s;
+    font-family: inherit;
+    line-height: 1.2;
+  }
+  .lc-chip:hover {
+    border-color: var(--accent);
+    color: var(--text);
+  }
+  .lc-chip.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+  .lc-chip-company.active {
+    background: #ff6b1a;
+    border-color: #ff6b1a;
+  }
+  .lc-chip-count {
+    margin-left: 0.3rem;
+    font-size: 0.68rem;
+    opacity: 0.7;
+  }
+  @media (max-width: 480px) {
+    .lc-chip { padding: 0.25rem 0.55rem; font-size: 0.72rem; }
+  }
   .lc-toggle {
     color: var(--text-faint);
     cursor: pointer;
@@ -1034,6 +1090,7 @@
   </section>
 
   <main class="section">
+    <div class="lc-filters" id="leetcode-filters" aria-label="Filter problems"></div>
     <div class="lc-table" id="leetcode-table"></div>
   </main>
 </div><!-- /#leetcode-view -->
@@ -1192,8 +1249,9 @@
     }
     const search = (p.title + ' ' + p.category + ' ' + p.bucket + ' ' + p.approach)
       .toLowerCase().replace(/"/g, '&quot;');
+    const companiesAttr = (p.companies || []).map(c => c.toLowerCase()).join(',');
     lcRowsHTML += `
-      <div class="lc-row lc-data" data-q="${search}" data-bucket="${escapeHtml(p.bucket).toLowerCase()}">
+      <div class="lc-row lc-data" data-q="${search}" data-bucket="${escapeHtml(p.bucket).toLowerCase()}" data-companies="${companiesAttr}">
         <div class="lc-num">${String(p.num).padStart(2, '0')}</div>
         <div class="lc-diff ${p.d}"><span class="pill">${p.d}</span></div>
         <div class="lc-title">${escapeHtml(p.title)}${
@@ -1229,6 +1287,88 @@
         row.querySelectorAll('pre code:not(.hljs)').forEach(b => window.hljs.highlightElement(b));
       }
     });
+  });
+
+  // ─────── LeetCode filter chips (category + tag) ───────
+  const lcFiltersEl = document.getElementById('leetcode-filters');
+  // Unique buckets in document order (so chips read the same as the table)
+  const lcBuckets = [];
+  const seenBuckets = new Set();
+  for (const p of leetcode) {
+    if (!seenBuckets.has(p.bucket)) { lcBuckets.push(p.bucket); seenBuckets.add(p.bucket); }
+  }
+  // Counts per bucket and per company for the chip labels
+  const bucketTotals = {};
+  const companyTotals = {};
+  for (const p of leetcode) {
+    bucketTotals[p.bucket] = (bucketTotals[p.bucket] || 0) + 1;
+    for (const c of (p.companies || [])) companyTotals[c] = (companyTotals[c] || 0) + 1;
+  }
+  const lcCompanies = Object.keys(companyTotals).sort();
+
+  let chipsHTML = `
+    <div class="lc-filter-row">
+      <span class="lc-filter-label">Category</span>
+      <button class="lc-chip active" data-bucket="">All<span class="lc-chip-count">${leetcode.length}</span></button>`;
+  for (const b of lcBuckets) {
+    chipsHTML += `<button class="lc-chip" data-bucket="${escapeHtml(b).toLowerCase()}">${escapeHtml(b)}<span class="lc-chip-count">${bucketTotals[b]}</span></button>`;
+  }
+  chipsHTML += `</div>`;
+  if (lcCompanies.length) {
+    chipsHTML += `
+      <div class="lc-filter-row">
+        <span class="lc-filter-label">Tag</span>
+        <button class="lc-chip active" data-company="">All</button>`;
+    for (const c of lcCompanies) {
+      chipsHTML += `<button class="lc-chip lc-chip-company" data-company="${escapeHtml(c).toLowerCase()}">${escapeHtml(c)}<span class="lc-chip-count">${companyTotals[c]}</span></button>`;
+    }
+    chipsHTML += `</div>`;
+  }
+  lcFiltersEl.innerHTML = chipsHTML;
+
+  // Filter state — all three dimensions compose via AND
+  let lcActiveBucket  = null;
+  let lcActiveCompany = null;
+  let lcSearchTerm    = '';
+
+  /**
+   * Re-apply all three LeetCode filters (search + bucket + company) to the row list.
+   * Also hides bucket header rows whose entire group is filtered out.
+   */
+  function applyLcFilters() {
+    const visibleByBucket = {};
+    lcTable.querySelectorAll('.lc-row.lc-data').forEach(row => {
+      const q = row.dataset.q || '';
+      const bucket = row.dataset.bucket;
+      const companies = (row.dataset.companies || '').split(',').filter(Boolean);
+      const passSearch  = !lcSearchTerm  || q.includes(lcSearchTerm);
+      const passBucket  = !lcActiveBucket  || bucket === lcActiveBucket;
+      const passCompany = !lcActiveCompany || companies.includes(lcActiveCompany);
+      const visible = passSearch && passBucket && passCompany;
+      row.classList.toggle('hidden', !visible);
+      if (visible) visibleByBucket[bucket] = (visibleByBucket[bucket] || 0) + 1;
+    });
+    lcTable.querySelectorAll('.lc-row.lc-bucket').forEach(header => {
+      header.classList.toggle('hidden', !visibleByBucket[header.dataset.bucket]);
+    });
+  }
+
+  // Chip clicks — delegate via the container
+  lcFiltersEl.addEventListener('click', (e) => {
+    const chip = e.target.closest('.lc-chip');
+    if (!chip) return;
+    if (chip.dataset.bucket !== undefined) {
+      lcActiveBucket = chip.dataset.bucket || null;
+      lcFiltersEl.querySelectorAll('.lc-chip[data-bucket]').forEach(c => {
+        c.classList.toggle('active', (c.dataset.bucket || null) === lcActiveBucket);
+      });
+    } else if (chip.dataset.company !== undefined) {
+      lcActiveCompany = chip.dataset.company || null;
+      lcFiltersEl.querySelectorAll('.lc-chip[data-company]').forEach(c => {
+        c.classList.toggle('active', (c.dataset.company || null) === lcActiveCompany);
+      });
+    }
+    applyLcFilters();
   });
 
   // ─────── View toggle (Topics ↔ LeetCode) with URL-hash routing ───────
@@ -1295,19 +1435,9 @@
   searchInput.addEventListener('input', (e) => {
     const term = e.target.value.toLowerCase().trim();
     if (!leetView.hidden) {
-      // Filter data rows by query, then hide bucket headers that have nothing visible.
-      const visibleByBucket = {};
-      lcTable.querySelectorAll('.lc-row.lc-data').forEach(row => {
-        const q = row.dataset.q || '';
-        const matches = !term || q.includes(term);
-        row.classList.toggle('hidden', !matches);
-        const b = row.dataset.bucket;
-        if (matches) visibleByBucket[b] = (visibleByBucket[b] || 0) + 1;
-      });
-      lcTable.querySelectorAll('.lc-row.lc-bucket').forEach(header => {
-        const b = header.dataset.bucket;
-        header.classList.toggle('hidden', term && !visibleByBucket[b]);
-      });
+      // LeetCode view: update the shared search term and re-apply all filters together
+      lcSearchTerm = term;
+      applyLcFilters();
     } else {
       document.querySelectorAll('.topic-section').forEach(section => {
         const rows = section.querySelectorAll('.q-row.q-data');
