@@ -1,0 +1,13 @@
+{
+  "name": "java-interview-prep",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static Java/Spring interview prep site",
+  "scripts": {
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "eslint": "^9.18.0",
+    "globals": "^15.14.0"
+  }
+}

@@ -131,7 +131,10 @@ const leetcode = [
   int idx = 0;
   for (int i = buckets.length - 1; i >= 0 && idx < k; i--) {
     if (buckets[i] == null) continue;
-    for (int n : buckets[i]) { out[idx++] = n; if (idx == k) break; }
+    for (int n : buckets[i]) {
+      out[idx++] = n;
+      if (idx == k) break;
+    }
   }
   return out;
 }`
@@ -268,7 +271,11 @@ public List<String> decode(String s) {
   for (int i = 1; i < nums.length; i++) {
     int n = nums[i];
     // Negative n flips the roles — what was max becomes min and vice versa
-    if (n < 0) { int t = max; max = min; min = t; }
+    if (n < 0) {
+      int t = max;
+      max = min;
+      min = t;
+    }
     // Either start fresh at n or extend the running product
     max = Math.max(n, max * n);
     min = Math.min(n, min * n);
@@ -618,7 +625,10 @@ public List<String> decode(String s) {
     if (need[s.charAt(r)]-- > 0) required--;
     // Window now valid → shrink from left while it stays valid
     while (required == 0) {
-      if (r - left + 1 < bestLen) { bestLen = r - left + 1; bestStart = left; }
+      if (r - left + 1 < bestLen) {
+        bestLen = r - left + 1;
+        bestStart = left;
+      }
       // Removing leftChar: if its count goes positive, we now need it again
       if (++need[s.charAt(left++)] > 0) required++;
     }
@@ -995,7 +1005,10 @@ public List<String> decode(String s) {
     code: `public double myPow(double x, int n) {
   // Promote n to long so we can safely negate Integer.MIN_VALUE
   long N = n;
-  if (N < 0) { x = 1 / x; N = -N; }
+  if (N < 0) {
+    x = 1 / x;
+    N = -N;
+  }
   // Walk the bits of N. Each iteration: square x, multiply result if the low bit is 1.
   double result = 1.0;
   while (N > 0) {
@@ -1038,8 +1051,13 @@ public List<String> decode(String s) {
   ListNode dummy = new ListNode(0), tail = dummy;
   while (a != null && b != null) {
     // Splice the smaller head onto the tail (preserves stable order)
-    if (a.val <= b.val) { tail.next = a; a = a.next; }
-    else                { tail.next = b; b = b.next; }
+    if (a.val <= b.val) {
+      tail.next = a;
+      a = a.next;
+    } else {
+      tail.next = b;
+      b = b.next;
+    }
     tail = tail.next;
   }
   // Whichever list still has nodes is already sorted — attach the whole remainder
@@ -1078,7 +1096,10 @@ public List<String> decode(String s) {
   ListNode slow = dummy, fast = dummy;
   // Open a gap of n+1 so when fast hits null, slow is at the node BEFORE the target
   for (int i = 0; i <= n; i++) fast = fast.next;
-  while (fast != null) { slow = slow.next; fast = fast.next; }
+  while (fast != null) {
+    slow = slow.next;
+    fast = fast.next;
+  }
   // Bypass the target node
   slow.next = slow.next.next;
   return dummy.next;
@@ -1119,8 +1140,14 @@ public List<String> decode(String s) {
   // Continue while either list has digits OR there's a leftover carry to spend
   while (a != null || b != null || carry > 0) {
     int sum = carry;
-    if (a != null) { sum += a.val; a = a.next; }
-    if (b != null) { sum += b.val; b = b.next; }
+    if (a != null) {
+      sum += a.val;
+      a = a.next;
+    }
+    if (b != null) {
+      sum += b.val;
+      b = b.next;
+    }
     // Grade-school add: digit is sum%10, carry-over is sum/10
     tail.next = new ListNode(sum % 10);
     tail = tail.next;
@@ -1258,8 +1285,13 @@ public List<String> decode(String s) {
 private ListNode merge(ListNode a, ListNode b) {
   ListNode dummy = new ListNode(0), tail = dummy;
   while (a != null && b != null) {
-    if (a.val <= b.val) { tail.next = a; a = a.next; }
-    else                { tail.next = b; b = b.next; }
+    if (a.val <= b.val) {
+      tail.next = a;
+      a = a.next;
+    } else {
+      tail.next = b;
+      b = b.next;
+    }
     tail = tail.next;
   }
   tail.next = (a != null) ? a : b;
@@ -1467,7 +1499,10 @@ private boolean validate(TreeNode node, long lo, long hi) {
   TreeNode cur = root;
   while (cur != null || !stack.isEmpty()) {
     // Dive as far left as possible, stacking ancestors for later return visits
-    while (cur != null) { stack.push(cur); cur = cur.left; }
+    while (cur != null) {
+      stack.push(cur);
+      cur = cur.left;
+    }
     cur = stack.pop();
     // This pop is the next smallest value — count toward k
     if (--k == 0) return cur.val;
@@ -1566,7 +1601,10 @@ public String serialize(TreeNode root) {
 }
 private void serializeHelper(TreeNode node, StringBuilder sb) {
   // Writing "#" for null preserves the tree shape so deserialize is unambiguous
-  if (node == null) { sb.append(NULL).append(SEP); return; }
+  if (node == null) {
+    sb.append(NULL).append(SEP);
+    return;
+  }
   sb.append(node.val).append(SEP);
   serializeHelper(node.left,  sb);
   serializeHelper(node.right, sb);
@@ -1849,7 +1887,10 @@ private void dfs(int[] nums, int i, List<Integer> path, List<List<Integer>> out)
 }
 private void dfs(int[] nums, boolean[] used, List<Integer> path, List<List<Integer>> out) {
   // Full-length permutation → snapshot it
-  if (path.size() == nums.length) { out.add(new ArrayList<>(path)); return; }
+  if (path.size() == nums.length) {
+    out.add(new ArrayList<>(path));
+    return;
+  }
   for (int i = 0; i < nums.length; i++) {
     if (used[i]) continue;   // skip elements already in the current permutation
     used[i] = true; path.add(nums[i]);
@@ -1872,7 +1913,10 @@ private void dfs(int[] nums, boolean[] used, List<Integer> path, List<List<Integ
 }
 private void dfs(int[] nums, int start, int remain, List<Integer> path, List<List<Integer>> out) {
   // Hit the target exactly — save this combination
-  if (remain == 0) { out.add(new ArrayList<>(path)); return; }
+  if (remain == 0) {
+    out.add(new ArrayList<>(path));
+    return;
+  }
   // Overshot — abandon this branch
   if (remain < 0) return;
   // Start from 'start' (not 0) to avoid generating permutations of the same combination
@@ -1903,7 +1947,10 @@ public List<String> letterCombinations(String digits) {
 }
 private void dfs(String digits, int i, StringBuilder path, List<String> out) {
   // Built a full-length combination — emit a snapshot
-  if (i == digits.length()) { out.add(path.toString()); return; }
+  if (i == digits.length()) {
+    out.add(path.toString());
+    return;
+  }
   // Try every letter mapped to the current digit
   for (char c : DIGITS[digits.charAt(i) - '0'].toCharArray()) {
     path.append(c);
@@ -1925,7 +1972,10 @@ private void dfs(String digits, int i, StringBuilder path, List<String> out) {
 }
 private void dfs(int n, int open, int close, StringBuilder sb, List<String> out) {
   // Full-length valid string — emit and stop
-  if (sb.length() == 2 * n) { out.add(sb.toString()); return; }
+  if (sb.length() == 2 * n) {
+    out.add(sb.toString());
+    return;
+  }
   // Can add '(' as long as we haven't used all n open-parens
   if (open < n) {
     sb.append('(');
@@ -1957,7 +2007,10 @@ private void dfs(int r, int n, int[] q,
                  boolean[] col, boolean[] diag, boolean[] anti,
                  List<List<String>> out) {
   // Placed a queen on every row — valid solution
-  if (r == n) { out.add(build(q, n)); return; }
+  if (r == n) {
+    out.add(build(q, n));
+    return;
+  }
   for (int c = 0; c < n; c++) {
     // "\\" diagonal: constant value of (row - col + n). "/" diagonal: row + col.
     int d = r - c + n, a = r + c;
@@ -1994,7 +2047,10 @@ private List<String> build(int[] q, int n) {
   for (int r = 0; r < grid.length; r++) {
     for (int c = 0; c < grid[0].length; c++) {
       // Each '1' we encounter starts a new island — fill it to 0 so it isn't counted again
-      if (grid[r][c] == '1') { dfs(grid, r, c); count++; }
+      if (grid[r][c] == '1') {
+        dfs(grid, r, c);
+        count++;
+      }
     }
   }
   return count;
@@ -2041,7 +2097,10 @@ public Node cloneGraph(Node node) {
   for (int i = 0; i < n; i++) graph.add(new ArrayList<>());
   int[] indeg = new int[n];
   // prereqs[i] = [course, prerequisite] → edge prerequisite → course
-  for (int[] p : prereqs) { graph.get(p[1]).add(p[0]); indeg[p[0]]++; }
+  for (int[] p : prereqs) {
+    graph.get(p[1]).add(p[0]);
+    indeg[p[0]]++;
+  }
 
   // Kahn's: start with all nodes that have no incoming edges
   Queue<Integer> q = new ArrayDeque<>();
@@ -2068,8 +2127,14 @@ public Node cloneGraph(Node node) {
   // Two visited sets: cells reachable from each ocean (working INWARD)
   boolean[][] pac = new boolean[R][C], atl = new boolean[R][C];
   // Seed from each ocean's border row/column
-  for (int r = 0; r < R; r++) { dfs(h, r, 0, pac, 0);     dfs(h, r, C-1, atl, 0); }
-  for (int c = 0; c < C; c++) { dfs(h, 0, c, pac, 0);     dfs(h, R-1, c, atl, 0); }
+  for (int r = 0; r < R; r++) {
+    dfs(h, r, 0, pac, 0);
+    dfs(h, r, C-1, atl, 0);
+  }
+  for (int c = 0; c < C; c++) {
+    dfs(h, 0, c, pac, 0);
+    dfs(h, R-1, c, atl, 0);
+  }
 
   // Any cell reachable from BOTH oceans is in our answer
   List<List<Integer>> out = new ArrayList<>();
@@ -2185,8 +2250,14 @@ private boolean dfs(char[][] b, int r, int c, String w, int i) {
   int R = board.length, C = board[0].length;
   // INVERSE: instead of finding surrounded O's, mark the ones that touch the border.
   // They (and their connected O's) are the survivors.
-  for (int r = 0; r < R; r++) { dfs(board, r, 0); dfs(board, r, C-1); }
-  for (int c = 0; c < C; c++) { dfs(board, 0, c); dfs(board, R-1, c); }
+  for (int r = 0; r < R; r++) {
+    dfs(board, r, 0);
+    dfs(board, r, C-1);
+  }
+  for (int c = 0; c < C; c++) {
+    dfs(board, 0, c);
+    dfs(board, R-1, c);
+  }
   // Final sweep: real O's left untouched are surrounded → X. Survivors (#) → O.
   for (int r = 0; r < R; r++)
     for (int c = 0; c < C; c++)
@@ -2230,7 +2301,10 @@ private void dfs(char[][] b, int r, int c) {
     for (int[] e : graph.getOrDefault(u, List.of())) {
       int v = e[0], w = e[1];
       // Standard relaxation — if going through u improves dist[v], update
-      if (d + w < dist[v]) { dist[v] = d + w; pq.offer(new int[]{ v, d + w }); }
+      if (d + w < dist[v]) {
+        dist[v] = d + w;
+        pq.offer(new int[]{ v, d + w });
+      }
     }
   }
   // Answer is the latest delivery time across all nodes; -1 if any unreached
@@ -2423,7 +2497,10 @@ private int robRange(int[] nums, int lo, int hi) {
   for (int i = 1; i <= s.length(); i++) {
     for (int j = 0; j < i; j++) {
       // s[0..i] is segmentable if some prefix s[0..j] is AND s[j..i] is a word
-      if (dp[j] && words.contains(s.substring(j, i))) { dp[i] = true; break; }
+      if (dp[j] && words.contains(s.substring(j, i))) {
+        dp[i] = true;
+        break;
+      }
     }
   }
   return dp[s.length()];
@@ -2482,7 +2559,10 @@ private int robRange(int[] nums, int lo, int hi) {
   for (int i = 0; i < nums.length - 1; i++) {
     farthest = Math.max(farthest, i + nums[i]);
     // Reached the limit of the current "jump" — commit to the next one
-    if (i == end) { jumps++; end = farthest; }
+    if (i == end) {
+      jumps++;
+      end = farthest;
+    }
   }
   return jumps;
 }`
@@ -2508,7 +2588,10 @@ private int robRange(int[] nums, int lo, int hi) {
 }
 // Expand outward from (l, r) while the chars match; return the palindrome's length
 private int expand(String s, int l, int r) {
-  while (l >= 0 && r < s.length() && s.charAt(l) == s.charAt(r)) { l--; r++; }
+  while (l >= 0 && r < s.length() && s.charAt(l) == s.charAt(r)) {
+    l--;
+    r++;
+  }
   return r - l - 1;
 }`
   },
@@ -2656,7 +2739,10 @@ private int expand(String s, int l, int r) {
     tank  += diff;
     // Ran out of fuel → no station before i+1 can be the start.
     // (Proof: if start..i works for some interim point, total would be ≥ 0 there too.)
-    if (tank < 0) { start = i + 1; tank = 0; }
+    if (tank < 0) {
+      start = i + 1;
+      tank = 0;
+    }
   }
   return total < 0 ? -1 : start;
 }`

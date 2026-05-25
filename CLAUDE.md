@@ -103,6 +103,20 @@ Decisions baked in — preserve unless the user asks otherwise:
 
 Clicking a `.q-row.q-data` toggles `.expanded`, but clicks originating inside `.q-answer` are deliberately ignored so users can select and copy answer text without collapsing the row. Don't regress this — the guard is `if (e.target.closest('.q-answer')) return;` in the row click handler.
 
+## Linting
+
+ESLint flat config in `eslint.config.mjs` covers every `.js` file. Run:
+
+```
+npm run lint
+```
+
+(Requires a one-time `npm install` to fetch `eslint` + `globals` into `node_modules`.)
+
+**Convention: run `npm run lint` after any JS edit and fix every reported issue before committing.** The inline `<script>` block in `index.html` isn't linted directly — use `node --check` (or the existing syntax-check command in the harness) for that.
+
+The config knows about our cross-script globals (`topics`, `extras`, `leetcode`, `leetcodeUserOverrides`, `leetcodeDescriptions`, `namedAlgorithms`, `problemAlgorithms`) so `const X = ...` in a data file doesn't trigger `no-unused-vars`.
+
 ## Deployment
 
 - GitHub: `SYLin117/java-interview-prep` (public).
