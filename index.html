@@ -952,6 +952,39 @@
     display: block;
   }
   .lc-detail pre code.hljs { background: transparent; padding: 0; }
+  /* Editable Java code: subtle text cursor + focus ring; reset button when changed */
+  .lc-detail pre code[contenteditable="true"] {
+    outline: none;
+    cursor: text;
+    caret-color: var(--accent);
+  }
+  .lc-detail pre:has(code[contenteditable="true"]:focus) {
+    box-shadow: inset 0 0 0 1px var(--accent);
+  }
+  .lc-detail .lc-code-lbl {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+  .lc-code-reset {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--text-dim);
+    font-size: 0.7rem;
+    font-weight: 500;
+    padding: 0.2rem 0.55rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    text-transform: none;
+    letter-spacing: 0;
+    transition: color 0.12s, border-color 0.12s;
+  }
+  .lc-code-reset:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
   .lc-row.hidden { display: none; }
   .lc-row.lc-bucket {
     grid-template-columns: 1fr;
@@ -1296,23 +1329,106 @@
             : ''}
           <div class="lbl">Complexity</div>
           <div>${escapeHtml(p.complexity)}</div>
-          <div class="lbl">Java</div>
-          <pre><code>${escapeHtml(p.code)}</code></pre>
+          <div class="lbl lc-code-lbl">Java<button class="lc-code-reset" data-lc-num="${p.num}" type="button" hidden>Reset to original</button></div>
+          <pre><code data-lc-num="${p.num}">${escapeHtml(p.code)}</code></pre>
         </div>
       </div>
     `;
   }
   lcTable.innerHTML = lcRowsHTML;
 
+  /**
+   * Re-run highlight.js on a code block after clearing any prior highlighting.
+   * Needed because user edits leave the spans torn up — we rebuild from textContent.
+   */
+  function rehighlight(block) {
+    if (!window.hljs) return;
+    const text = block.textContent;
+    block.textContent = text;                       // wipes all child spans
+    block.classList.remove('hljs');
+    block.removeAttribute('data-highlighted');
+    block.className = block.className.split(' ').filter(c => !c.startsWith('language-')).join(' ');
+    window.hljs.highlightElement(block);
+  }
+
+  /**
+   * Make a LeetCode solution code block editable: restore any saved edit,
+   * enable contenteditable, run hljs, wire up debounced auto-save + re-highlight.
+   * Idempotent — guarded by the `editable-init` class so multiple expands are safe.
+   */
+  function initEditableCode(block, row) {
+    if (block.classList.contains('editable-init')) return;
+    block.classList.add('editable-init');
+    const num = +block.dataset.lcNum;
+    const key = 'lc_code_' + num;
+    const original = (typeof leetcode !== 'undefined')
+      ? (leetcode.find(p => p.num === num) || {}).code
+      : null;
+    const resetBtn = row.querySelector('.lc-code-reset[data-lc-num="' + num + '"]');
+
+    // Restore any saved edit BEFORE first highlight
+    let saved = null;
+    try { saved = localStorage.getItem(key); } catch {}
+    if (saved !== null) {
+      block.textContent = saved;
+      if (resetBtn) resetBtn.hidden = false;
+    }
+
+    block.contentEditable = 'true';
+    block.spellcheck = false;
+    if (window.hljs) window.hljs.highlightElement(block);
+
+    let saveTimer = null;
+    block.addEventListener('input', () => {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => {
+        const text = block.textContent;
+        try {
+          if (original !== null && text === original) {
+            localStorage.removeItem(key);
+            if (resetBtn) resetBtn.hidden = true;
+          } else {
+            localStorage.setItem(key, text);
+            if (resetBtn) resetBtn.hidden = false;
+          }
+        } catch { /* localStorage full or private-mode */ }
+      }, 400);
+    });
+
+    // Re-highlight after the user stops typing — clean up torn-apart spans
+    block.addEventListener('blur', () => rehighlight(block));
+  }
+
   lcTable.querySelectorAll('.lc-row.lc-data').forEach(row => {
     row.addEventListener('click', (e) => {
-      if (e.target.closest('.lc-detail')) return;     // let users select / copy detail
+      if (e.target.closest('.lc-detail')) return;     // let users select / copy / edit detail
       if (e.target.closest('.lc-link-cell a')) return; // let link click fall through
       row.classList.toggle('expanded');
-      if (row.classList.contains('expanded') && window.hljs) {
-        row.querySelectorAll('pre code:not(.hljs)').forEach(b => window.hljs.highlightElement(b));
+      if (row.classList.contains('expanded')) {
+        // Solution code blocks: editable. Algorithm example blocks: read-only.
+        row.querySelectorAll('pre code[data-lc-num]').forEach(b => initEditableCode(b, row));
+        if (window.hljs) {
+          row.querySelectorAll('pre code:not(.hljs):not([data-lc-num])').forEach(b => window.hljs.highlightElement(b));
+        }
       }
     });
+  });
+
+  // Reset button — delegated so it works regardless of when the row was first opened
+  lcTable.addEventListener('click', (e) => {
+    const btn = e.target.closest('.lc-code-reset');
+    if (!btn) return;
+    e.stopPropagation();
+    const num = +btn.dataset.lcNum;
+    const block = lcTable.querySelector('pre code[data-lc-num="' + num + '"]');
+    const original = (typeof leetcode !== 'undefined')
+      ? (leetcode.find(p => p.num === num) || {}).code
+      : null;
+    if (!block || original == null) return;
+    block.textContent = original;
+    try { localStorage.removeItem('lc_code_' + num); } catch {}
+    btn.hidden = true;
+    rehighlight(block);
   });
 
   // ─────── LeetCode filter chips (category + tag) ───────
