@@ -13,9 +13,9 @@
 //   class Node     { int val; Node next; Node random; List<Node> neighbors; ... }
 
 const leetcode = [
-  // ─── Arrays & Hashing (15) ───
+  // ─── Arrays & Hashing (18) ───
   {
-    num: 1, title: 'Two Sum', d: 'easy',
+    num: 1, title: 'Two Sum', d: 'easy', companies: ['Temu'],
     bucket: 'Arrays & Hashing', category: 'Array · Hash Map',
     url: 'https://leetcode.com/problems/two-sum/',
     approach: 'One-pass hash map: for each element, check if its complement (target - num) is already in the map. If yes, return both indices; otherwise, store this index.',
@@ -237,7 +237,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 11, title: 'Maximum Subarray', d: 'medium',
+    num: 11, title: 'Maximum Subarray', d: 'medium', companies: ['Temu'],
     bucket: 'Arrays & Hashing', category: 'Array · DP (Kadane)',
     url: 'https://leetcode.com/problems/maximum-subarray/',
     approach: "Kadane's algorithm: at each step, either extend the current run or restart at the current element. Track the best run seen.",
@@ -343,9 +343,87 @@ public List<String> decode(String s) {
 }`
   },
 
+  {
+    num: 16, title: 'Merge Intervals', d: 'medium', companies: ['Temu'],
+    bucket: 'Arrays & Hashing', category: 'Array · Intervals',
+    url: 'https://leetcode.com/problems/merge-intervals/',
+    approach: 'Sort by start; sweep through and either extend the last group\'s end or start a new group.',
+    complexity: 'O(n log n) time · O(n) space',
+    code: `public int[][] merge(int[][] intervals) {
+  // Sort by start time — overlapping intervals will be adjacent
+  Arrays.sort(intervals, (a, b) -> a[0] - b[0]);
+  List<int[]> merged = new ArrayList<>();
+  for (int[] cur : intervals) {
+    // No overlap with the last group → start a new one
+    if (merged.isEmpty() || merged.get(merged.size() - 1)[1] < cur[0]) {
+      merged.add(cur);
+    } else {
+      // Overlap → extend the last group's END (could be nested, take max)
+      merged.get(merged.size() - 1)[1] = Math.max(merged.get(merged.size() - 1)[1], cur[1]);
+    }
+  }
+  return merged.toArray(new int[0][]);
+}`
+  },
+  {
+    num: 17, title: 'Spiral Matrix', d: 'medium', companies: ['Temu'],
+    bucket: 'Arrays & Hashing', category: 'Matrix',
+    url: 'https://leetcode.com/problems/spiral-matrix/',
+    approach: 'Four shrinking boundaries (top, bottom, left, right). Walk top row L→R, right col T→B, bottom row R→L, left col B→T; then shrink and repeat.',
+    complexity: 'O(R · C) time · O(1) extra space',
+    code: `public List<Integer> spiralOrder(int[][] matrix) {
+  List<Integer> out = new ArrayList<>();
+  // Four boundaries that shrink inward as we peel off layers
+  int top = 0, bottom = matrix.length - 1;
+  int left = 0, right = matrix[0].length - 1;
+  while (top <= bottom && left <= right) {
+    // Top row, left → right
+    for (int c = left; c <= right; c++) out.add(matrix[top][c]);
+    top++;
+    // Right column, top → bottom
+    for (int r = top; r <= bottom; r++) out.add(matrix[r][right]);
+    right--;
+    // Bottom row (only if a row still remains after shrinking top)
+    if (top <= bottom) {
+      for (int c = right; c >= left; c--) out.add(matrix[bottom][c]);
+      bottom--;
+    }
+    // Left column (only if a column still remains after shrinking right)
+    if (left <= right) {
+      for (int r = bottom; r >= top; r--) out.add(matrix[r][left]);
+      left++;
+    }
+  }
+  return out;
+}`
+  },
+  {
+    num: 18, title: 'Rotate Image', d: 'medium', companies: ['Temu'],
+    bucket: 'Arrays & Hashing', category: 'Matrix',
+    url: 'https://leetcode.com/problems/rotate-image/',
+    approach: 'Two-step in-place rotation: transpose the matrix (swap across the main diagonal), then reverse each row. Net effect is a 90° clockwise rotation.',
+    complexity: 'O(n²) time · O(1) space',
+    code: `public void rotate(int[][] matrix) {
+  int n = matrix.length;
+  // Step 1: transpose — swap matrix[i][j] with matrix[j][i] for i < j
+  for (int i = 0; i < n; i++) {
+    for (int j = i + 1; j < n; j++) {
+      int tmp = matrix[i][j]; matrix[i][j] = matrix[j][i]; matrix[j][i] = tmp;
+    }
+  }
+  // Step 2: reverse each row in place — combined with the transpose, that's a 90° clockwise rotation
+  for (int[] row : matrix) {
+    int l = 0, r = n - 1;
+    while (l < r) {
+      int tmp = row[l]; row[l++] = row[r]; row[r--] = tmp;
+    }
+  }
+}`
+  },
+
   // ─── Two Pointers (6) ───
   {
-    num: 16, title: 'Valid Palindrome', d: 'easy',
+    num: 19, title: 'Valid Palindrome', d: 'easy',
     bucket: 'Two Pointers', category: 'String',
     url: 'https://leetcode.com/problems/valid-palindrome/',
     approach: 'Two pointers from each end. Skip non-alphanumeric chars. Compare lowercased.',
@@ -366,7 +444,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 17, title: 'Two Sum II - Input Array Is Sorted', d: 'medium',
+    num: 20, title: 'Two Sum II - Input Array Is Sorted', d: 'medium',
     bucket: 'Two Pointers', category: 'Array',
     url: 'https://leetcode.com/problems/two-sum-ii-input-array-is-sorted/',
     approach: 'Two pointers from each end. Sum too small → advance left; too large → retreat right. O(1) extra space because the array is already sorted.',
@@ -384,7 +462,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 18, title: '3Sum', d: 'medium',
+    num: 21, title: '3Sum', d: 'medium',
     bucket: 'Two Pointers', category: 'Array',
     url: 'https://leetcode.com/problems/3sum/',
     approach: 'Sort. Fix one number, then use two pointers on the rest to find pairs summing to its negation. Skip duplicates carefully on all three positions.',
@@ -413,7 +491,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 19, title: 'Container With Most Water', d: 'medium',
+    num: 22, title: 'Container With Most Water', d: 'medium',
     bucket: 'Two Pointers', category: 'Array',
     url: 'https://leetcode.com/problems/container-with-most-water/',
     approach: 'Two pointers from ends. Area is (r - l) * min(height). Move the SHORTER side inward — moving the taller side can only ever lower the area.',
@@ -432,7 +510,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 20, title: 'Trapping Rain Water', d: 'hard',
+    num: 23, title: 'Trapping Rain Water', d: 'hard',
     bucket: 'Two Pointers', category: 'Array',
     url: 'https://leetcode.com/problems/trapping-rain-water/',
     approach: 'Two pointers + running maxes. Always advance from the shorter side. Water at a position = (sideMax - height) once you know the side max bounds it.',
@@ -458,7 +536,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 21, title: 'Remove Duplicates from Sorted Array', d: 'easy',
+    num: 24, title: 'Remove Duplicates from Sorted Array', d: 'easy',
     bucket: 'Two Pointers', category: 'Array',
     url: 'https://leetcode.com/problems/remove-duplicates-from-sorted-array/',
     approach: 'Two pointers: a write index that only advances when the current element differs from the previous one.',
@@ -474,9 +552,9 @@ public List<String> decode(String s) {
 }`
   },
 
-  // ─── Sliding Window (5) ───
+  // ─── Sliding Window (7) ───
   {
-    num: 22, title: 'Longest Substring Without Repeating Characters', d: 'medium',
+    num: 25, title: 'Longest Substring Without Repeating Characters', d: 'medium',
     bucket: 'Sliding Window', category: 'String',
     url: 'https://leetcode.com/problems/longest-substring-without-repeating-characters/',
     approach: 'Sliding window with a map of char → last index. When we hit a repeat inside the window, jump the left edge past its previous occurrence.',
@@ -499,7 +577,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 23, title: 'Longest Repeating Character Replacement', d: 'medium',
+    num: 26, title: 'Longest Repeating Character Replacement', d: 'medium',
     bucket: 'Sliding Window', category: 'String',
     url: 'https://leetcode.com/problems/longest-repeating-character-replacement/',
     approach: 'Window is valid if (windowLen - maxFreq) <= k (we can flip the rest to match). Shrink when invalid; track max length.',
@@ -522,7 +600,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 24, title: 'Minimum Window Substring', d: 'hard',
+    num: 27, title: 'Minimum Window Substring', d: 'hard',
     bucket: 'Sliding Window', category: 'String',
     url: 'https://leetcode.com/problems/minimum-window-substring/',
     approach: 'Expand right until window contains all needed chars (track via "have == need" matched-count). Then shrink left while still valid, updating the best.',
@@ -549,7 +627,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 25, title: 'Best Time to Buy and Sell Stock II', d: 'medium',
+    num: 28, title: 'Best Time to Buy and Sell Stock II', d: 'medium',
     bucket: 'Sliding Window', category: 'Array · Greedy',
     url: 'https://leetcode.com/problems/best-time-to-buy-and-sell-stock-ii/',
     approach: 'Capture every up-move. The sum of all positive day-to-day differences equals the max profit from unlimited transactions.',
@@ -566,7 +644,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 26, title: 'Permutation in String', d: 'medium',
+    num: 29, title: 'Permutation in String', d: 'medium',
     bucket: 'Sliding Window', category: 'String',
     url: 'https://leetcode.com/problems/permutation-in-string/',
     approach: 'Fixed-size sliding window over s2 of length s1. Track two 26-int frequency counts; on each shift, compare them with Arrays.equals.',
@@ -591,9 +669,53 @@ public List<String> decode(String s) {
 }`
   },
 
-  // ─── Stack (5) ───
   {
-    num: 27, title: 'Valid Parentheses', d: 'easy',
+    num: 30, title: 'Subarray Sum Equals K', d: 'medium', companies: ['Temu'],
+    bucket: 'Sliding Window', category: 'Array · Prefix Sum · Hash Map',
+    url: 'https://leetcode.com/problems/subarray-sum-equals-k/',
+    approach: 'Running prefix sum + hash map. A subarray (j..i] sums to k iff prefix[i] - prefix[j] = k → count how many earlier prefixes equal (current - k).',
+    complexity: 'O(n) time · O(n) space',
+    code: `public int subarraySum(int[] nums, int k) {
+  // Map: prefix sum → how many times we've seen it
+  Map<Integer, Integer> prefixCount = new HashMap<>();
+  prefixCount.put(0, 1);   // the empty prefix has sum 0
+  int sum = 0, count = 0;
+  for (int n : nums) {
+    sum += n;
+    // Each earlier prefix equal to (sum - k) gives one valid subarray ending at this index
+    count += prefixCount.getOrDefault(sum - k, 0);
+    prefixCount.merge(sum, 1, Integer::sum);
+  }
+  return count;
+}`
+  },
+  {
+    num: 31, title: 'Sliding Window Maximum', d: 'hard', companies: ['Temu'],
+    bucket: 'Sliding Window', category: 'Monotonic Deque',
+    url: 'https://leetcode.com/problems/sliding-window-maximum/',
+    approach: 'Monotonic decreasing deque of INDICES. The front always holds the max of the current window; evict the front when it falls out of window.',
+    complexity: 'O(n) time · O(k) space',
+    code: `public int[] maxSlidingWindow(int[] nums, int k) {
+  int n = nums.length;
+  int[] out = new int[n - k + 1];
+  // Deque of indices; values at those indices are strictly decreasing from front to back
+  Deque<Integer> dq = new ArrayDeque<>();
+  for (int i = 0; i < n; i++) {
+    // Drop the front if it's now outside the window
+    if (!dq.isEmpty() && dq.peekFirst() <= i - k) dq.pollFirst();
+    // Maintain monotonic: pop tail values smaller than nums[i] — they can never be max again
+    while (!dq.isEmpty() && nums[dq.peekLast()] < nums[i]) dq.pollLast();
+    dq.offerLast(i);
+    // Record the window's max once we've filled the first window
+    if (i >= k - 1) out[i - k + 1] = nums[dq.peekFirst()];
+  }
+  return out;
+}`
+  },
+
+  // ─── Stack (6) ───
+  {
+    num: 32, title: 'Valid Parentheses', d: 'easy',
     bucket: 'Stack', category: 'String',
     url: 'https://leetcode.com/problems/valid-parentheses/',
     approach: 'Push openers onto a stack. On a closer, pop and check it matches. Empty stack at end == valid.',
@@ -618,7 +740,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 28, title: 'Min Stack', d: 'medium',
+    num: 33, title: 'Min Stack', d: 'medium',
     bucket: 'Stack', category: 'Design',
     url: 'https://leetcode.com/problems/min-stack/',
     approach: 'Keep a parallel "min stack" — push the current min on every push, pop on every pop. top() of min stack is always the running minimum.',
@@ -640,7 +762,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 29, title: 'Evaluate Reverse Polish Notation', d: 'medium',
+    num: 34, title: 'Evaluate Reverse Polish Notation', d: 'medium',
     bucket: 'Stack', category: 'Stack',
     url: 'https://leetcode.com/problems/evaluate-reverse-polish-notation/',
     approach: 'Standard RPN evaluation: push numbers; on an operator pop two, apply, push result. Watch operand order for non-commutative ops (- and /).',
@@ -662,7 +784,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 30, title: 'Daily Temperatures', d: 'medium',
+    num: 35, title: 'Daily Temperatures', d: 'medium',
     bucket: 'Stack', category: 'Monotonic Stack',
     url: 'https://leetcode.com/problems/daily-temperatures/',
     approach: 'Monotonic decreasing stack of indices. When a warmer day appears, pop all colder indices and record (i - poppedIdx) as their answer.',
@@ -685,7 +807,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 31, title: 'Largest Rectangle in Histogram', d: 'hard',
+    num: 36, title: 'Largest Rectangle in Histogram', d: 'hard',
     bucket: 'Stack', category: 'Monotonic Stack',
     url: 'https://leetcode.com/problems/largest-rectangle-in-histogram/',
     approach: 'Monotonic increasing stack of indices. When a shorter bar arrives, pop and compute the rectangle anchored by the popped bar — width spans from one past the new stack top to i-1.',
@@ -711,9 +833,45 @@ public List<String> decode(String s) {
 }`
   },
 
-  // ─── Binary Search (5) ───
   {
-    num: 32, title: 'Binary Search', d: 'easy',
+    num: 37, title: 'Decode String', d: 'medium', companies: ['Temu'],
+    bucket: 'Stack', category: 'String',
+    url: 'https://leetcode.com/problems/decode-string/',
+    approach: 'Two parallel stacks (counts and prefix-strings) plus a running buffer. On "[", push state; on "]", pop and repeat-concatenate.',
+    complexity: 'O(n · max_k) time · O(depth) space',
+    code: `public String decodeString(String s) {
+  // Stacks for the counts and the prefix strings before each '['
+  Deque<Integer> counts = new ArrayDeque<>();
+  Deque<StringBuilder> strs = new ArrayDeque<>();
+  StringBuilder current = new StringBuilder();
+  int k = 0;
+  for (char c : s.toCharArray()) {
+    if (Character.isDigit(c)) {
+      // Handle multi-digit counts like "100[a]"
+      k = k * 10 + (c - '0');
+    } else if (c == '[') {
+      // Save the count and the prefix string; reset for the inner segment
+      counts.push(k);
+      strs.push(current);
+      k = 0;
+      current = new StringBuilder();
+    } else if (c == ']') {
+      // Repeat the inner segment 'times' times, then prepend the saved prefix
+      int times = counts.pop();
+      StringBuilder prev = strs.pop();
+      for (int i = 0; i < times; i++) prev.append(current);
+      current = prev;
+    } else {
+      current.append(c);   // ordinary letter — extend the current segment
+    }
+  }
+  return current.toString();
+}`
+  },
+
+  // ─── Binary Search (6) ───
+  {
+    num: 38, title: 'Binary Search', d: 'easy',
     bucket: 'Binary Search', category: 'Array',
     url: 'https://leetcode.com/problems/binary-search/',
     approach: 'Classic iterative binary search. Use (lo + hi) >>> 1 to avoid integer overflow when lo + hi could exceed MAX_VALUE.',
@@ -732,7 +890,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 33, title: 'Search in Rotated Sorted Array', d: 'medium',
+    num: 39, title: 'Search in Rotated Sorted Array', d: 'medium',
     bucket: 'Binary Search', category: 'Array',
     url: 'https://leetcode.com/problems/search-in-rotated-sorted-array/',
     approach: 'Modified binary search. One half is always sorted. Decide which half by comparing nums[lo] to nums[mid]; check whether target lies in the sorted half.',
@@ -758,7 +916,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 34, title: 'Find Minimum in Rotated Sorted Array', d: 'medium',
+    num: 40, title: 'Find Minimum in Rotated Sorted Array', d: 'medium',
     bucket: 'Binary Search', category: 'Array',
     url: 'https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/',
     approach: 'Binary search comparing mid to the RIGHT end. If nums[mid] > nums[hi], the min is to the right of mid; else it is at mid or to the left.',
@@ -778,7 +936,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 35, title: 'First Bad Version', d: 'easy',
+    num: 41, title: 'First Bad Version', d: 'easy',
     bucket: 'Binary Search', category: 'Array · API',
     url: 'https://leetcode.com/problems/first-bad-version/',
     approach: 'Binary search for the smallest n with isBadVersion(n) == true. Use lo + (hi - lo) / 2 to avoid overflow (Integer.MAX_VALUE input).',
@@ -797,7 +955,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 36, title: 'Median of Two Sorted Arrays', d: 'hard',
+    num: 42, title: 'Median of Two Sorted Arrays', d: 'hard',
     bucket: 'Binary Search', category: 'Array',
     url: 'https://leetcode.com/problems/median-of-two-sorted-arrays/',
     approach: 'Binary search on the partition position of the shorter array. The correct partition makes both left halves total to (m+n+1)/2 and have aLeft <= bRight && bLeft <= aRight.',
@@ -828,9 +986,30 @@ public List<String> decode(String s) {
 }`
   },
 
-  // ─── Linked List (10) ───
   {
-    num: 37, title: 'Reverse Linked List', d: 'easy',
+    num: 43, title: 'Pow(x, n)', d: 'medium', companies: ['Temu'],
+    bucket: 'Binary Search', category: 'Math · Fast Exponentiation',
+    url: 'https://leetcode.com/problems/powx-n/',
+    approach: 'Fast exponentiation by squaring: walk the bits of |n|. Each iteration squares x; bits set to 1 multiply the result.',
+    complexity: 'O(log n) time · O(1) space',
+    code: `public double myPow(double x, int n) {
+  // Promote n to long so we can safely negate Integer.MIN_VALUE
+  long N = n;
+  if (N < 0) { x = 1 / x; N = -N; }
+  // Walk the bits of N. Each iteration: square x, multiply result if the low bit is 1.
+  double result = 1.0;
+  while (N > 0) {
+    if ((N & 1) == 1) result *= x;
+    x *= x;
+    N >>= 1;
+  }
+  return result;
+}`
+  },
+
+  // ─── Linked List (11) ───
+  {
+    num: 44, title: 'Reverse Linked List', d: 'easy',
     bucket: 'Linked List', category: 'Two Pointers',
     url: 'https://leetcode.com/problems/reverse-linked-list/',
     approach: 'Iterative three-pointer reverse: prev, curr, next. Reassign next pointers as you walk.',
@@ -849,7 +1028,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 38, title: 'Merge Two Sorted Lists', d: 'easy',
+    num: 45, title: 'Merge Two Sorted Lists', d: 'easy', companies: ['Temu'],
     bucket: 'Linked List', category: 'Two Pointers',
     url: 'https://leetcode.com/problems/merge-two-sorted-lists/',
     approach: 'Dummy head + tail pointer. Pick the smaller of the two heads each step.',
@@ -869,7 +1048,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 39, title: 'Linked List Cycle', d: 'easy',
+    num: 46, title: 'Linked List Cycle', d: 'easy',
     bucket: 'Linked List', category: 'Two Pointers (Floyd)',
     url: 'https://leetcode.com/problems/linked-list-cycle/',
     approach: "Floyd's tortoise and hare. Slow moves 1, fast moves 2. They meet iff there's a cycle.",
@@ -888,7 +1067,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 40, title: 'Remove Nth Node From End of List', d: 'medium',
+    num: 47, title: 'Remove Nth Node From End of List', d: 'medium',
     bucket: 'Linked List', category: 'Two Pointers',
     url: 'https://leetcode.com/problems/remove-nth-node-from-end-of-list/',
     approach: 'Two-pointer gap of n+1. Use a dummy head so removing the first node is uniform.',
@@ -906,7 +1085,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 41, title: 'Merge K Sorted Lists', d: 'hard',
+    num: 48, title: 'Merge K Sorted Lists', d: 'hard',
     bucket: 'Linked List', category: 'Heap',
     url: 'https://leetcode.com/problems/merge-k-sorted-lists/',
     approach: 'Min-heap of all current heads. Pop the smallest, append, push its successor. O(N log k) where N is total nodes and k is list count.',
@@ -929,7 +1108,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 42, title: 'Add Two Numbers', d: 'medium',
+    num: 49, title: 'Add Two Numbers', d: 'medium',
     bucket: 'Linked List', category: 'Math',
     url: 'https://leetcode.com/problems/add-two-numbers/',
     approach: 'Walk both lists, carrying like in grade-school addition. Continue while either has nodes or carry > 0.',
@@ -951,7 +1130,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 43, title: 'Copy List with Random Pointer', d: 'medium',
+    num: 50, title: 'Copy List with Random Pointer', d: 'medium',
     bucket: 'Linked List', category: 'Hash Map',
     url: 'https://leetcode.com/problems/copy-list-with-random-pointer/',
     approach: 'Two passes with a hash map old → new. First pass clones nodes; second pass wires up next/random using the map. O(n) space; the in-place interleaving trick gets O(1) space but is fiddly.',
@@ -972,7 +1151,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 44, title: 'Reorder List', d: 'medium',
+    num: 51, title: 'Reorder List', d: 'medium',
     bucket: 'Linked List', category: 'Two Pointers',
     url: 'https://leetcode.com/problems/reorder-list/',
     approach: 'Three steps: (1) find the middle via slow/fast; (2) reverse the second half; (3) merge the two halves alternately.',
@@ -1003,7 +1182,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 45, title: 'Find the Duplicate Number', d: 'medium',
+    num: 52, title: 'Find the Duplicate Number', d: 'medium',
     bucket: 'Linked List', category: 'Two Pointers (Floyd)',
     url: 'https://leetcode.com/problems/find-the-duplicate-number/',
     approach: "Treat array as a function i → nums[i]. The duplicate creates a cycle. Use Floyd's: find a meeting point, then reset slow to start and walk both at speed 1.",
@@ -1028,7 +1207,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 46, title: 'LRU Cache', d: 'medium',
+    num: 53, title: 'LRU Cache', d: 'medium', companies: ['Temu'],
     bucket: 'Linked List', category: 'Design',
     url: 'https://leetcode.com/problems/lru-cache/',
     approach: 'Quickest Java solution: extend LinkedHashMap in access-order mode and override removeEldestEntry. Behind the scenes it\'s a hash map + doubly-linked list, the same structure you\'d build by hand.',
@@ -1053,9 +1232,44 @@ public List<String> decode(String s) {
 }`
   },
 
-  // ─── Trees (15) ───
   {
-    num: 47, title: 'Invert Binary Tree', d: 'easy',
+    num: 54, title: 'Sort List', d: 'medium', companies: ['Temu'],
+    bucket: 'Linked List', category: 'Merge Sort',
+    url: 'https://leetcode.com/problems/sort-list/',
+    approach: 'Merge sort: split via slow/fast pointers, recursively sort each half, then merge the two sorted halves.',
+    complexity: 'O(n log n) time · O(log n) recursion',
+    code: `public ListNode sortList(ListNode head) {
+  // 0 or 1 node is already sorted
+  if (head == null || head.next == null) return head;
+  // Step 1: split into two halves. slow ends at the LAST node of the left half.
+  ListNode slow = head, fast = head, prev = null;
+  while (fast != null && fast.next != null) {
+    prev = slow;
+    slow = slow.next;
+    fast = fast.next.next;
+  }
+  prev.next = null;   // sever — now \`head\` and \`slow\` are two independent lists
+  // Step 2: recursively sort each half
+  ListNode left = sortList(head);
+  ListNode right = sortList(slow);
+  // Step 3: merge the two sorted halves
+  return merge(left, right);
+}
+private ListNode merge(ListNode a, ListNode b) {
+  ListNode dummy = new ListNode(0), tail = dummy;
+  while (a != null && b != null) {
+    if (a.val <= b.val) { tail.next = a; a = a.next; }
+    else                { tail.next = b; b = b.next; }
+    tail = tail.next;
+  }
+  tail.next = (a != null) ? a : b;
+  return dummy.next;
+}`
+  },
+
+  // ─── Trees (17) ───
+  {
+    num: 55, title: 'Invert Binary Tree', d: 'easy',
     bucket: 'Trees', category: 'Recursion',
     url: 'https://leetcode.com/problems/invert-binary-tree/',
     approach: 'Recurse: swap children, then recurse on each.',
@@ -1070,7 +1284,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 48, title: 'Maximum Depth of Binary Tree', d: 'easy',
+    num: 56, title: 'Maximum Depth of Binary Tree', d: 'easy',
     bucket: 'Trees', category: 'Recursion',
     url: 'https://leetcode.com/problems/maximum-depth-of-binary-tree/',
     approach: '1 + max(depth(left), depth(right)). Base case: null = 0.',
@@ -1082,7 +1296,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 49, title: 'Same Tree', d: 'easy',
+    num: 57, title: 'Same Tree', d: 'easy',
     bucket: 'Trees', category: 'Recursion',
     url: 'https://leetcode.com/problems/same-tree/',
     approach: 'Both null → true. One null → false. Else values match and recurse on both subtrees.',
@@ -1099,7 +1313,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 50, title: 'Subtree of Another Tree', d: 'easy',
+    num: 58, title: 'Subtree of Another Tree', d: 'easy',
     bucket: 'Trees', category: 'Recursion',
     url: 'https://leetcode.com/problems/subtree-of-another-tree/',
     approach: 'For each node in root, check sameTree against subRoot.',
@@ -1118,7 +1332,7 @@ private boolean isSameTree(TreeNode a, TreeNode b) {
 }`
   },
   {
-    num: 51, title: 'Path Sum', d: 'easy',
+    num: 59, title: 'Path Sum', d: 'easy',
     bucket: 'Trees', category: 'DFS',
     url: 'https://leetcode.com/problems/path-sum/',
     approach: 'DFS subtracting node.val from the running target. A leaf with remainder == 0 wins.',
@@ -1133,7 +1347,7 @@ private boolean isSameTree(TreeNode a, TreeNode b) {
 }`
   },
   {
-    num: 52, title: 'Balanced Binary Tree', d: 'easy',
+    num: 60, title: 'Balanced Binary Tree', d: 'easy',
     bucket: 'Trees', category: 'DFS',
     url: 'https://leetcode.com/problems/balanced-binary-tree/',
     approach: 'Bottom-up DFS returning height; sentinel -1 propagates "unbalanced" upward without recomputing heights.',
@@ -1153,7 +1367,7 @@ private int height(TreeNode node) {
 }`
   },
   {
-    num: 53, title: 'Symmetric Tree', d: 'easy',
+    num: 61, title: 'Symmetric Tree', d: 'easy',
     bucket: 'Trees', category: 'Recursion',
     url: 'https://leetcode.com/problems/symmetric-tree/',
     approach: 'Recurse on mirrored pairs: (left.left, right.right) and (left.right, right.left).',
@@ -1172,7 +1386,7 @@ private boolean mirror(TreeNode a, TreeNode b) {
 }`
   },
   {
-    num: 54, title: 'Binary Tree Level Order Traversal', d: 'medium',
+    num: 62, title: 'Binary Tree Level Order Traversal', d: 'medium',
     bucket: 'Trees', category: 'BFS',
     url: 'https://leetcode.com/problems/binary-tree-level-order-traversal/',
     approach: 'BFS with a queue. For each level, pop exactly the current size, process them as one level.',
@@ -1199,7 +1413,7 @@ private boolean mirror(TreeNode a, TreeNode b) {
 }`
   },
   {
-    num: 55, title: 'Binary Tree Right Side View', d: 'medium',
+    num: 63, title: 'Binary Tree Right Side View', d: 'medium',
     bucket: 'Trees', category: 'BFS',
     url: 'https://leetcode.com/problems/binary-tree-right-side-view/',
     approach: 'Level-order BFS. The last node popped at each level is the visible-from-right one.',
@@ -1223,7 +1437,7 @@ private boolean mirror(TreeNode a, TreeNode b) {
 }`
   },
   {
-    num: 56, title: 'Validate Binary Search Tree', d: 'medium',
+    num: 64, title: 'Validate Binary Search Tree', d: 'medium',
     bucket: 'Trees', category: 'DFS',
     url: 'https://leetcode.com/problems/validate-binary-search-tree/',
     approach: 'Recurse with (min, max) bounds. Each node\'s value must be strictly inside its bounds; pass tightened bounds to children.',
@@ -1242,7 +1456,7 @@ private boolean validate(TreeNode node, long lo, long hi) {
 }`
   },
   {
-    num: 57, title: 'Kth Smallest Element in a BST', d: 'medium',
+    num: 65, title: 'Kth Smallest Element in a BST', d: 'medium',
     bucket: 'Trees', category: 'In-order traversal',
     url: 'https://leetcode.com/problems/kth-smallest-element-in-a-bst/',
     approach: 'Iterative in-order traversal with a stack — gives nodes in ascending order. Count down to k and return.',
@@ -1263,7 +1477,7 @@ private boolean validate(TreeNode node, long lo, long hi) {
 }`
   },
   {
-    num: 58, title: 'Lowest Common Ancestor of BST', d: 'easy',
+    num: 66, title: 'Lowest Common Ancestor of BST', d: 'easy',
     bucket: 'Trees', category: 'BST',
     url: 'https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-search-tree/',
     approach: 'Walk down: if both p,q < current → go left; both > → go right; else current is the split point = LCA.',
@@ -1282,7 +1496,7 @@ private boolean validate(TreeNode node, long lo, long hi) {
 }`
   },
   {
-    num: 59, title: 'Construct Binary Tree from Preorder and Inorder', d: 'medium',
+    num: 67, title: 'Construct Binary Tree from Preorder and Inorder', d: 'medium', companies: ['Temu'],
     bucket: 'Trees', category: 'Recursion',
     url: 'https://leetcode.com/problems/construct-binary-tree-from-preorder-and-inorder-traversal/',
     approach: 'Preorder[0] is the root. Find its index in inorder to split left/right subtrees, recurse. Cache inorder indices in a HashMap for O(1) lookup.',
@@ -1310,7 +1524,7 @@ private TreeNode build(int[] pre, int lo, int hi) {
 }`
   },
   {
-    num: 60, title: 'Binary Tree Maximum Path Sum', d: 'hard',
+    num: 68, title: 'Binary Tree Maximum Path Sum', d: 'hard',
     bucket: 'Trees', category: 'DFS',
     url: 'https://leetcode.com/problems/binary-tree-maximum-path-sum/',
     approach: 'Bottom-up DFS. At each node, the answer-candidate is left + node + right (the U-shape through it). The return value (gain you can extend upward) is node + max(left, right). Clamp left/right to 0 to skip negative subtrees.',
@@ -1336,7 +1550,7 @@ private int gain(TreeNode node) {
 }`
   },
   {
-    num: 61, title: 'Serialize and Deserialize Binary Tree', d: 'hard',
+    num: 69, title: 'Serialize and Deserialize Binary Tree', d: 'hard',
     bucket: 'Trees', category: 'Design · DFS',
     url: 'https://leetcode.com/problems/serialize-and-deserialize-binary-tree/',
     approach: 'Pre-order DFS, writing "#" for null. Deserialize by consuming tokens left-to-right via a queue.',
@@ -1373,9 +1587,52 @@ private TreeNode deserializeHelper(Deque<String> tokens) {
 }`
   },
 
+  {
+    num: 70, title: 'Lowest Common Ancestor of a Binary Tree', d: 'medium', companies: ['Temu'],
+    bucket: 'Trees', category: 'Recursion',
+    url: 'https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-tree/',
+    approach: 'Recursive: if a subtree contains both p and q in opposite branches, this node is the LCA. Otherwise propagate whichever branch found one of them.',
+    complexity: 'O(n) time · O(h) space',
+    code: `public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
+  // Base: null → no LCA. Finding p or q → return as a "found" signal up the call stack.
+  if (root == null || root == p || root == q) return root;
+  // Look in both subtrees
+  TreeNode left  = lowestCommonAncestor(root.left,  p, q);
+  TreeNode right = lowestCommonAncestor(root.right, p, q);
+  // Both sides returned non-null → p and q live in DIFFERENT subtrees, so this node IS the LCA
+  if (left != null && right != null) return root;
+  // Otherwise only one side contains anything — bubble it up
+  return left != null ? left : right;
+}`
+  },
+  {
+    num: 71, title: 'Diameter of Binary Tree', d: 'easy', companies: ['Temu'],
+    bucket: 'Trees', category: 'DFS',
+    url: 'https://leetcode.com/problems/diameter-of-binary-tree/',
+    approach: 'DFS returning each node\'s depth. The diameter through any node is leftDepth + rightDepth; track the global max as we go.',
+    complexity: 'O(n) time · O(h) space',
+    code: `private int diameter;
+
+public int diameterOfBinaryTree(TreeNode root) {
+  diameter = 0;
+  depth(root);
+  return diameter;
+}
+// Returns this subtree's depth; side effect: updates 'diameter' with the longest U-shape through this node
+private int depth(TreeNode node) {
+  if (node == null) return 0;
+  int l = depth(node.left);
+  int r = depth(node.right);
+  // Path THROUGH this node has length l + r edges — candidate for max
+  diameter = Math.max(diameter, l + r);
+  // For the parent's computation, return depth (in edges) — pick the deeper subtree
+  return 1 + Math.max(l, r);
+}`
+  },
+
   // ─── Tries (2) ───
   {
-    num: 62, title: 'Implement Trie (Prefix Tree)', d: 'medium',
+    num: 72, title: 'Implement Trie (Prefix Tree)', d: 'medium',
     bucket: 'Tries', category: 'Design',
     url: 'https://leetcode.com/problems/implement-trie-prefix-tree/',
     approach: 'Each node has 26 children + an "end of word" flag. insert/search/startsWith all walk character by character.',
@@ -1415,7 +1672,7 @@ private TreeNode deserializeHelper(Deque<String> tokens) {
 }`
   },
   {
-    num: 63, title: 'Design Add and Search Words Data Structure', d: 'medium',
+    num: 73, title: 'Design Add and Search Words Data Structure', d: 'medium',
     bucket: 'Tries', category: 'Design · DFS',
     url: 'https://leetcode.com/problems/design-add-and-search-words-data-structure/',
     approach: 'Trie + DFS search. Wildcard "." branches into all 26 children at that level.',
@@ -1458,7 +1715,7 @@ private TreeNode deserializeHelper(Deque<String> tokens) {
 
   // ─── Heap / Priority Queue (4) ───
   {
-    num: 64, title: 'Kth Largest Element in an Array', d: 'medium',
+    num: 74, title: 'Kth Largest Element in an Array', d: 'medium',
     bucket: 'Heap / Priority Queue', category: 'Heap',
     url: 'https://leetcode.com/problems/kth-largest-element-in-an-array/',
     approach: 'Min-heap of size k. After processing all elements, the heap holds the k largest; its top is the answer. Quickselect achieves O(n) average but is trickier.',
@@ -1476,7 +1733,7 @@ private TreeNode deserializeHelper(Deque<String> tokens) {
 }`
   },
   {
-    num: 65, title: 'Find Median from Data Stream', d: 'hard',
+    num: 75, title: 'Find Median from Data Stream', d: 'hard',
     bucket: 'Heap / Priority Queue', category: 'Design',
     url: 'https://leetcode.com/problems/find-median-from-data-stream/',
     approach: 'Two heaps: a max-heap for the lower half, a min-heap for the upper half. Keep their sizes balanced within 1. Median is from the larger one, or the average of both tops.',
@@ -1505,7 +1762,7 @@ private TreeNode deserializeHelper(Deque<String> tokens) {
 }`
   },
   {
-    num: 66, title: 'Kth Smallest Element in a Sorted Matrix', d: 'medium',
+    num: 76, title: 'Kth Smallest Element in a Sorted Matrix', d: 'medium',
     bucket: 'Heap / Priority Queue', category: 'Heap',
     url: 'https://leetcode.com/problems/kth-smallest-element-in-a-sorted-matrix/',
     approach: 'Seed a min-heap with the first column. Each pop pushes the next element in its row. Stop after k pops.',
@@ -1529,7 +1786,7 @@ private TreeNode deserializeHelper(Deque<String> tokens) {
 }`
   },
   {
-    num: 67, title: 'Reorganize String', d: 'medium',
+    num: 77, title: 'Reorganize String', d: 'medium',
     bucket: 'Heap / Priority Queue', category: 'Greedy · Heap',
     url: 'https://leetcode.com/problems/reorganize-string/',
     approach: 'Greedy: always pick the highest-count remaining char that isn\'t the previous one. Use a max-heap; hold the previous char aside until the next char is appended.',
@@ -1558,7 +1815,7 @@ private TreeNode deserializeHelper(Deque<String> tokens) {
 
   // ─── Backtracking (6) ───
   {
-    num: 68, title: 'Subsets', d: 'medium',
+    num: 78, title: 'Subsets', d: 'medium',
     bucket: 'Backtracking', category: 'Backtracking',
     url: 'https://leetcode.com/problems/subsets/',
     approach: 'Backtrack: for each index, choose to include or skip. Add current path at every recursive call.',
@@ -1580,7 +1837,7 @@ private void dfs(int[] nums, int i, List<Integer> path, List<List<Integer>> out)
 }`
   },
   {
-    num: 69, title: 'Permutations', d: 'medium',
+    num: 79, title: 'Permutations', d: 'medium',
     bucket: 'Backtracking', category: 'Backtracking',
     url: 'https://leetcode.com/problems/permutations/',
     approach: 'Backtrack with a "used" array. At each level, try every unused element; recurse; undo.',
@@ -1603,7 +1860,7 @@ private void dfs(int[] nums, boolean[] used, List<Integer> path, List<List<Integ
 }`
   },
   {
-    num: 70, title: 'Combination Sum', d: 'medium',
+    num: 80, title: 'Combination Sum', d: 'medium',
     bucket: 'Backtracking', category: 'Backtracking',
     url: 'https://leetcode.com/problems/combination-sum/',
     approach: 'Backtrack with a start index (lets us reuse the same element). Stop branches where the running sum exceeds target.',
@@ -1628,7 +1885,7 @@ private void dfs(int[] nums, int start, int remain, List<Integer> path, List<Lis
 }`
   },
   {
-    num: 71, title: 'Letter Combinations of a Phone Number', d: 'medium',
+    num: 81, title: 'Letter Combinations of a Phone Number', d: 'medium',
     bucket: 'Backtracking', category: 'Backtracking',
     url: 'https://leetcode.com/problems/letter-combinations-of-a-phone-number/',
     approach: 'For each digit, append each of its letters and recurse on the next digit. Cap path at digits.length.',
@@ -1656,7 +1913,7 @@ private void dfs(String digits, int i, StringBuilder path, List<String> out) {
 }`
   },
   {
-    num: 72, title: 'Generate Parentheses', d: 'medium',
+    num: 82, title: 'Generate Parentheses', d: 'medium',
     bucket: 'Backtracking', category: 'Backtracking',
     url: 'https://leetcode.com/problems/generate-parentheses/',
     approach: 'Track running open and close counts. Add "(" while open < n; add ")" while close < open. Done when length == 2n.',
@@ -1684,7 +1941,7 @@ private void dfs(int n, int open, int close, StringBuilder sb, List<String> out)
 }`
   },
   {
-    num: 73, title: 'N-Queens', d: 'hard',
+    num: 83, title: 'N-Queens', d: 'hard',
     bucket: 'Backtracking', category: 'Backtracking',
     url: 'https://leetcode.com/problems/n-queens/',
     approach: 'Row-by-row backtracking with three sets of constraints: occupied columns, "/" diagonals (r + c), and "\\" diagonals (r - c + n).',
@@ -1727,7 +1984,7 @@ private List<String> build(int[] q, int n) {
 
   // ─── Graphs (8) ───
   {
-    num: 74, title: 'Number of Islands', d: 'medium',
+    num: 84, title: 'Number of Islands', d: 'medium',
     bucket: 'Graphs', category: 'DFS / BFS',
     url: 'https://leetcode.com/problems/number-of-islands/',
     approach: 'Walk the grid. On a 1, increment count and flood-fill (DFS) to mark the whole island as visited (overwrite to 0).',
@@ -1752,7 +2009,7 @@ private void dfs(char[][] g, int r, int c) {
 }`
   },
   {
-    num: 75, title: 'Clone Graph', d: 'medium',
+    num: 85, title: 'Clone Graph', d: 'medium',
     bucket: 'Graphs', category: 'DFS · Hash Map',
     url: 'https://leetcode.com/problems/clone-graph/',
     approach: 'DFS with a map from original node → cloned node. On revisit, return the existing clone — that handles cycles.',
@@ -1773,7 +2030,7 @@ public Node cloneGraph(Node node) {
 }`
   },
   {
-    num: 76, title: 'Course Schedule', d: 'medium',
+    num: 86, title: 'Course Schedule', d: 'medium',
     bucket: 'Graphs', category: 'Topological Sort',
     url: 'https://leetcode.com/problems/course-schedule/',
     approach: "Cycle detection. Use Kahn's algorithm (BFS on in-degrees): if you can process all N courses, there's no cycle.",
@@ -1801,7 +2058,7 @@ public Node cloneGraph(Node node) {
 }`
   },
   {
-    num: 77, title: 'Pacific Atlantic Water Flow', d: 'medium',
+    num: 87, title: 'Pacific Atlantic Water Flow', d: 'medium',
     bucket: 'Graphs', category: 'DFS',
     url: 'https://leetcode.com/problems/pacific-atlantic-water-flow/',
     approach: 'DFS *inward* from each ocean (reversing flow direction). A cell reachable from both ocean sets is the answer.',
@@ -1830,7 +2087,7 @@ private void dfs(int[][] h, int r, int c, boolean[][] seen, int prev) {
 }`
   },
   {
-    num: 78, title: 'Rotting Oranges', d: 'medium',
+    num: 88, title: 'Rotting Oranges', d: 'medium',
     bucket: 'Graphs', category: 'BFS',
     url: 'https://leetcode.com/problems/rotting-oranges/',
     approach: 'Multi-source BFS from every initially rotten orange. Each BFS level corresponds to one minute; track fresh count and stop when zero.',
@@ -1865,7 +2122,7 @@ private void dfs(int[][] h, int r, int c, boolean[][] seen, int prev) {
 }`
   },
   {
-    num: 79, title: 'Word Search', d: 'medium',
+    num: 89, title: 'Word Search', d: 'medium',
     bucket: 'Graphs', category: 'DFS · Backtracking',
     url: 'https://leetcode.com/problems/word-search/',
     approach: 'DFS from each cell. Mark visited by overwriting with a sentinel char; restore on backtrack to allow other paths.',
@@ -1892,7 +2149,7 @@ private boolean dfs(char[][] b, int r, int c, String w, int i) {
 }`
   },
   {
-    num: 80, title: 'Walls and Gates', d: 'medium',
+    num: 90, title: 'Walls and Gates', d: 'medium',
     bucket: 'Graphs', category: 'BFS',
     url: 'https://leetcode.com/problems/walls-and-gates/',
     approach: 'Multi-source BFS from every gate (cell == 0) simultaneously. Each cell\'s distance is its BFS depth — only update if currently INF.',
@@ -1919,7 +2176,7 @@ private boolean dfs(char[][] b, int r, int c, String w, int i) {
 }`
   },
   {
-    num: 81, title: 'Surrounded Regions', d: 'medium',
+    num: 91, title: 'Surrounded Regions', d: 'medium',
     bucket: 'Graphs', category: 'DFS',
     url: 'https://leetcode.com/problems/surrounded-regions/',
     approach: 'Inverse trick: DFS from border O\'s and mark them with a temp char "#" (they survive). Then sweep: O → X (surrounded), # → O (saved).',
@@ -1946,7 +2203,7 @@ private void dfs(char[][] b, int r, int c) {
 
   // ─── Advanced Graphs (3) ───
   {
-    num: 82, title: 'Network Delay Time', d: 'medium',
+    num: 92, title: 'Network Delay Time', d: 'medium',
     bucket: 'Advanced Graphs', category: 'Dijkstra',
     url: 'https://leetcode.com/problems/network-delay-time/',
     approach: "Dijkstra's from node k. Answer is the max final distance — or -1 if any node is unreachable.",
@@ -1986,7 +2243,7 @@ private void dfs(char[][] b, int r, int c) {
 }`
   },
   {
-    num: 83, title: 'Reconstruct Itinerary', d: 'hard',
+    num: 93, title: 'Reconstruct Itinerary', d: 'hard',
     bucket: 'Advanced Graphs', category: 'Eulerian Path (Hierholzer)',
     url: 'https://leetcode.com/problems/reconstruct-itinerary/',
     approach: "Hierholzer's algorithm for Eulerian paths. Store outgoing edges in min-heaps so we always pick the lexicographically smallest. Reverse-add to the result.",
@@ -2016,7 +2273,7 @@ private void dfs(char[][] b, int r, int c) {
 }`
   },
   {
-    num: 84, title: 'Word Ladder', d: 'hard',
+    num: 94, title: 'Word Ladder', d: 'hard',
     bucket: 'Advanced Graphs', category: 'BFS',
     url: 'https://leetcode.com/problems/word-ladder/',
     approach: 'BFS over words. For each level, mutate each position to every letter; enqueue any word still in the unused-set. Remove on enqueue to avoid re-visits.',
@@ -2055,7 +2312,7 @@ private void dfs(char[][] b, int r, int c) {
 
   // ─── Dynamic Programming - 1D (10) ───
   {
-    num: 85, title: 'Climbing Stairs', d: 'easy',
+    num: 95, title: 'Climbing Stairs', d: 'easy',
     bucket: 'Dynamic Programming - 1D', category: 'Fibonacci',
     url: 'https://leetcode.com/problems/climbing-stairs/',
     approach: 'ways(n) = ways(n-1) + ways(n-2). Iterate with two variables — O(1) space.',
@@ -2072,7 +2329,7 @@ private void dfs(char[][] b, int r, int c) {
 }`
   },
   {
-    num: 86, title: 'House Robber', d: 'medium',
+    num: 96, title: 'House Robber', d: 'medium', companies: ['Temu'],
     bucket: 'Dynamic Programming - 1D', category: 'DP',
     url: 'https://leetcode.com/problems/house-robber/',
     approach: 'At each house: either rob it (skip the previous) or skip it. dp[i] = max(dp[i-1], dp[i-2] + nums[i]). Roll with two variables.',
@@ -2089,7 +2346,7 @@ private void dfs(char[][] b, int r, int c) {
 }`
   },
   {
-    num: 87, title: 'House Robber II', d: 'medium',
+    num: 97, title: 'House Robber II', d: 'medium',
     bucket: 'Dynamic Programming - 1D', category: 'DP · Circular',
     url: 'https://leetcode.com/problems/house-robber-ii/',
     approach: 'Houses are in a circle — first and last are adjacent. Solve House Robber twice: once excluding the first house, once excluding the last; take the max.',
@@ -2112,7 +2369,7 @@ private int robRange(int[] nums, int lo, int hi) {
 }`
   },
   {
-    num: 88, title: 'Coin Change', d: 'medium',
+    num: 98, title: 'Coin Change', d: 'medium',
     bucket: 'Dynamic Programming - 1D', category: 'Unbounded Knapsack',
     url: 'https://leetcode.com/problems/coin-change/',
     approach: 'dp[i] = fewest coins to make amount i. For each amount, try every coin and take 1 + dp[i - coin]. Unreachable amounts stay at +infinity.',
@@ -2133,7 +2390,7 @@ private int robRange(int[] nums, int lo, int hi) {
 }`
   },
   {
-    num: 89, title: 'Longest Increasing Subsequence', d: 'medium',
+    num: 99, title: 'Longest Increasing Subsequence', d: 'medium',
     bucket: 'Dynamic Programming - 1D', category: 'DP · Binary Search',
     url: 'https://leetcode.com/problems/longest-increasing-subsequence/',
     approach: 'Patience sort: maintain "tails" — tails[k] is the smallest possible tail of an increasing subsequence of length k+1. Binary-search to place each element.',
@@ -2153,7 +2410,7 @@ private int robRange(int[] nums, int lo, int hi) {
 }`
   },
   {
-    num: 90, title: 'Word Break', d: 'medium',
+    num: 100, title: 'Word Break', d: 'medium',
     bucket: 'Dynamic Programming - 1D', category: 'DP · String',
     url: 'https://leetcode.com/problems/word-break/',
     approach: 'dp[i] = can s[0..i] be segmented? dp[i] is true if some dp[j] is true AND s[j..i] is in the dictionary.',
@@ -2173,7 +2430,7 @@ private int robRange(int[] nums, int lo, int hi) {
 }`
   },
   {
-    num: 91, title: 'Decode Ways', d: 'medium',
+    num: 101, title: 'Decode Ways', d: 'medium',
     bucket: 'Dynamic Programming - 1D', category: 'DP · String',
     url: 'https://leetcode.com/problems/decode-ways/',
     approach: 'dp[i] = decodings of s[0..i]. Add dp[i-1] if s[i] is 1-9; add dp[i-2] if the two-digit chunk s[i-1..i] is 10-26.',
@@ -2196,7 +2453,7 @@ private int robRange(int[] nums, int lo, int hi) {
 }`
   },
   {
-    num: 92, title: 'Jump Game', d: 'medium',
+    num: 102, title: 'Jump Game', d: 'medium',
     bucket: 'Dynamic Programming - 1D', category: 'Greedy',
     url: 'https://leetcode.com/problems/jump-game/',
     approach: 'Greedy: track the furthest reachable index. If i ever exceeds reach, we\'re stuck.',
@@ -2213,7 +2470,7 @@ private int robRange(int[] nums, int lo, int hi) {
 }`
   },
   {
-    num: 93, title: 'Jump Game II', d: 'medium',
+    num: 103, title: 'Jump Game II', d: 'medium',
     bucket: 'Dynamic Programming - 1D', category: 'Greedy · BFS-like',
     url: 'https://leetcode.com/problems/jump-game-ii/',
     approach: 'BFS-by-jumps: extend the "current jump end". Whenever i hits end, we must jump; new end becomes farthest seen so far.',
@@ -2231,7 +2488,7 @@ private int robRange(int[] nums, int lo, int hi) {
 }`
   },
   {
-    num: 94, title: 'Longest Palindromic Substring', d: 'medium',
+    num: 104, title: 'Longest Palindromic Substring', d: 'medium',
     bucket: 'Dynamic Programming - 1D', category: 'Expand Around Center',
     url: 'https://leetcode.com/problems/longest-palindromic-substring/',
     approach: 'Expand around each center (both odd and even centers). O(n²); the classic DP table is the same complexity but uses O(n²) space.',
@@ -2258,7 +2515,7 @@ private int expand(String s, int l, int r) {
 
   // ─── Dynamic Programming - 2D (5) ───
   {
-    num: 95, title: 'Unique Paths', d: 'medium',
+    num: 105, title: 'Unique Paths', d: 'medium',
     bucket: 'Dynamic Programming - 2D', category: 'Grid',
     url: 'https://leetcode.com/problems/unique-paths/',
     approach: 'dp[r][c] = ways to reach (r,c) = dp[r-1][c] + dp[r][c-1]. Compress to O(C) space with a rolling row.',
@@ -2278,7 +2535,7 @@ private int expand(String s, int l, int r) {
 }`
   },
   {
-    num: 96, title: 'Longest Common Subsequence', d: 'medium',
+    num: 106, title: 'Longest Common Subsequence', d: 'medium',
     bucket: 'Dynamic Programming - 2D', category: 'String',
     url: 'https://leetcode.com/problems/longest-common-subsequence/',
     approach: 'dp[i][j] = LCS length of text1[0..i] and text2[0..j]. If chars match: dp[i-1][j-1] + 1; else max(dp[i-1][j], dp[i][j-1]).',
@@ -2302,7 +2559,7 @@ private int expand(String s, int l, int r) {
 }`
   },
   {
-    num: 97, title: 'Edit Distance', d: 'hard',
+    num: 107, title: 'Edit Distance', d: 'hard',
     bucket: 'Dynamic Programming - 2D', category: 'String',
     url: 'https://leetcode.com/problems/edit-distance/',
     approach: 'dp[i][j] = edits to turn word1[0..i] into word2[0..j]. If chars equal: inherit dp[i-1][j-1]. Else 1 + min(replace, delete, insert).',
@@ -2331,7 +2588,7 @@ private int expand(String s, int l, int r) {
 }`
   },
   {
-    num: 98, title: 'Partition Equal Subset Sum', d: 'medium',
+    num: 108, title: 'Partition Equal Subset Sum', d: 'medium',
     bucket: 'Dynamic Programming - 2D', category: '0/1 Knapsack',
     url: 'https://leetcode.com/problems/partition-equal-subset-sum/',
     approach: 'Classic 0/1 knapsack rolled to 1D. Total sum must be even; target = sum / 2. dp[t] = can we make sum t? Walk amounts in reverse so each number is used at most once.',
@@ -2353,7 +2610,7 @@ private int expand(String s, int l, int r) {
 }`
   },
   {
-    num: 99, title: 'Maximal Square', d: 'medium',
+    num: 109, title: 'Maximal Square', d: 'medium',
     bucket: 'Dynamic Programming - 2D', category: 'Grid',
     url: 'https://leetcode.com/problems/maximal-square/',
     approach: 'dp[r][c] = side length of the largest all-1 square whose bottom-right is (r,c). If cell is 1: 1 + min(top, left, top-left). Track max side.',
@@ -2384,7 +2641,7 @@ private int expand(String s, int l, int r) {
 
   // ─── Greedy (1) ───
   {
-    num: 100, title: 'Gas Station', d: 'medium',
+    num: 110, title: 'Gas Station', d: 'medium',
     bucket: 'Greedy', category: 'Array',
     url: 'https://leetcode.com/problems/gas-station/',
     approach: 'If total gas - total cost < 0, impossible. Otherwise, the answer is the first index from which the running tank never goes negative — restart whenever it does.',
