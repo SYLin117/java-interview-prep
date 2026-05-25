@@ -889,6 +889,35 @@
     font-size: 0.85em;
     background: rgba(255, 255, 255, 0.7);
   }
+  .lc-detail .lc-algo-example-lbl {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #846100;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 0.7rem;
+    margin-bottom: 0.25rem;
+  }
+  .lc-detail .lc-algo-example {
+    background: #fffcf2;
+    border: 1px solid #f0d97a;
+    border-radius: 4px;
+    padding: 0.6rem 0.8rem;
+    margin-top: 0;
+    overflow-x: auto;
+    box-shadow: none;
+  }
+  .lc-detail .lc-algo-example code {
+    font-family: "JetBrains Mono", "SF Mono", Consolas, "Liberation Mono", monospace;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    color: var(--text);
+    background: transparent;
+    border: none;
+    padding: 0;
+    display: block;
+    white-space: pre;
+  }
   .lc-detail .lbl {
     font-size: 0.7rem;
     font-weight: 600;
@@ -1259,7 +1288,10 @@
             ? `<div class="lbl">Algorithm</div>` + problemAlgorithms[p.num].map(key => {
                 const algo = namedAlgorithms[key];
                 if (!algo) return '';
-                return `<div class="lc-algo"><div class="lc-algo-name">${escapeHtml(algo.name)}</div><div class="lc-algo-text">${algo.explanation}</div></div>`;
+                const exampleBlock = algo.example
+                  ? `<div class="lc-algo-example-lbl">Example</div><pre class="lc-algo-example"><code>${escapeHtml(algo.example)}</code></pre>`
+                  : '';
+                return `<div class="lc-algo"><div class="lc-algo-name">${escapeHtml(algo.name)}</div><div class="lc-algo-text">${algo.explanation}</div>${exampleBlock}</div>`;
               }).join('')
             : ''}
           <div class="lbl">Complexity</div>
