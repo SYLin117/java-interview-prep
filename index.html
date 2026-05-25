@@ -866,6 +866,29 @@
     font-size: 0.85em;
     background: var(--bg-soft);
   }
+  .lc-detail .lc-algo {
+    background: #fff8e6;
+    border: 1px solid #f0d97a;
+    border-radius: 6px;
+    padding: 0.6rem 0.85rem 0.7rem;
+    margin-top: 0.3rem;
+  }
+  .lc-detail .lc-algo + .lc-algo { margin-top: 0.45rem; }
+  .lc-detail .lc-algo-name {
+    font-size: 0.83rem;
+    font-weight: 700;
+    color: #846100;
+    margin-bottom: 0.2rem;
+  }
+  .lc-detail .lc-algo-text {
+    font-size: 0.88rem;
+    color: var(--text);
+    line-height: 1.55;
+  }
+  .lc-detail .lc-algo code {
+    font-size: 0.85em;
+    background: rgba(255, 255, 255, 0.7);
+  }
   .lc-detail .lbl {
     font-size: 0.7rem;
     font-weight: 600;
@@ -1051,6 +1074,7 @@
 <script src="content.js"></script>
 <script src="leetcode.js"></script>
 <script src="descriptions.js"></script>
+<script src="algorithms.js"></script>
 <script>
   const allTopics = [...topics, extras];
 
@@ -1231,6 +1255,13 @@
             : ''}
           <div class="lbl">Approach</div>
           <div>${escapeHtml(p.approach)}</div>
+          ${typeof problemAlgorithms !== 'undefined' && problemAlgorithms[p.num]
+            ? `<div class="lbl">Algorithm</div>` + problemAlgorithms[p.num].map(key => {
+                const algo = namedAlgorithms[key];
+                if (!algo) return '';
+                return `<div class="lc-algo"><div class="lc-algo-name">${escapeHtml(algo.name)}</div><div class="lc-algo-text">${algo.explanation}</div></div>`;
+              }).join('')
+            : ''}
           <div class="lbl">Complexity</div>
           <div>${escapeHtml(p.complexity)}</div>
           <div class="lbl">Java</div>
