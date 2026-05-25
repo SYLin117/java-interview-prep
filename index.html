@@ -745,6 +745,23 @@
     text-transform: uppercase;
     line-height: 1.2;
   }
+  /* ─── Sticky filter bar (wraps the chips on both Topics + LeetCode views) ─── */
+  .filter-bar {
+    position: sticky;
+    top: 57px;                                  /* sits flush under the sticky header */
+    background: rgba(255, 255, 255, 0.95);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+    z-index: 50;
+  }
+  .filter-bar-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0.7rem 1.5rem;
+  }
+  .filter-bar .lc-filters { margin-bottom: 0; }   /* bar provides outer spacing */
+
   /* ─── LeetCode filter chips (category + tag) ─── */
   .lc-filters {
     margin-bottom: 1rem;
@@ -800,6 +817,11 @@
   }
   @media (max-width: 480px) {
     .lc-chip { padding: 0.25rem 0.55rem; font-size: 0.72rem; }
+  }
+  /* Header wraps on mobile → filter bar drops further down to clear it */
+  @media (max-width: 768px) {
+    .filter-bar { top: 102px; }
+    .filter-bar-inner { padding: 0.55rem 1rem; }
   }
   .lc-toggle {
     color: var(--text-faint);
@@ -970,9 +992,11 @@
   </div>
 </section>
 
-<main class="section">
-  <div class="lc-filters" id="topic-filters" aria-label="Filter topics"></div>
-</main>
+<div class="filter-bar">
+  <div class="filter-bar-inner">
+    <div class="lc-filters" id="topic-filters" aria-label="Filter topics"></div>
+  </div>
+</div>
 
 <main id="content"></main>
 
@@ -992,8 +1016,13 @@
     </p>
   </section>
 
+  <div class="filter-bar">
+    <div class="filter-bar-inner">
+      <div class="lc-filters" id="leetcode-filters" aria-label="Filter problems"></div>
+    </div>
+  </div>
+
   <main class="section">
-    <div class="lc-filters" id="leetcode-filters" aria-label="Filter problems"></div>
     <div class="lc-table" id="leetcode-table"></div>
   </main>
 </div><!-- /#leetcode-view -->
