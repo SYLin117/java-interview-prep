@@ -3,3 +3,7 @@
 node_modules
 *.log
 .claude/
+
+# Scratch/working artifacts for the content-enhancement pass (not deliverables)
+tools/
+*.gen.js
