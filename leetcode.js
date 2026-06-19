@@ -13,9 +13,47 @@
 //   class Node     { int val; Node next; Node random; List<Node> neighbors; ... }
 
 const leetcode = [
-  // ─── Arrays & Hashing (18) ───
+  // ─── Arrays & Hashing (20) ───
   {
-    num: 1, title: 'Two Sum', d: 'easy', companies: ['Temu'],
+    num: 111, title: 'Longest Common Prefix', d: 'easy', companies: ['Garmin'],
+    bucket: 'Arrays & Hashing', category: 'String · Scan',
+    url: 'https://leetcode.com/problems/longest-common-prefix/',
+    approach: 'Start with the first string as the candidate prefix. For each remaining string, trim the prefix from the right until it\'s a prefix of that string. Stop early if it becomes empty.',
+    complexity: 'O(S) time (S = total chars) · O(1) space',
+    code: `public String longestCommonPrefix(String[] strs) {
+  if (strs == null || strs.length == 0) return "";
+  // Assume the whole first string is the prefix, then chip it down as others disagree
+  String prefix = strs[0];
+  for (int i = 1; i < strs.length; i++) {
+    // Shorten from the right until strs[i] starts with it; empty means no common prefix
+    while (!strs[i].startsWith(prefix)) {
+      prefix = prefix.substring(0, prefix.length() - 1);
+      if (prefix.isEmpty()) return "";
+    }
+  }
+  return prefix;
+}`
+  },
+  {
+    num: 115, title: 'FizzBuzz', d: 'easy', companies: ['Garmin'],
+    bucket: 'Arrays & Hashing', category: 'Math · Simulation',
+    url: 'https://leetcode.com/problems/fizz-buzz/',
+    approach: 'Check divisibility by 15 first (covers both), then 3, then 5, else the number itself.',
+    complexity: 'O(n) time · O(n) space (output)',
+    code: `public List<String> fizzBuzz(int n) {
+  List<String> result = new ArrayList<>();
+  for (int i = 1; i <= n; i++) {
+    // Order matters: test 15 first, or a multiple of both 3 and 5 gets grabbed early
+    if (i % 15 == 0)      result.add("FizzBuzz");
+    else if (i % 3 == 0)  result.add("Fizz");
+    else if (i % 5 == 0)  result.add("Buzz");
+    else                  result.add(String.valueOf(i));
+  }
+  return result;
+}`
+  },
+  {
+    num: 1, title: 'Two Sum', d: 'easy', companies: ['Temu', 'Garmin'],
     bucket: 'Arrays & Hashing', category: 'Array · Hash Map',
     url: 'https://leetcode.com/problems/two-sum/',
     approach: 'One-pass hash map: for each element, check if its complement (target - num) is already in the map. If yes, return both indices; otherwise, store this index.',
@@ -36,7 +74,7 @@ const leetcode = [
 }`
   },
   {
-    num: 2, title: 'Best Time to Buy and Sell Stock', d: 'easy',
+    num: 2, title: 'Best Time to Buy and Sell Stock', d: 'easy', companies: ['Garmin'],
     bucket: 'Arrays & Hashing', category: 'Array · Greedy',
     url: 'https://leetcode.com/problems/best-time-to-buy-and-sell-stock/',
     approach: 'Track the minimum price seen so far. For each day, update the best profit as price minus that min.',
@@ -53,7 +91,7 @@ const leetcode = [
 }`
   },
   {
-    num: 3, title: 'Contains Duplicate', d: 'easy',
+    num: 3, title: 'Contains Duplicate', d: 'easy', companies: ['Garmin'],
     bucket: 'Arrays & Hashing', category: 'Array · Hash Set',
     url: 'https://leetcode.com/problems/contains-duplicate/',
     approach: 'Hash set: add as you go; if .add() returns false, you have a duplicate.',
@@ -68,7 +106,7 @@ const leetcode = [
 }`
   },
   {
-    num: 4, title: 'Valid Anagram', d: 'easy',
+    num: 4, title: 'Valid Anagram', d: 'easy', companies: ['Garmin'],
     bucket: 'Arrays & Hashing', category: 'String · Hash Map',
     url: 'https://leetcode.com/problems/valid-anagram/',
     approach: 'Count characters in one string, decrement in the other, check all counts are zero. For ASCII-only inputs an int[26] is faster than a HashMap.',
@@ -87,7 +125,7 @@ const leetcode = [
 }`
   },
   {
-    num: 5, title: 'Group Anagrams', d: 'medium',
+    num: 5, title: 'Group Anagrams', d: 'medium', companies: ['Garmin'],
     bucket: 'Arrays & Hashing', category: 'String · Hash Map',
     url: 'https://leetcode.com/problems/group-anagrams/',
     approach: 'Group by a canonical key — either the sorted string or a 26-char count signature.',
@@ -140,7 +178,7 @@ const leetcode = [
 }`
   },
   {
-    num: 7, title: 'Product of Array Except Self', d: 'medium',
+    num: 7, title: 'Product of Array Except Self', d: 'medium', companies: ['Garmin'],
     bucket: 'Arrays & Hashing', category: 'Array · Prefix Product',
     url: 'https://leetcode.com/problems/product-of-array-except-self/',
     approach: 'Two passes without division. First pass: result[i] = product of all elements to the LEFT. Second pass: multiply by product of elements to the RIGHT.',
@@ -240,7 +278,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 11, title: 'Maximum Subarray', d: 'medium', companies: ['Temu'],
+    num: 11, title: 'Maximum Subarray', d: 'medium', companies: ['Temu', 'Garmin'],
     bucket: 'Arrays & Hashing', category: 'Array · DP (Kadane)',
     url: 'https://leetcode.com/problems/maximum-subarray/',
     approach: "Kadane's algorithm: at each step, either extend the current run or restart at the current element. Track the best run seen.",
@@ -285,7 +323,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 13, title: 'Move Zeroes', d: 'easy',
+    num: 13, title: 'Move Zeroes', d: 'easy', companies: ['Garmin'],
     bucket: 'Arrays & Hashing', category: 'Array · Two Pointers',
     url: 'https://leetcode.com/problems/move-zeroes/',
     approach: 'Two pointers: a write index that only advances on non-zero. After one pass, fill the tail with zeros.',
@@ -351,7 +389,7 @@ public List<String> decode(String s) {
   },
 
   {
-    num: 16, title: 'Merge Intervals', d: 'medium', companies: ['Temu'],
+    num: 16, title: 'Merge Intervals', d: 'medium', companies: ['Temu', 'Garmin'],
     bucket: 'Arrays & Hashing', category: 'Array · Intervals',
     url: 'https://leetcode.com/problems/merge-intervals/',
     approach: 'Sort by start; sweep through and either extend the last group\'s end or start a new group.',
@@ -430,7 +468,7 @@ public List<String> decode(String s) {
 
   // ─── Two Pointers (6) ───
   {
-    num: 19, title: 'Valid Palindrome', d: 'easy',
+    num: 19, title: 'Valid Palindrome', d: 'easy', companies: ['Garmin'],
     bucket: 'Two Pointers', category: 'String',
     url: 'https://leetcode.com/problems/valid-palindrome/',
     approach: 'Two pointers from each end. Skip non-alphanumeric chars. Compare lowercased.',
@@ -469,7 +507,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 21, title: '3Sum', d: 'medium',
+    num: 21, title: '3Sum', d: 'medium', companies: ['Garmin'],
     bucket: 'Two Pointers', category: 'Array',
     url: 'https://leetcode.com/problems/3sum/',
     approach: 'Sort. Fix one number, then use two pointers on the rest to find pairs summing to its negation. Skip duplicates carefully on all three positions.',
@@ -498,7 +536,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 22, title: 'Container With Most Water', d: 'medium',
+    num: 22, title: 'Container With Most Water', d: 'medium', companies: ['Garmin'],
     bucket: 'Two Pointers', category: 'Array',
     url: 'https://leetcode.com/problems/container-with-most-water/',
     approach: 'Two pointers from ends. Area is (r - l) * min(height). Move the SHORTER side inward — moving the taller side can only ever lower the area.',
@@ -559,9 +597,28 @@ public List<String> decode(String s) {
 }`
   },
 
-  // ─── Sliding Window (7) ───
+  // ─── Sliding Window (8) ───
   {
-    num: 25, title: 'Longest Substring Without Repeating Characters', d: 'medium',
+    num: 114, title: 'Minimum Size Subarray Sum', d: 'medium', companies: ['Garmin'],
+    bucket: 'Sliding Window', category: 'Array · Sliding Window',
+    url: 'https://leetcode.com/problems/minimum-size-subarray-sum/',
+    approach: 'Grow the window by adding from the right. Whenever the running sum reaches target, record the window length and shrink from the left to look for something tighter.',
+    complexity: 'O(n) time · O(1) space',
+    code: `public int minSubArrayLen(int target, int[] nums) {
+  int left = 0, sum = 0, min = Integer.MAX_VALUE;
+  for (int right = 0; right < nums.length; right++) {
+    sum += nums[right];            // expand window to the right
+    // While the window already meets target, record length and shrink from the left
+    while (sum >= target) {
+      min = Math.min(min, right - left + 1);
+      sum -= nums[left++];
+    }
+  }
+  return min == Integer.MAX_VALUE ? 0 : min;   // min unchanged => no qualifying window
+}`
+  },
+  {
+    num: 25, title: 'Longest Substring Without Repeating Characters', d: 'medium', companies: ['Garmin'],
     bucket: 'Sliding Window', category: 'String',
     url: 'https://leetcode.com/problems/longest-substring-without-repeating-characters/',
     approach: 'Sliding window with a map of char → last index. When we hit a repeat inside the window, jump the left edge past its previous occurrence.',
@@ -584,7 +641,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 26, title: 'Longest Repeating Character Replacement', d: 'medium',
+    num: 26, title: 'Longest Repeating Character Replacement', d: 'medium', companies: ['Garmin'],
     bucket: 'Sliding Window', category: 'String',
     url: 'https://leetcode.com/problems/longest-repeating-character-replacement/',
     approach: 'Window is valid if (windowLen - maxFreq) <= k (we can flip the rest to match). Shrink when invalid; track max length.',
@@ -1046,7 +1103,7 @@ public String decodeString(String s) {
 
   // ─── Linked List (11) ───
   {
-    num: 44, title: 'Reverse Linked List', d: 'easy',
+    num: 44, title: 'Reverse Linked List', d: 'easy', companies: ['Garmin'],
     bucket: 'Linked List', category: 'Two Pointers',
     url: 'https://leetcode.com/problems/reverse-linked-list/',
     approach: 'Iterative three-pointer reverse: prev, curr, next. Reassign next pointers as you walk.',
@@ -1692,7 +1749,32 @@ private int depth(TreeNode node) {
 }`
   },
 
-  // ─── Tries (2) ───
+  // ─── Tries (3) ───
+  {
+    num: 112, title: 'Search Suggestions System', d: 'medium', companies: ['Garmin'],
+    bucket: 'Tries', category: 'String · Trie',
+    url: 'https://leetcode.com/problems/search-suggestions-system/',
+    approach: 'Sort the products once. For each growing prefix, scan the sorted list and collect the first 3 matches with startsWith — sorted order makes them the lexicographically smallest. A Trie or binary-search-on-sorted-array is the optimization, but sort-and-scan is clean and usually sufficient.',
+    complexity: 'O(n log n + m·n) time · O(1) extra space',
+    code: `public List<List<String>> suggestedProducts(String[] products, String searchWord) {
+  // Sort alphabetically: for any prefix, the first matches found are the 3 smallest
+  Arrays.sort(products);
+  List<List<String>> result = new ArrayList<>();
+  StringBuilder prefix = new StringBuilder();
+  for (char c : searchWord.toCharArray()) {
+    prefix.append(c);                          // prefix typed so far
+    List<String> matches = new ArrayList<>();
+    for (String p : products) {
+      if (p.startsWith(prefix.toString())) {
+        matches.add(p);
+        if (matches.size() == 3) break;        // never need more than 3
+      }
+    }
+    result.add(matches);
+  }
+  return result;
+}`
+  },
   {
     num: 72, title: 'Implement Trie (Prefix Tree)', d: 'medium',
     bucket: 'Tries', category: 'Design',
@@ -2296,7 +2378,55 @@ private void dfs(char[][] b, int r, int c) {
 }`
   },
 
-  // ─── Advanced Graphs (3) ───
+  // ─── Advanced Graphs (4) ───
+  {
+    num: 113, title: 'Rank Transform of a Matrix', d: 'hard', companies: ['Garmin'],
+    bucket: 'Advanced Graphs', category: 'Union-Find · Sort',
+    url: 'https://leetcode.com/problems/rank-transform-of-a-matrix/',
+    approach: 'Process values ascending. For each value, union all its cells sharing a row or column (rows 0..m-1 and columns m..m+n-1 as union-find nodes). Each connected group\'s rank is one more than the max rank already used in any of its rows or columns.',
+    complexity: 'O(m·n · log(m·n)) time · O(m·n) space',
+    code: `public int[][] matrixRankTransform(int[][] matrix) {
+  int m = matrix.length, n = matrix[0].length;
+  // Bucket every cell by value, ascending, so smallest values get the lower ranks
+  TreeMap<Integer, List<int[]>> byValue = new TreeMap<>();
+  for (int i = 0; i < m; i++)
+    for (int j = 0; j < n; j++)
+      byValue.computeIfAbsent(matrix[i][j], x -> new ArrayList<>()).add(new int[]{i, j});
+
+  int[] rowRank = new int[m], colRank = new int[n];   // high-water rank per row/col
+  int[][] answer = new int[m][n];
+
+  for (List<int[]> cells : byValue.values()) {
+    // Union-find over m row-nodes (0..m-1) + n column-nodes (m..m+n-1)
+    int[] parent = new int[m + n];
+    for (int i = 0; i < m + n; i++) parent[i] = i;
+    for (int[] cell : cells) union(parent, cell[0], m + cell[1]);
+
+    // group rank = 1 + largest rank already used in any row/col it touches
+    Map<Integer, Integer> groupRank = new HashMap<>();
+    for (int[] cell : cells) {
+      int root = find(parent, cell[0]);
+      int r = Math.max(groupRank.getOrDefault(root, 0),
+                       Math.max(rowRank[cell[0]], colRank[cell[1]]) + 1);
+      groupRank.put(root, r);
+    }
+    // write ranks in and raise the row/column high-water marks
+    for (int[] cell : cells) {
+      int r = groupRank.get(find(parent, cell[0]));
+      answer[cell[0]][cell[1]] = r;
+      rowRank[cell[0]] = r;
+      colRank[cell[1]] = r;
+    }
+  }
+  return answer;
+}
+
+private int find(int[] p, int x) {            // path-compressed find
+  while (p[x] != x) { p[x] = p[p[x]]; x = p[x]; }
+  return x;
+}
+private void union(int[] p, int a, int b) { p[find(p, a)] = find(p, b); }`
+  },
   {
     num: 92, title: 'Network Delay Time', d: 'medium',
     bucket: 'Advanced Graphs', category: 'Dijkstra',
