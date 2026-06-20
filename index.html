@@ -911,6 +911,49 @@
     color: var(--text-faint);
     font-style: italic;
   }
+  /* Inline warning banner shown inside an expanded description when the official
+     fetch failed or the slug resolved to a different problem. */
+  .lc-desc-warn {
+    margin: 0 0 0.6rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--hard-bg);
+    border: 1px solid var(--hard);
+    border-radius: 6px;
+    font-size: 0.82rem;
+    color: var(--hard);
+    line-height: 1.45;
+  }
+  /* Small badge in the title cell so a flagged problem is visible in the collapsed list. */
+  .lc-status-badge {
+    display: inline-block;
+    margin-left: 0.4rem;
+    padding: 0.08rem 0.4rem;
+    background: var(--hard);
+    color: #fff;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    border-radius: 3px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    vertical-align: 0.06rem;
+  }
+  .lc-status-badge.mismatch { background: var(--med); }
+  /* "Verify official statements" button under the LeetCode filter chips. */
+  .lc-verify-row { margin-top: 0.6rem; }
+  .lc-verify-btn {
+    padding: 0.35rem 0.8rem;
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    font-size: 0.78rem;
+    font-family: inherit;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: color 0.12s, background 0.12s, border-color 0.12s;
+  }
+  .lc-verify-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--text); }
+  .lc-verify-btn:disabled { opacity: 0.7; cursor: progress; }
   .lc-desc-src {
     margin-top: 0.6rem;
     font-size: 0.72rem;
@@ -1183,6 +1226,10 @@
   <div class="filter-bar">
     <div class="filter-bar-inner">
       <div class="lc-filters" id="leetcode-filters" aria-label="Filter problems"></div>
+      <div class="lc-verify-row">
+        <button id="lc-verify-btn" type="button" class="lc-verify-btn"
+                title="Fetch every problem's official LeetCode statement and flag any that fail or whose slug points to the wrong problem">Verify official statements</button>
+      </div>
     </div>
   </div>
 
@@ -1397,7 +1444,7 @@
         <div class="lc-toggle">+</div>
         <div class="lc-detail">
           ${typeof leetcodeDescriptions !== 'undefined' && leetcodeDescriptions[p.num]
-            ? `<div class="lbl">Problem</div><div class="lc-problem" data-slug="${p.url.replace(/\/+$/, '').split('/').pop()}" data-num="${p.num}">${leetcodeDescriptions[p.num]}</div>`
+            ? `<div class="lbl">Problem</div><div class="lc-problem" data-slug="${p.url.replace(/\/+$/, '').split('/').pop()}" data-num="${p.num}" data-lc="${p.lc}">${leetcodeDescriptions[p.num]}</div>`
             : ''}
           <div class="lbl">Approach</div>
           <div>${escapeHtml(p.approach)}</div>
@@ -1510,52 +1557,185 @@
    * LeetCode rate-limited) silently keeps the existing local description — the page
    * degrades gracefully and never ends up blank.
    */
-  const officialDescCache = new Map();
+  // slug → { content, id, title, difficulty }. Mirrors localStorage so each
+  // problem is fetched at most once across the whole session.
+  const officialCache = new Map();
+
+  function readOfficialCache(slug) {
+    if (officialCache.has(slug)) return officialCache.get(slug);
+    try {
+      const raw = localStorage.getItem('lc_desc_' + slug);
+      if (raw) {
+        // Current format is a JSON object; tolerate the older content-only string.
+        if (raw[0] === '{') {
+          const obj = JSON.parse(raw);
+          if (obj && obj.content) { officialCache.set(slug, obj); return obj; }
+        } else {
+          const obj = { content: raw, id: '', title: '', difficulty: '' };
+          officialCache.set(slug, obj);
+          return obj;
+        }
+      }
+    } catch { /* private mode / bad JSON */ }
+    return null;
+  }
+
+  /**
+   * Resolve the official statement for a slug, using cache when possible.
+   * Returns a Promise of { content, id, title, difficulty }; rejects on any failure.
+   */
+  function fetchOfficial(slug) {
+    const cached = readOfficialCache(slug);
+    if (cached) return Promise.resolve(cached);
+    return fetch('/api/leetcode?slug=' + encodeURIComponent(slug))
+      .then(r => (r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status))))
+      .then(data => {
+        if (!data || !data.content) throw new Error('no content');
+        const obj = {
+          content: data.content,
+          id: String(data.id || ''),
+          title: data.title || '',
+          difficulty: data.difficulty || '',
+        };
+        officialCache.set(slug, obj);
+        try { localStorage.setItem('lc_desc_' + slug, JSON.stringify(obj)); } catch { /* quota */ }
+        return obj;
+      });
+  }
+
+  /**
+   * Flag a problem row with its official-fetch status, visible even when collapsed.
+   *   'ok'       — fetched and the LeetCode id matches our entry (no badge)
+   *   'fail'     — the fetch failed (bad slug / 404 / network)
+   *   'mismatch' — fetched, but the slug resolves to a DIFFERENT LeetCode problem
+   */
+  function setRowStatus(row, status, message) {
+    row.classList.remove('lc-status-fail', 'lc-status-mismatch');
+    const titleCell = row.querySelector('.lc-title');
+    let badge = titleCell ? titleCell.querySelector('.lc-status-badge') : null;
+    if (status === 'ok') { if (badge) badge.remove(); return; }
+    row.classList.add(status === 'fail' ? 'lc-status-fail' : 'lc-status-mismatch');
+    if (!badge && titleCell) {
+      badge = document.createElement('span');
+      badge.className = 'lc-status-badge';
+      titleCell.appendChild(badge);
+    }
+    if (badge) {
+      badge.classList.toggle('mismatch', status === 'mismatch');
+      badge.textContent = status === 'fail' ? '⚠ fetch failed' : '⚠ wrong slug?';
+      badge.title = message || '';
+    }
+  }
+
+  /** Insert (once) a warning banner at the top of an expanded description block. */
+  function descWarn(el, text) {
+    if (el.querySelector('.lc-desc-warn')) return;
+    const b = document.createElement('div');
+    b.className = 'lc-desc-warn';
+    b.textContent = text;
+    el.insertBefore(b, el.firstChild);
+  }
+
   function loadOfficialDescription(row) {
     const el = row.querySelector('.lc-problem[data-slug]');
     if (!el) return;
     if (el.dataset.official === 'loading' || el.dataset.official === 'done') return;
     const slug = el.dataset.slug;
+    const expectedLc = el.dataset.lc;
     if (!slug) return;
 
-    const lsKey = 'lc_desc_' + slug;
-    let cached = officialDescCache.get(slug);
-    if (cached == null) {
-      try { cached = localStorage.getItem(lsKey); } catch { /* private mode */ }
-    }
-    if (cached) {
-      officialDescCache.set(slug, cached);
-      applyOfficialDescription(el, cached);
-      return;
-    }
-
     el.dataset.official = 'loading';
-    const note = document.createElement('div');
-    note.className = 'lc-desc-loading';
-    note.textContent = 'Loading the official LeetCode statement…';
-    el.appendChild(note);
+    if (!readOfficialCache(slug)) {
+      const note = document.createElement('div');
+      note.className = 'lc-desc-loading';
+      note.textContent = 'Loading the official LeetCode statement…';
+      el.appendChild(note);
+    }
 
-    fetch('/api/leetcode?slug=' + encodeURIComponent(slug))
-      .then(r => (r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status))))
-      .then(data => {
-        if (!data || !data.content) throw new Error('no content');
-        try { localStorage.setItem(lsKey, data.content); } catch { /* quota/full */ }
-        officialDescCache.set(slug, data.content);
-        applyOfficialDescription(el, data.content);
+    fetchOfficial(slug)
+      .then(obj => {
+        el.dataset.official = 'done';
+        const mismatch = expectedLc && obj.id && String(obj.id) !== String(expectedLc);
+        el.innerHTML = obj.content + '<div class="lc-desc-src">Source: leetcode.com (official problem statement)</div>';
+        if (mismatch) {
+          const msg = 'This slug resolves to LeetCode #' + obj.id + ' "' + obj.title +
+            '", but the entry is marked #' + expectedLc + '. The problem url/slug may be wrong.';
+          setRowStatus(row, 'mismatch', msg);
+          descWarn(el, '⚠ ' + msg);
+        } else {
+          setRowStatus(row, 'ok');
+        }
       })
-      .catch(() => {
-        // Keep the local blurb; drop the loading note and allow a retry on a later expand.
+      .catch(err => {
+        // Keep the local blurb, mark the row, and allow a retry on a later expand.
         delete el.dataset.official;
         const n = el.querySelector('.lc-desc-loading');
         if (n) n.remove();
+        const msg = 'Couldn\'t fetch the official statement for slug "' + slug + '" (' + err.message +
+          '). Showing the local summary — the LeetCode url/slug may be wrong.';
+        setRowStatus(row, 'fail', msg);
+        descWarn(el, '⚠ ' + msg);
       });
   }
 
-  /** Replace the blurb body with official LeetCode HTML and tag a small source caption. */
-  function applyOfficialDescription(el, html) {
-    el.dataset.official = 'done';
-    el.innerHTML = html + '<div class="lc-desc-src">Source: leetcode.com (official problem statement)</div>';
+  /**
+   * Scan every problem against /api/leetcode and flag the ones that fail to fetch
+   * or whose slug resolves to a different LeetCode number. Throttled concurrency;
+   * uses the cache so re-runs are cheap. Updates the button with a live count and
+   * a final summary (the full list of flagged problems goes in its tooltip).
+   */
+  function verifyAllOfficial(btn) {
+    const rows = Array.from(lcTable.querySelectorAll('.lc-row.lc-data'))
+      .filter(r => r.querySelector('.lc-problem[data-slug]'));
+    const total = rows.length;
+    let done = 0;
+    const fails = [], mismatches = [];
+    btn.disabled = true;
+    const tick = () => { btn.textContent = 'Verifying… ' + done + '/' + total; };
+    tick();
+
+    let idx = 0;
+    const step = () => {
+      if (idx >= rows.length) return Promise.resolve();
+      const row = rows[idx++];
+      const el = row.querySelector('.lc-problem[data-slug]');
+      const slug = el.dataset.slug, expectedLc = el.dataset.lc, num = el.dataset.num;
+      return fetchOfficial(slug)
+        .then(obj => {
+          if (expectedLc && obj.id && String(obj.id) !== String(expectedLc)) {
+            setRowStatus(row, 'mismatch', 'Slug "' + slug + '" → LeetCode #' + obj.id + ' "' + obj.title + '" (entry marked #' + expectedLc + ')');
+            mismatches.push('#' + expectedLc + ' (entry ' + num + ') slug "' + slug + '" → LC#' + obj.id);
+          } else {
+            setRowStatus(row, 'ok');
+          }
+        })
+        .catch(err => {
+          setRowStatus(row, 'fail', 'slug "' + slug + '": ' + err.message);
+          fails.push('#' + expectedLc + ' (entry ' + num + ') slug "' + slug + '" — ' + err.message);
+        })
+        .then(() => { done++; tick(); return step(); });
+    };
+
+    const workers = [];
+    for (let i = 0; i < 6 && i < rows.length; i++) workers.push(step());
+    Promise.all(workers).then(() => {
+      btn.disabled = false;
+      const bad = fails.length + mismatches.length;
+      if (bad === 0) {
+        btn.textContent = '✓ All ' + total + ' verified';
+        btn.title = 'Every problem fetched its official statement and the LeetCode numbers all match.';
+      } else {
+        btn.textContent = '⚠ ' + bad + ' need attention';
+        btn.title = 'Fetch failed (' + fails.length + '):\n' + (fails.join('\n') || '—') +
+          '\n\nWrong slug / mismatch (' + mismatches.length + '):\n' + (mismatches.join('\n') || '—');
+      }
+      // Full details also in the console for easy copy.
+      if (bad) console.warn('LeetCode verify — fetch failures:', fails, '| mismatches:', mismatches);
+    });
   }
+
+  const lcVerifyBtn = document.getElementById('lc-verify-btn');
+  if (lcVerifyBtn) lcVerifyBtn.addEventListener('click', () => verifyAllOfficial(lcVerifyBtn));
 
   lcTable.querySelectorAll('.lc-row.lc-data').forEach(row => {
     row.addEventListener('click', (e) => {
