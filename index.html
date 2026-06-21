@@ -259,6 +259,10 @@
   .q-diff.easy .pill { color: var(--easy); background: var(--easy-bg); }
   .q-diff.medium .pill { color: var(--med); background: var(--med-bg); }
   .q-diff.hard .pill { color: var(--hard); background: var(--hard-bg); }
+  /* Behavioral view: row type pills (the main answer vs. its follow-ups) */
+  .q-diff.answer .pill { color: var(--accent); background: var(--accent-soft); }
+  .q-diff.followup .pill { color: var(--text-dim); background: var(--bg-soft); }
+  .behavioral-section.hidden { display: none; }
   .q-text {
     font-size: 0.97rem;
     color: var(--text);
@@ -1158,6 +1162,7 @@
     <div class="view-toggle" role="tablist" aria-label="Section">
       <button class="view-btn active" data-view="topics" role="tab" aria-selected="true">Topics</button>
       <button class="view-btn" data-view="leetcode" role="tab" aria-selected="false">LeetCode 110</button>
+      <button class="view-btn" data-view="behavioral" role="tab" aria-selected="false">Garmin Behavioral</button>
     </div>
     <div class="search-box">
       <input type="text" id="search" placeholder="Search questions..." autocomplete="off">
@@ -1238,6 +1243,47 @@
   </main>
 </div><!-- /#leetcode-view -->
 
+<div id="behavioral-view" hidden>
+
+  <section class="hero">
+    <div class="hero-label">Garmin · Behavioral Prep</div>
+    <h1 class="hero-title">Garmin Behavioral Questions</h1>
+    <p class="hero-subtitle">
+      Behavioral question "chains" tailored to your background — each main question is
+      grouped with the follow-ups an interviewer is likely to ask next, every one with a
+      suggested STAR answer. Click any question to reveal it. Bracketed [Personalize: …]
+      notes mark spots to drop in a real number or detail.
+    </p>
+    <div class="hero-meta">
+      <div class="meta-cell">
+        <div class="label">Question Chains</div>
+        <div class="value">8</div>
+      </div>
+      <div class="meta-cell">
+        <div class="label">Format</div>
+        <div class="value">STAR</div>
+      </div>
+      <div class="meta-cell">
+        <div class="label">Total Q&amp;A</div>
+        <div class="value">35</div>
+      </div>
+      <div class="meta-cell">
+        <div class="label">Level</div>
+        <div class="value">Mid · Java SWE</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="filter-bar">
+    <div class="filter-bar-inner">
+      <div class="lc-filters" id="behavioral-filters" aria-label="Filter behavioral questions"></div>
+    </div>
+  </div>
+
+  <main id="behavioral-content"></main>
+
+</div><!-- /#behavioral-view -->
+
 <footer>
   Built for senior-track interview prep · Java 17+ · Spring Boot 3.x<br>
   Click any question to reveal the answer · Use search to filter
@@ -1264,6 +1310,7 @@
 <script src="descriptions.js"></script>
 <script src="algorithms.js"></script>
 <script src="user-overrides.js"></script>
+<script src="behavioral.js"></script>
 <script>
   const allTopics = [...topics, extras];
 
@@ -1927,11 +1974,104 @@
     applyLcFilters();
   });
 
-  // ─────── View toggle (Topics ↔ LeetCode) with URL-hash routing ───────
+  // ─────── Garmin Behavioral view: render question chains + category filter ───────
+  let behavioralSearchTerm = '';
+  let activeBehavioralCategory = null;
+  (function renderBehavioral() {
+    if (typeof behavioral === 'undefined') return;
+    const bContent = document.getElementById('behavioral-content');
+    const bFilters = document.getElementById('behavioral-filters');
+    if (!bContent) return;
+    const stripTags = h => h.replace(/<[^>]*>/g, ' ');
+
+    behavioral.forEach((chain, i) => {
+      const section = document.createElement('section');
+      section.className = 'section behavioral-section';
+      section.id = 'bq-' + chain.id;
+      section.dataset.category = chain.category.toLowerCase();
+      // Everything in the chain is searchable: main question + every follow-up Q&A.
+      section.dataset.search = (chain.q + ' ' + chain.category + ' ' + stripTags(chain.a) + ' ' +
+        chain.followups.map(f => f.q + ' ' + stripTags(f.a)).join(' ')).toLowerCase();
+
+      // First row is the suggested answer to the main question (the section title);
+      // the rest are the likely follow-ups, each grouped under the same chain.
+      const rows = [{ type: 'answer', label: 'answer', q: 'Suggested STAR answer', a: chain.a }]
+        .concat(chain.followups.map(f => ({ type: 'followup', label: 'follow-up', q: f.q, a: f.a })));
+
+      let rowsHTML = `
+        <div class="q-row q-head"><div>#</div><div>Type</div><div>Question</div><div></div></div>`;
+      rows.forEach((r, ri) => {
+        const numLabel = r.type === 'answer' ? '★' : String(ri).padStart(2, '0');
+        rowsHTML += `
+          <div class="q-row q-data">
+            <div class="q-num">${numLabel}</div>
+            <div class="q-diff ${r.type}"><span class="pill">${r.label}</span></div>
+            <div class="q-text">${escapeHtml(r.q)}</div>
+            <div class="q-toggle">+</div>
+            <div class="q-answer">${r.a}</div>
+          </div>`;
+      });
+
+      section.innerHTML = `
+        <div class="section-header">
+          <div class="section-num">Chain ${String(i + 1).padStart(2, '0')} · ${escapeHtml(chain.category)}</div>
+          <h2 class="section-title">${escapeHtml(chain.q)}</h2>
+          <p class="section-desc">${chain.followups.length} likely follow-up${chain.followups.length === 1 ? '' : 's'}. Click any question to reveal a suggested answer.</p>
+        </div>
+        <div class="q-table">${rowsHTML}</div>`;
+      bContent.appendChild(section);
+    });
+
+    // Expand/collapse — same rule as Topics (clicks inside the answer don't collapse).
+    bContent.querySelectorAll('.q-row.q-data').forEach(row => {
+      row.addEventListener('click', (e) => {
+        if (e.target.closest('.q-answer')) return;
+        row.classList.toggle('expanded');
+      });
+    });
+
+    // Category filter chips
+    if (bFilters) {
+      const cats = [...new Set(behavioral.map(c => c.category))];
+      let chipsHTML = `<div class="lc-filter-row"><span class="lc-filter-label">Category</span>` +
+        `<button class="lc-chip active" data-category="">All</button>`;
+      cats.forEach(c => {
+        chipsHTML += `<button class="lc-chip" data-category="${escapeHtml(c).toLowerCase()}">${escapeHtml(c)}</button>`;
+      });
+      bFilters.innerHTML = chipsHTML + `</div>`;
+      bFilters.addEventListener('click', (e) => {
+        const chip = e.target.closest('.lc-chip');
+        if (!chip) return;
+        activeBehavioralCategory = chip.dataset.category || null;
+        bFilters.querySelectorAll('.lc-chip').forEach(c =>
+          c.classList.toggle('active', (c.dataset.category || null) === activeBehavioralCategory));
+        applyBehavioralFilters();
+      });
+    }
+  })();
+
+  /** Show/hide behavioral chains by the active category chip + search term. */
+  function applyBehavioralFilters() {
+    document.querySelectorAll('.behavioral-section').forEach(section => {
+      const matchCat = !activeBehavioralCategory || section.dataset.category === activeBehavioralCategory;
+      const matchSearch = !behavioralSearchTerm || (section.dataset.search || '').includes(behavioralSearchTerm);
+      section.classList.toggle('hidden', !(matchCat && matchSearch));
+    });
+  }
+
+  // ─────── View toggle (Topics ↔ LeetCode ↔ Behavioral) with URL-hash routing ───────
   const viewBtns  = document.querySelectorAll('.view-btn');
   const topicsView = document.getElementById('topics-view');
   const leetView   = document.getElementById('leetcode-view');
+  const behavioralView = document.getElementById('behavioral-view');
   const searchInput = document.getElementById('search');
+  const VIEW_EL = { topics: topicsView, leetcode: leetView, behavioral: behavioralView };
+  const VIEW_HASH = { topics: '', leetcode: '#leetcode', behavioral: '#behavioral' };
+  const VIEW_PLACEHOLDER = {
+    topics: 'Search questions...',
+    leetcode: 'Search problems...',
+    behavioral: 'Search behavioral questions...',
+  };
 
   /**
    * Switch between the Topics and LeetCode views.
@@ -1945,21 +2085,20 @@
    * LeetCode view, no hash for the Topics view. Pass `pushHash: false` to skip
    * this (used on initial load + on hashchange to avoid loops).
    *
-   * @param {'topics'|'leetcode'} view - Which view to show.
+   * @param {'topics'|'leetcode'|'behavioral'} view - Which view to show.
    * @param {{pushHash?: boolean}} [opts] - Optional flags. pushHash defaults to true.
    */
   function setView(view, opts = {}) {
-    const isLc = view === 'leetcode';
-    topicsView.hidden = isLc;
-    leetView.hidden   = !isLc;
+    if (!VIEW_EL[view]) view = 'topics';
+    Object.keys(VIEW_EL).forEach(k => { VIEW_EL[k].hidden = k !== view; });
     viewBtns.forEach(b => {
       const active = b.dataset.view === view;
       b.classList.toggle('active', active);
       b.setAttribute('aria-selected', String(active));
     });
-    searchInput.placeholder = isLc ? 'Search problems...' : 'Search questions...';
+    searchInput.placeholder = VIEW_PLACEHOLDER[view];
     if (opts.pushHash !== false) {
-      const hash = isLc ? '#leetcode' : '';
+      const hash = VIEW_HASH[view];
       const target = hash || location.pathname + location.search;
       if (location.hash !== hash) history.replaceState(null, '', target);
     }
@@ -1974,11 +2113,15 @@
   // Initial view from URL hash
   if (location.hash === '#leetcode' || location.hash === '#lc') {
     setView('leetcode', { pushHash: false });
+  } else if (location.hash === '#behavioral') {
+    setView('behavioral', { pushHash: false });
   }
-  // Hashchange — handle direct links to either view, and activate the right chip
+  // Hashchange — handle direct links to any view, and activate the right chip
   window.addEventListener('hashchange', () => {
     if (location.hash === '#leetcode' || location.hash === '#lc') {
       setView('leetcode', { pushHash: false });
+    } else if (location.hash === '#behavioral') {
+      setView('behavioral', { pushHash: false });
     } else if (location.hash) {
       const target = document.getElementById(location.hash.slice(1));
       if (target && target.closest('#topics-view')) {
@@ -1995,6 +2138,10 @@
       // LeetCode view: update the shared search term and re-apply all filters together
       lcSearchTerm = term;
       applyLcFilters();
+    } else if (!behavioralView.hidden) {
+      // Behavioral view: filter chains by search + category chip
+      behavioralSearchTerm = term;
+      applyBehavioralFilters();
     } else {
       // Topics view: update search term and re-apply the combined filter (search + chip)
       topicsSearchTerm = term;
