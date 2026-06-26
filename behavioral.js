@@ -251,5 +251,33 @@ const behavioral = [
         a: `I'm open to it — I'm relocation-ready, and for the right team and product I see this as a long-term move, not a short stop. [Personalize: add anything genuine — cost of living, the outdoors, being closer to family, etc.]`
       }
     ]
+  },
+
+  {
+    id: 9,
+    category: 'Intro & Motivation',
+    q: 'You are currently in a management role — why apply for a hands-on (individual-contributor) engineering role?',
+    a: `<strong>The short version.</strong> Stepping into a junior management role actually clarified something valuable for me: the part of the work I care about most, and where I add the most value, is hands-on engineering. Leading a team showed me I genuinely enjoy mentoring and owning outcomes — but I'm at my best when I'm close to the code, designing and building. So moving into a strong individual-contributor role isn't a step back for me; it's me leaning into the technical track on purpose.<br><br>
+<strong>What management gave me.</strong> I grew a lot from it, and I'm grateful for the experience. I learned to see the bigger picture, communicate with non-technical stakeholders, plan and unblock work, and bring people along — and I'll carry all of that into an engineering seat. A team gets a force-multiplier: someone who mentors naturally, owns things end to end, and can lead by influence without needing the title.<br><br>
+<strong>Why now, and why Garmin.</strong> I'm about five years in, and this is the right moment to deepen my technical craft rather than drift away from it. I want to build real products on a strong engineering team, and Garmin is exactly that kind of place — great products, a genuine technical career ladder, and room to grow toward senior and eventually staff-level engineering. That long-term technical path is what excites me.<br><br>
+<em>Delivery tip: stay 100% positive and forward-looking — frame it as choosing the technical track, never as "stepping down." Your real push factors (a heavy workload for a small raise, no authority over your team's pay, and a constant-overtime culture) are valid, but do NOT raise them in the room — complaints read as negative and as a flight risk. Lead only with the pull toward hands-on building.</em>`,
+    followups: [
+      {
+        q: 'Will you miss managing people, or want to move back into management later?',
+        a: `I'll still get the parts of leadership I value most — mentoring, helping set technical direction, and owning outcomes — just as an engineer rather than a full-time people manager. I'm not closing the door on leadership forever, but right now I'm clear that I want to be hands-on building, and I'm choosing that deliberately. If anything, staying close to the technology keeps me sharp enough to lead well down the road.`
+      },
+      {
+        q: 'How do we know you will not get bored as an IC or leave?',
+        a: `Because being hands-on is exactly what energizes me — it's the reason I'm making this move, not something I'm settling for. And the technical track has real room to grow: senior, staff, principal. I can keep leveling up by deepening my impact and scope as an engineer, so I see this as a long-term home, not a temporary stop.`
+      },
+      {
+        q: 'Will it be hard for you to take direction instead of giving it?',
+        a: `Not at all. I've always been happiest collaborating and building, and even as a manager I led by listening and aligning rather than command-and-control. I'm comfortable disagreeing, committing, and getting fully behind a decision. Having sat on the other side, I think I'm easy to work with — I understand why priorities shift and what a lead needs from their engineers.`
+      },
+      {
+        q: 'What did you learn as a manager that you will bring as an engineer?',
+        a: `Three things. The bigger picture — I think in terms of impact and stakeholders, not just my own ticket. Communication — I can translate between business users and engineering, which I did constantly in my PLM work. And ownership — I naturally pick up loose ends and unblock people. Those make me a more reliable engineer and a multiplier for the team, not just someone heads-down on their own tasks.`
+      }
+    ]
   }
 ];
