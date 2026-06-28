@@ -34,7 +34,7 @@ const behavioral = [
       },
       {
         q: 'What is your biggest accomplishment or proudest project?',
-        a: `Leading the end-to-end setup of a new site on our Oracle Agile PLM system. I owned the whole delivery — all of the Agile PLM configuration (classes, roles, workflows, and lifecycles), plus multiple custom integrations built with the Agile API and several Process Extensions (PX) that automate the site's part and BOM workflows. On top of the technical build, I mentored four newcomers to the team and coordinated their pieces, and I kept the whole project on schedule. I'm proudest of it because it stretched me technically and as a leader at the same time. <em>Tip: give this as a tight highlight, then offer to go deep — it sets up your strongest story.</em>`
+        a: `Leading the end-to-end setup of a new site on our Oracle Agile PLM system. I owned the whole delivery — all of the Agile PLM configuration (classes, roles, workflows, and lifecycles), multiple customization APIs and Process Extensions (PX), and the piece I'm proudest of: a full BOM import automation that replaced a slow, manual way of loading parts and bills of materials. I also led four newcomers on the team — I planned and split the work, mentored them, and jumped in to unblock or take over a piece whenever someone got stuck, so the whole team delivered on schedule. It stretched me technically and as a leader at the same time. <em>Tip: give this as a tight highlight, then offer to go deep — it sets up your strongest story.</em>`
       }
     ]
   },
@@ -47,11 +47,12 @@ const behavioral = [
 <strong>Task.</strong> I was given ownership of the whole setup, asked to mentor and coordinate four newcomers to the team, and to keep the project on schedule.<br><br>
 <strong>Action.</strong><ul>
 <li>I started by sitting down with the business users to understand their part/BOM structure and workflow rules, and documented the requirements so everyone was aligned.</li>
-<li>I broke the work into clear pieces — the full Agile PLM configuration (classes, roles, workflows, and lifecycles), the customization APIs and Process Extensions (PX) that automate the part and BOM workflows, and the data loading — and assigned chunks to the four newcomers based on their strengths.</li>
+<li>I broke the work into clear pieces — the full Agile PLM configuration (classes, roles, workflows, and lifecycles), the customization APIs and Process Extensions (PX) that automate the part and BOM workflows, and the full BOM import automation that replaced manual data loading — and assigned chunks to the four newcomers based on their strengths.</li>
 <li>I mentored as we went: pairing on the Agile SDK and extension code, reviewing their work, and running short check-ins so I caught blockers early.</li>
+<li>Whenever a newcomer hit a wall, I kicked in right away — pairing, debugging alongside them, or temporarily taking the piece over — so nobody stayed stuck and the team held the timeline.</li>
 <li>I kept the riskier custom pieces myself and tracked everything against a checklist tied to the deadline.</li>
 </ul>
-<strong>Result.</strong> We brought the new site live on Agile PLM on schedule, with the workflows automated and the team able to maintain it themselves afterward. [Personalize: add a number if you can — e.g., cut a manual process from X hours to Y, or onboarded N users / M part records.]<br><br>
+<strong>Result.</strong> We brought the new site live on Agile PLM on schedule, with the part and BOM workflows automated — including the full BOM import automation that replaced a manual loading process — and the team able to maintain it themselves afterward. [Personalize: add a number if you can — e.g., BOM import time cut from X hours to Y, or M part/BOM records loaded, or N users onboarded.]<br><br>
 <em>Tip: hit both halves — the leadership (planning, mentoring) and the hands-on technical ownership.</em>`,
     followups: [
       {
