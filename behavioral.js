@@ -34,7 +34,7 @@ const behavioral = [
       },
       {
         q: 'What is your biggest accomplishment or proudest project?',
-        a: `Leading the Oracle Agile PLM setup for a new site end to end — I owned the delivery and mentored two teammates while keeping it on schedule. I'm happy to walk through it in detail. <em>Tip: name it briefly here and offer to expand — it sets up your strongest story.</em>`
+        a: `Leading the end-to-end setup of a new site on our Oracle Agile PLM system. I owned the whole delivery — all of the Agile PLM configuration (classes, roles, workflows, and lifecycles), plus multiple custom integrations built with the Agile API and several Process Extensions (PX) that automate the site's part and BOM workflows. On top of the technical build, I mentored four newcomers to the team and coordinated their pieces, and I kept the whole project on schedule. I'm proudest of it because it stretched me technically and as a leader at the same time. <em>Tip: give this as a tight highlight, then offer to go deep — it sets up your strongest story.</em>`
       }
     ]
   },
@@ -44,10 +44,10 @@ const behavioral = [
     category: 'Ownership & Leadership',
     q: 'Tell me about a project you owned or led from start to finish.',
     a: `<strong>Situation.</strong> At Foxconn we needed to stand up a new site on our Oracle Agile PLM system so a new business unit could manage its parts, BOMs, and change processes on the same platform as the rest of the company.<br><br>
-<strong>Task.</strong> I was given ownership of the setup and asked to lead the effort — including a couple of less-experienced teammates — and to keep it on schedule.<br><br>
+<strong>Task.</strong> I was given ownership of the whole setup, asked to mentor and coordinate four newcomers to the team, and to keep the project on schedule.<br><br>
 <strong>Action.</strong><ul>
 <li>I started by sitting down with the business users to understand their part/BOM structure and workflow rules, and documented the requirements so everyone was aligned.</li>
-<li>I broke the work into clear pieces — environment and roles, workflow and lifecycle setup, custom Java extensions, and data loading — and assigned chunks based on each teammate's strengths.</li>
+<li>I broke the work into clear pieces — the full Agile PLM configuration (classes, roles, workflows, and lifecycles), the customization APIs and Process Extensions (PX) that automate the part and BOM workflows, and the data loading — and assigned chunks to the four newcomers based on their strengths.</li>
 <li>I mentored as we went: pairing on the Agile SDK and extension code, reviewing their work, and running short check-ins so I caught blockers early.</li>
 <li>I kept the riskier custom pieces myself and tracked everything against a checklist tied to the deadline.</li>
 </ul>
@@ -59,7 +59,7 @@ const behavioral = [
         a: `I broke it into milestones with clear owners and rough dates, and ran short, regular check-ins instead of waiting for one big status meeting. That let me see slippage early and rebalance — if someone was stuck, I'd pair with them or take the piece myself. A shared checklist kept everyone's progress visible.`
       },
       {
-        q: 'How did you handle mentoring the less-experienced teammates?',
+        q: 'How did you handle mentoring the four newcomers?',
         a: `I matched each task to the person, then gave them context and a starting point rather than just the answer. For Agile PLM extension work I'd pair the first time, review their code, and explain the "why" so the lesson carried forward. I let them own real pieces, not busywork — people grow faster when the work matters.`
       },
       {
@@ -77,7 +77,7 @@ const behavioral = [
     id: 3,
     category: 'Teamwork & Conflict',
     q: 'Tell me about a time you mentored or helped a teammate grow.',
-    a: `<strong>Situation.</strong> During the new-site Agile PLM project, two of my teammates were newer to Oracle Agile and to writing Java extensions against its SDK.<br><br>
+    a: `<strong>Situation.</strong> During the new-site Agile PLM project, four newcomers joined the team — all new to Oracle Agile and to writing customization APIs and Process Extensions (PX) against its SDK.<br><br>
 <strong>Task.</strong> I needed them productive on real parts of the project — not just watching — while we still hit our deadline.<br><br>
 <strong>Action.</strong><ul>
 <li>I gave each of them a real, ownable slice of the work matched to their level.</li>
