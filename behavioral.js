@@ -18,7 +18,7 @@ const behavioral = [
     id: 1,
     category: 'Intro & Motivation',
     q: 'Tell me about yourself.',
-    a: `<strong>Present.</strong> I'm a software engineer with about five years of experience building and supporting enterprise web applications, mostly in Java and Spring Boot with some C#/.NET. Right now I'm at Foxconn as an Oracle Agile PLM developer and administrator — I gather requirements from non-technical business users in manufacturing and operations, then build custom Java extensions, secure REST APIs, and scheduled batch jobs that automate their product-data workflows.<br><br>
+    a: `<strong>Present.</strong> I'm a software engineer with about five years of experience building and supporting enterprise web applications, mostly in Java and Spring Boot with some C#/.NET. Right now I'm at Foxconn as an Oracle Agile PLM developer and administrator — I gather requirements from non-technical business users in manufacturing and operations, then build custom Java extensions, secure REST APIs, and scheduled batch jobs that automate their product-data workflows. I was actually the first member of our PLM team in North America: I helped stand the function up from scratch — starting with a plant transfer from IBM — and I've grown into effectively leading the NA PLM team.<br><br>
 <strong>Past.</strong> Before that I spent a couple of years at SYSTEX in Taipei building production web systems with Java, Spring Boot, and Hibernate — including a government household-registration platform that integrated several central-government APIs, and an ERP system for Taiwan's largest gym chain. I also earned my Master's in Computer Science along the way.<br><br>
 <strong>Strengths.</strong> What I'm known for is being the bridge between business users and engineering — turning vague business needs into reliable, well-documented software — and I care a lot about data integrity and getting integrations right.<br><br>
 <strong>Why here.</strong> I want to move into a stronger, product-focused engineering team, and Garmin really appeals to me — you build hardware people love, and my product-data background feels like a natural fit.<br><br>
@@ -70,6 +70,10 @@ const behavioral = [
       {
         q: 'What would you do differently next time?',
         a: `I'd lock down the workflow requirements with the business users even earlier and in more detail — a couple of small reworks came from assumptions we made up front. I've learned that an hour of alignment early saves days later.`
+      },
+      {
+        q: 'How did you come to lead the NA PLM team?',
+        a: `I was the first member of our PLM team in North America, so I helped build the function from the ground up — it started with the Argos plant transfer from IBM to Foxconn, which for the first six months was just me and my supervisor visiting from Taiwan. As we onboarded more people, I naturally took on the planning, mentoring, and coordination, and grew into effectively leading the NA PLM team — taking on the responsibility well before the title.`
       }
     ]
   },
@@ -170,7 +174,7 @@ const behavioral = [
     id: 6,
     category: 'Ambiguity & Pressure',
     q: 'Tell me about a time you dealt with unclear or changing requirements.',
-    a: `<strong>Situation.</strong> A lot of my work at Foxconn starts with non-technical business users who know what they need but not how to specify it — and during the IBM-to-Foxconn business transfer for part and BOM management, the requirements were especially fuzzy and kept shifting.<br><br>
+    a: `<strong>Situation.</strong> The clearest example is the Argos project — the plant transfer of part and BOM management from IBM to Foxconn in Guadalajara. I was the first member of our PLM team in North America, so for the first six months it was essentially just me and my supervisor, who flew in from Taiwan — the two of us migrated the whole thing, and the requirements stayed fuzzy and kept shifting the entire way.<br><br>
 <strong>Task.</strong> I had to turn vague, moving requirements into something I could actually build, without the data integrity slipping during the transition.<br><br>
 <strong>Action.</strong><ul>
 <li>I asked a lot of questions and translated business language into concrete examples — "so when a part changes, you expect X to happen" — and confirmed it back in writing.</li>
@@ -200,12 +204,12 @@ const behavioral = [
     id: 7,
     category: 'Ambiguity & Pressure',
     q: 'Tell me about a time you worked under pressure or against a tight deadline.',
-    a: `<strong>Situation.</strong> During the IBM-to-Foxconn business transfer for part and BOM management, we were on a firm cut-over timeline — the data and processes had to be moved and working by a set date, with zero room to corrupt production part/BOM data.<br><br>
+    a: `<strong>Situation.</strong> The Argos project — the plant transfer of part and BOM management from IBM to Foxconn in Guadalajara — ran on a firm cut-over date, with zero room to corrupt production part/BOM data. As the first PLM hire in North America, for the first six months it was just me and my supervisor from Taiwan running the migration: a hard deadline with a two-person team.<br><br>
 <strong>Task.</strong> Support the transfer, keep data integrity intact, and hit the cut-over date.<br><br>
 <strong>Action.</strong><ul>
 <li>I focused on the critical path first — the part and BOM data and the workflows other teams depended on.</li>
 <li>I validated every migration in a lower environment before touching production, so moving fast never cost us correctness.</li>
-<li>I documented the process so nothing depended only on me and others could work in parallel.</li>
+<li>I documented the process as we went so nothing lived only in my head — which let my supervisor and me divide and conquer, and made it easy to hand off as the team grew.</li>
 <li>When the crunch hit I put in extra hours on the highest-risk pieces and kept my manager updated, so there were no surprises.</li>
 </ul>
 <strong>Result.</strong> We supported the transfer on time with the part and BOM data intact. [Personalize: add scale if you can — e.g., volume of parts/BOMs migrated or systems integrated.]<br><br>
@@ -258,10 +262,10 @@ const behavioral = [
     id: 9,
     category: 'Intro & Motivation',
     q: 'You are currently in a management role — why apply for a hands-on (individual-contributor) engineering role?',
-    a: `<strong>The short version.</strong> Stepping into a junior management role actually clarified something valuable for me: the part of the work I care about most, and where I add the most value, is hands-on engineering. Leading a team showed me I genuinely enjoy mentoring and owning outcomes — but I'm at my best when I'm close to the code, designing and building. So moving into a strong individual-contributor role isn't a step back for me; it's me leaning into the technical track on purpose.<br><br>
+    a: `<strong>The short version.</strong> I came into Foxconn as the first member of our PLM team in North America, helped build the function from scratch, and grew into effectively leading the NA PLM team — so I've carried real team-lead responsibility, not just a title. That experience clarified something valuable for me: the part of the work I care about most, and where I add the most value, is hands-on engineering. Leading the team showed me I genuinely enjoy mentoring and owning outcomes — but I'm at my best when I'm close to the code, designing and building. So moving into a strong individual-contributor role isn't a step back for me; it's me leaning into the technical track on purpose.<br><br>
 <strong>What management gave me.</strong> I grew a lot from it, and I'm grateful for the experience. I learned to see the bigger picture, communicate with non-technical stakeholders, plan and unblock work, and bring people along — and I'll carry all of that into an engineering seat. A team gets a force-multiplier: someone who mentors naturally, owns things end to end, and can lead by influence without needing the title.<br><br>
 <strong>Why now, and why Garmin.</strong> I'm about five years in, and this is the right moment to deepen my technical craft rather than drift away from it. I want to build real products on a strong engineering team, and Garmin is exactly that kind of place — great products, a genuine technical career ladder, and room to grow toward senior and eventually staff-level engineering. That long-term technical path is what excites me.<br><br>
-<em>Delivery tip: stay 100% positive and forward-looking — frame it as choosing the technical track, never as "stepping down." Your real push factors (a heavy workload for a small raise, no authority over your team's pay, and a constant-overtime culture) are valid, but do NOT raise them in the room — complaints read as negative and as a flight risk. Lead only with the pull toward hands-on building.</em>`,
+<em>Delivery tip: lean on the strength here — you took on the lead role (first NA hire, built and ran the team) well before you took the title, which signals real ownership. Stay 100% positive and frame the move as choosing the technical track, never as "stepping down." Keep your real push factors private (heavy workload for a small raise, no authority over your team's pay, the constant-overtime culture, and holding off on the promotion because the pay did not match the responsibility) — those read as complaints / flight risk. Lead only with the pull toward hands-on building.</em>`,
     followups: [
       {
         q: 'Will you miss managing people, or want to move back into management later?',
