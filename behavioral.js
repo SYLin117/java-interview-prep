@@ -234,10 +234,10 @@ const behavioral = [
     id: 8,
     category: 'Intro & Motivation',
     q: 'Why do you want to work at Garmin?',
-    a: `<strong>The products.</strong> I'm genuinely a fan — Garmin makes hardware people rely on across fitness, the outdoors, aviation, marine, and automotive. Working on software that ships inside products like that, instead of internal-only tools, is exactly the direction I want to go. [Personalize: name a Garmin product you actually use — e.g., a Forerunner or fēnix watch — and one line on why you like it.]<br><br>
+    a: `<strong>The products.</strong> I'm genuinely a fan — Garmin makes hardware people rely on across fitness, the outdoors, aviation, marine, and automotive. Even as someone who hasn't owned one yet, what stands out to me is the engineering: multi-week battery life, serious GPS accuracy, and rugged, purpose-built devices that do their one job extremely well. Working on software that ships inside products like that, instead of internal-only tools, is exactly the direction I want to go.<br><br>
 <strong>The fit.</strong> My current work is deep in product data — parts, BOMs, change management, and a large business-transfer migration in Oracle Agile PLM. Garmin is a product company that lives and breathes that kind of engineering and product data, so my background lines up unusually well, and I'd bring solid Java/Spring backend skills plus a real respect for data integrity.<br><br>
 <strong>The growth.</strong> I want to grow as a backend engineer on a strong team with good engineering practices, and eventually take on more technical leadership — and Garmin has the scale and product depth to be a long-term home. I'm also open to relocating to Olathe for the right team.<br><br>
-<em>Tip: tie it to THEIR products plus YOUR background; specifics about a product you use make this land.</em>`,
+<em>Tip: tie it to THEIR products plus YOUR background. You don't own a Garmin (you're on an Apple Watch), so admire the engineering honestly instead of claiming to use one — see the "Do you use Garmin products?" follow-up.</em>`,
     followups: [
       {
         q: 'Why this role specifically?',
@@ -245,7 +245,11 @@ const behavioral = [
       },
       {
         q: 'What do you know about our products?',
-        a: `Garmin is best known for GPS and wearables — fitness watches and cycling computers, outdoor handhelds — plus whole business lines in aviation, marine, and automotive. [Personalize: mention a product you actually use, like a Forerunner/fēnix/Edge, and a sentence on why you like it — it shows genuine interest.]`
+        a: `Garmin is best known for GPS and wearables — Forerunner and fēnix watches, Edge cycling computers, outdoor handhelds, and inReach satellite communicators — plus whole business lines in aviation, marine, and automotive. What I admire most is where Garmin beats the mainstream wearables: multi-week battery life, GPS and route accuracy, and rugged, purpose-built design for athletes and the outdoors. <em>Tip: knowing the product lines AND what makes them special signals genuine interest — you don't need to own one to show that.</em>`
+      },
+      {
+        q: 'Do you use any Garmin products yourself?',
+        a: `I'll be honest — I don't own a Garmin yet; I've been in the Apple ecosystem with an Apple Watch. But I'm genuinely a fan of what Garmin does, especially the things mainstream watches don't prioritize: multi-week battery life, GPS accuracy, and a real focus on the outdoors and serious training. As a software engineer I'm honestly drawn as much to the engineering behind the products as the consumer side — and joining would be the perfect reason to finally make the switch. <em>Note: being honest about the Apple Watch is totally fine and more credible than faking it. Don't volunteer that price was the reason, and never knock Garmin's pricing — just lead with authentic admiration.</em>`
       },
       {
         q: 'Why should we hire you? What makes you a good fit?',
