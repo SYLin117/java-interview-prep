@@ -253,7 +253,7 @@ const behavioral = [
       },
       {
         q: 'How do you feel about relocating to Olathe?',
-        a: `I'm open to it — I'm relocation-ready, and for the right team and product I see this as a long-term move, not a short stop. [Personalize: add anything genuine — cost of living, the outdoors, being closer to family, etc.]`
+        a: `It's a deliberate, long-term move for my family. We're ready to leave California — the cost of living is tough — and the Kansas City area really appeals to us: it's far more affordable, there's more space, and Johnson County has a great reputation for schools and raising a family. So this isn't a temporary stop; it's where we want to put down roots. That's actually part of why a stable, well-established company like Garmin fits — I'm looking for somewhere to build a career, not a stepping stone. I get the role I want and the home we want in one move, so I'm fully committed to making it work. [Personalize: add your own specifics — e.g., family already nearby, a neighborhood/school you like, or what drew you to the KC area.] <em>Note: keep cost-of-living and family reasons in THIS relocation answer, never in "Why Garmin."</em>`
       }
     ]
   },
