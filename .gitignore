@@ -4,4 +4,6 @@ node_modules
 *.log
 .claude/
 
-.vercel
+# Scratch/working artifacts for the content-enhancement pass (not deliverables)
+tools/
+*.gen.js

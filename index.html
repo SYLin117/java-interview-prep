@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Java & Spring Boot Interview Prep</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/favicon.svg">
+<meta name="theme-color" content="#0969da">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -71,14 +74,11 @@
   .brand .icon {
     width: 28px;
     height: 28px;
-    background: var(--accent);
-    color: white;
-    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 700;
-    font-size: 0.9rem;
+    font-size: 1.35rem;
+    line-height: 1;
   }
   .search-box {
     flex: 1;
@@ -259,6 +259,10 @@
   .q-diff.easy .pill { color: var(--easy); background: var(--easy-bg); }
   .q-diff.medium .pill { color: var(--med); background: var(--med-bg); }
   .q-diff.hard .pill { color: var(--hard); background: var(--hard-bg); }
+  /* Behavioral view: row type pills (the main answer vs. its follow-ups) */
+  .q-diff.answer .pill { color: var(--accent); background: var(--accent-soft); }
+  .q-diff.followup .pill { color: var(--text-dim); background: var(--bg-soft); }
+  .behavioral-section.hidden { display: none; }
   .q-text {
     font-size: 0.97rem;
     color: var(--text);
@@ -891,6 +895,76 @@
     font-size: 0.85em;
     background: var(--bg-soft);
   }
+  /* LeetCode's official statements include <pre> example blocks and images */
+  .lc-detail .lc-problem pre {
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 0.6rem 0.8rem;
+    margin: 0.5rem 0;
+    overflow-x: auto;
+    font-size: 0.85em;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .lc-detail .lc-problem img { max-width: 100%; height: auto; }
+  .lc-detail .lc-problem ul { margin: 0.4rem 0 0.4rem 1.1rem; }
+  .lc-desc-loading {
+    margin-top: 0.5rem;
+    font-size: 0.82rem;
+    color: var(--text-faint);
+    font-style: italic;
+  }
+  /* Inline warning banner shown inside an expanded description when the official
+     fetch failed or the slug resolved to a different problem. */
+  .lc-desc-warn {
+    margin: 0 0 0.6rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--hard-bg);
+    border: 1px solid var(--hard);
+    border-radius: 6px;
+    font-size: 0.82rem;
+    color: var(--hard);
+    line-height: 1.45;
+  }
+  /* Small badge in the title cell so a flagged problem is visible in the collapsed list. */
+  .lc-status-badge {
+    display: inline-block;
+    margin-left: 0.4rem;
+    padding: 0.08rem 0.4rem;
+    background: var(--hard);
+    color: #fff;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    border-radius: 3px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    vertical-align: 0.06rem;
+  }
+  .lc-status-badge.mismatch { background: var(--med); }
+  /* "Verify official statements" button under the LeetCode filter chips. */
+  .lc-verify-row { margin-top: 0.6rem; }
+  .lc-verify-btn {
+    padding: 0.35rem 0.8rem;
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    font-size: 0.78rem;
+    font-family: inherit;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: color 0.12s, background 0.12s, border-color 0.12s;
+  }
+  .lc-verify-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--text); }
+  .lc-verify-btn:disabled { opacity: 0.7; cursor: progress; }
+  .lc-desc-src {
+    margin-top: 0.6rem;
+    font-size: 0.72rem;
+    color: var(--text-faint);
+    border-top: 1px dashed var(--line);
+    padding-top: 0.4rem;
+  }
   .lc-detail .lc-algo {
     background: #fff8e6;
     border: 1px solid #f0d97a;
@@ -1082,12 +1156,13 @@
 <header>
   <div class="header-inner">
     <div class="brand">
-      <span class="icon">J</span>
+      <span class="icon">💻</span>
       <span>Interview Prep</span>
     </div>
     <div class="view-toggle" role="tablist" aria-label="Section">
       <button class="view-btn active" data-view="topics" role="tab" aria-selected="true">Topics</button>
       <button class="view-btn" data-view="leetcode" role="tab" aria-selected="false">LeetCode 110</button>
+      <button class="view-btn" data-view="behavioral" role="tab" aria-selected="false">Garmin Behavioral</button>
     </div>
     <div class="search-box">
       <input type="text" id="search" placeholder="Search questions..." autocomplete="off">
@@ -1156,6 +1231,10 @@
   <div class="filter-bar">
     <div class="filter-bar-inner">
       <div class="lc-filters" id="leetcode-filters" aria-label="Filter problems"></div>
+      <div class="lc-verify-row">
+        <button id="lc-verify-btn" type="button" class="lc-verify-btn"
+                title="Fetch every problem's official LeetCode statement and flag any that fail or whose slug points to the wrong problem">Verify official statements</button>
+      </div>
     </div>
   </div>
 
@@ -1163,6 +1242,47 @@
     <div class="lc-table" id="leetcode-table"></div>
   </main>
 </div><!-- /#leetcode-view -->
+
+<div id="behavioral-view" hidden>
+
+  <section class="hero">
+    <div class="hero-label">Garmin · Behavioral Prep</div>
+    <h1 class="hero-title">Garmin Behavioral Questions</h1>
+    <p class="hero-subtitle">
+      Behavioral question "chains" tailored to your background — each main question is
+      grouped with the follow-ups an interviewer is likely to ask next, every one with a
+      suggested STAR answer. Click any question to reveal it. Bracketed [Personalize: …]
+      notes mark spots to drop in a real number or detail.
+    </p>
+    <div class="hero-meta">
+      <div class="meta-cell">
+        <div class="label">Question Chains</div>
+        <div class="value">9</div>
+      </div>
+      <div class="meta-cell">
+        <div class="label">Format</div>
+        <div class="value">STAR</div>
+      </div>
+      <div class="meta-cell">
+        <div class="label">Total Q&amp;A</div>
+        <div class="value">42</div>
+      </div>
+      <div class="meta-cell">
+        <div class="label">Level</div>
+        <div class="value">Mid · Java SWE</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="filter-bar">
+    <div class="filter-bar-inner">
+      <div class="lc-filters" id="behavioral-filters" aria-label="Filter behavioral questions"></div>
+    </div>
+  </div>
+
+  <main id="behavioral-content"></main>
+
+</div><!-- /#behavioral-view -->
 
 <footer>
   Built for senior-track interview prep · Java 17+ · Spring Boot 3.x<br>
@@ -1190,6 +1310,7 @@
 <script src="descriptions.js"></script>
 <script src="algorithms.js"></script>
 <script src="user-overrides.js"></script>
+<script src="behavioral.js"></script>
 <script>
   const allTopics = [...topics, extras];
 
@@ -1358,7 +1479,7 @@
       : p.code;
     lcRowsHTML += `
       <div class="lc-row lc-data" data-q="${search}" data-bucket="${escapeHtml(p.bucket).toLowerCase()}" data-companies="${companiesAttr}">
-        <div class="lc-num">${String(p.num).padStart(2, '0')}</div>
+        <div class="lc-num" title="LeetCode #${p.lc}">${p.lc}</div>
         <div class="lc-diff ${p.d}"><span class="pill">${p.d}</span></div>
         <div class="lc-title">${escapeHtml(p.title)}${
           p.companies && p.companies.length
@@ -1370,7 +1491,7 @@
         <div class="lc-toggle">+</div>
         <div class="lc-detail">
           ${typeof leetcodeDescriptions !== 'undefined' && leetcodeDescriptions[p.num]
-            ? `<div class="lbl">Problem</div><div class="lc-problem">${leetcodeDescriptions[p.num]}</div>`
+            ? `<div class="lbl">Problem</div><div class="lc-problem" data-slug="${p.url.replace(/\/+$/, '').split('/').pop()}" data-num="${p.num}" data-lc="${p.lc}">${leetcodeDescriptions[p.num]}</div>`
             : ''}
           <div class="lbl">Approach</div>
           <div>${escapeHtml(p.approach)}</div>
@@ -1473,12 +1594,204 @@
     block.addEventListener('blur', () => rehighlight(block));
   }
 
+  /**
+   * Swap the paraphrased blurb for LeetCode's official problem statement, fetched
+   * through the /api/leetcode serverless proxy (the browser can't hit leetcode.com
+   * directly — CORS — and a server-side fetch also sidesteps egress limits).
+   *
+   * Results are cached per problem slug in localStorage + an in-memory map, so each
+   * problem is fetched at most once. Any failure (offline, proxy not deployed,
+   * LeetCode rate-limited) silently keeps the existing local description — the page
+   * degrades gracefully and never ends up blank.
+   */
+  // slug → { content, id, title, difficulty }. Mirrors localStorage so each
+  // problem is fetched at most once across the whole session.
+  const officialCache = new Map();
+
+  function readOfficialCache(slug) {
+    if (officialCache.has(slug)) return officialCache.get(slug);
+    try {
+      const raw = localStorage.getItem('lc_desc_' + slug);
+      if (raw) {
+        // Current format is a JSON object; tolerate the older content-only string.
+        if (raw[0] === '{') {
+          const obj = JSON.parse(raw);
+          if (obj && obj.content) { officialCache.set(slug, obj); return obj; }
+        } else {
+          const obj = { content: raw, id: '', title: '', difficulty: '' };
+          officialCache.set(slug, obj);
+          return obj;
+        }
+      }
+    } catch { /* private mode / bad JSON */ }
+    return null;
+  }
+
+  /**
+   * Resolve the official statement for a slug, using cache when possible.
+   * Returns a Promise of { content, id, title, difficulty }; rejects on any failure.
+   */
+  function fetchOfficial(slug) {
+    const cached = readOfficialCache(slug);
+    if (cached) return Promise.resolve(cached);
+    return fetch('/api/leetcode?slug=' + encodeURIComponent(slug))
+      .then(r => (r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status))))
+      .then(data => {
+        if (!data || !data.content) throw new Error('no content');
+        const obj = {
+          content: data.content,
+          id: String(data.id || ''),
+          title: data.title || '',
+          difficulty: data.difficulty || '',
+        };
+        officialCache.set(slug, obj);
+        try { localStorage.setItem('lc_desc_' + slug, JSON.stringify(obj)); } catch { /* quota */ }
+        return obj;
+      });
+  }
+
+  /**
+   * Flag a problem row with its official-fetch status, visible even when collapsed.
+   *   'ok'       — fetched and the LeetCode id matches our entry (no badge)
+   *   'fail'     — the fetch failed (bad slug / 404 / network)
+   *   'mismatch' — fetched, but the slug resolves to a DIFFERENT LeetCode problem
+   */
+  function setRowStatus(row, status, message) {
+    row.classList.remove('lc-status-fail', 'lc-status-mismatch');
+    const titleCell = row.querySelector('.lc-title');
+    let badge = titleCell ? titleCell.querySelector('.lc-status-badge') : null;
+    if (status === 'ok') { if (badge) badge.remove(); return; }
+    row.classList.add(status === 'fail' ? 'lc-status-fail' : 'lc-status-mismatch');
+    if (!badge && titleCell) {
+      badge = document.createElement('span');
+      badge.className = 'lc-status-badge';
+      titleCell.appendChild(badge);
+    }
+    if (badge) {
+      badge.classList.toggle('mismatch', status === 'mismatch');
+      badge.textContent = status === 'fail' ? '⚠ fetch failed' : '⚠ wrong slug?';
+      badge.title = message || '';
+    }
+  }
+
+  /** Insert (once) a warning banner at the top of an expanded description block. */
+  function descWarn(el, text) {
+    if (el.querySelector('.lc-desc-warn')) return;
+    const b = document.createElement('div');
+    b.className = 'lc-desc-warn';
+    b.textContent = text;
+    el.insertBefore(b, el.firstChild);
+  }
+
+  function loadOfficialDescription(row) {
+    const el = row.querySelector('.lc-problem[data-slug]');
+    if (!el) return;
+    if (el.dataset.official === 'loading' || el.dataset.official === 'done') return;
+    const slug = el.dataset.slug;
+    const expectedLc = el.dataset.lc;
+    if (!slug) return;
+
+    el.dataset.official = 'loading';
+    if (!readOfficialCache(slug)) {
+      const note = document.createElement('div');
+      note.className = 'lc-desc-loading';
+      note.textContent = 'Loading the official LeetCode statement…';
+      el.appendChild(note);
+    }
+
+    fetchOfficial(slug)
+      .then(obj => {
+        el.dataset.official = 'done';
+        const mismatch = expectedLc && obj.id && String(obj.id) !== String(expectedLc);
+        el.innerHTML = obj.content + '<div class="lc-desc-src">Source: leetcode.com (official problem statement)</div>';
+        if (mismatch) {
+          const msg = 'This slug resolves to LeetCode #' + obj.id + ' "' + obj.title +
+            '", but the entry is marked #' + expectedLc + '. The problem url/slug may be wrong.';
+          setRowStatus(row, 'mismatch', msg);
+          descWarn(el, '⚠ ' + msg);
+        } else {
+          setRowStatus(row, 'ok');
+        }
+      })
+      .catch(err => {
+        // Keep the local blurb, mark the row, and allow a retry on a later expand.
+        delete el.dataset.official;
+        const n = el.querySelector('.lc-desc-loading');
+        if (n) n.remove();
+        const msg = 'Couldn\'t fetch the official statement for slug "' + slug + '" (' + err.message +
+          '). Showing the local summary — the LeetCode url/slug may be wrong.';
+        setRowStatus(row, 'fail', msg);
+        descWarn(el, '⚠ ' + msg);
+      });
+  }
+
+  /**
+   * Scan every problem against /api/leetcode and flag the ones that fail to fetch
+   * or whose slug resolves to a different LeetCode number. Throttled concurrency;
+   * uses the cache so re-runs are cheap. Updates the button with a live count and
+   * a final summary (the full list of flagged problems goes in its tooltip).
+   */
+  function verifyAllOfficial(btn) {
+    const rows = Array.from(lcTable.querySelectorAll('.lc-row.lc-data'))
+      .filter(r => r.querySelector('.lc-problem[data-slug]'));
+    const total = rows.length;
+    let done = 0;
+    const fails = [], mismatches = [];
+    btn.disabled = true;
+    const tick = () => { btn.textContent = 'Verifying… ' + done + '/' + total; };
+    tick();
+
+    let idx = 0;
+    const step = () => {
+      if (idx >= rows.length) return Promise.resolve();
+      const row = rows[idx++];
+      const el = row.querySelector('.lc-problem[data-slug]');
+      const slug = el.dataset.slug, expectedLc = el.dataset.lc, num = el.dataset.num;
+      return fetchOfficial(slug)
+        .then(obj => {
+          if (expectedLc && obj.id && String(obj.id) !== String(expectedLc)) {
+            setRowStatus(row, 'mismatch', 'Slug "' + slug + '" → LeetCode #' + obj.id + ' "' + obj.title + '" (entry marked #' + expectedLc + ')');
+            mismatches.push('#' + expectedLc + ' (entry ' + num + ') slug "' + slug + '" → LC#' + obj.id);
+          } else {
+            setRowStatus(row, 'ok');
+          }
+        })
+        .catch(err => {
+          setRowStatus(row, 'fail', 'slug "' + slug + '": ' + err.message);
+          fails.push('#' + expectedLc + ' (entry ' + num + ') slug "' + slug + '" — ' + err.message);
+        })
+        .then(() => { done++; tick(); return step(); });
+    };
+
+    const workers = [];
+    for (let i = 0; i < 6 && i < rows.length; i++) workers.push(step());
+    Promise.all(workers).then(() => {
+      btn.disabled = false;
+      const bad = fails.length + mismatches.length;
+      if (bad === 0) {
+        btn.textContent = '✓ All ' + total + ' verified';
+        btn.title = 'Every problem fetched its official statement and the LeetCode numbers all match.';
+      } else {
+        btn.textContent = '⚠ ' + bad + ' need attention';
+        btn.title = 'Fetch failed (' + fails.length + '):\n' + (fails.join('\n') || '—') +
+          '\n\nWrong slug / mismatch (' + mismatches.length + '):\n' + (mismatches.join('\n') || '—');
+      }
+      // Full details also in the console for easy copy.
+      if (bad) console.warn('LeetCode verify — fetch failures:', fails, '| mismatches:', mismatches);
+    });
+  }
+
+  const lcVerifyBtn = document.getElementById('lc-verify-btn');
+  if (lcVerifyBtn) lcVerifyBtn.addEventListener('click', () => verifyAllOfficial(lcVerifyBtn));
+
   lcTable.querySelectorAll('.lc-row.lc-data').forEach(row => {
     row.addEventListener('click', (e) => {
       if (e.target.closest('.lc-detail')) return;     // let users select / copy / edit detail
       if (e.target.closest('.lc-link-cell a')) return; // let link click fall through
       row.classList.toggle('expanded');
       if (row.classList.contains('expanded')) {
+        // Upgrade the paraphrased blurb to LeetCode's official statement (via /api/leetcode).
+        loadOfficialDescription(row);
         // Solution code blocks: editable. Algorithm example blocks: read-only.
         row.querySelectorAll('pre code[data-lc-num]').forEach(b => initEditableCode(b, row));
         if (window.hljs) {
@@ -1661,11 +1974,104 @@
     applyLcFilters();
   });
 
-  // ─────── View toggle (Topics ↔ LeetCode) with URL-hash routing ───────
+  // ─────── Garmin Behavioral view: render question chains + category filter ───────
+  let behavioralSearchTerm = '';
+  let activeBehavioralCategory = null;
+  (function renderBehavioral() {
+    if (typeof behavioral === 'undefined') return;
+    const bContent = document.getElementById('behavioral-content');
+    const bFilters = document.getElementById('behavioral-filters');
+    if (!bContent) return;
+    const stripTags = h => h.replace(/<[^>]*>/g, ' ');
+
+    behavioral.forEach((chain, i) => {
+      const section = document.createElement('section');
+      section.className = 'section behavioral-section';
+      section.id = 'bq-' + chain.id;
+      section.dataset.category = chain.category.toLowerCase();
+      // Everything in the chain is searchable: main question + every follow-up Q&A.
+      section.dataset.search = (chain.q + ' ' + chain.category + ' ' + stripTags(chain.a) + ' ' +
+        chain.followups.map(f => f.q + ' ' + stripTags(f.a)).join(' ')).toLowerCase();
+
+      // First row is the suggested answer to the main question (the section title);
+      // the rest are the likely follow-ups, each grouped under the same chain.
+      const rows = [{ type: 'answer', label: 'answer', q: 'Suggested STAR answer', a: chain.a }]
+        .concat(chain.followups.map(f => ({ type: 'followup', label: 'follow-up', q: f.q, a: f.a })));
+
+      let rowsHTML = `
+        <div class="q-row q-head"><div>#</div><div>Type</div><div>Question</div><div></div></div>`;
+      rows.forEach((r, ri) => {
+        const numLabel = r.type === 'answer' ? '★' : String(ri).padStart(2, '0');
+        rowsHTML += `
+          <div class="q-row q-data">
+            <div class="q-num">${numLabel}</div>
+            <div class="q-diff ${r.type}"><span class="pill">${r.label}</span></div>
+            <div class="q-text">${escapeHtml(r.q)}</div>
+            <div class="q-toggle">+</div>
+            <div class="q-answer">${r.a}</div>
+          </div>`;
+      });
+
+      section.innerHTML = `
+        <div class="section-header">
+          <div class="section-num">Chain ${String(i + 1).padStart(2, '0')} · ${escapeHtml(chain.category)}</div>
+          <h2 class="section-title">${escapeHtml(chain.q)}</h2>
+          <p class="section-desc">${chain.followups.length} likely follow-up${chain.followups.length === 1 ? '' : 's'}. Click any question to reveal a suggested answer.</p>
+        </div>
+        <div class="q-table">${rowsHTML}</div>`;
+      bContent.appendChild(section);
+    });
+
+    // Expand/collapse — same rule as Topics (clicks inside the answer don't collapse).
+    bContent.querySelectorAll('.q-row.q-data').forEach(row => {
+      row.addEventListener('click', (e) => {
+        if (e.target.closest('.q-answer')) return;
+        row.classList.toggle('expanded');
+      });
+    });
+
+    // Category filter chips
+    if (bFilters) {
+      const cats = [...new Set(behavioral.map(c => c.category))];
+      let chipsHTML = `<div class="lc-filter-row"><span class="lc-filter-label">Category</span>` +
+        `<button class="lc-chip active" data-category="">All</button>`;
+      cats.forEach(c => {
+        chipsHTML += `<button class="lc-chip" data-category="${escapeHtml(c).toLowerCase()}">${escapeHtml(c)}</button>`;
+      });
+      bFilters.innerHTML = chipsHTML + `</div>`;
+      bFilters.addEventListener('click', (e) => {
+        const chip = e.target.closest('.lc-chip');
+        if (!chip) return;
+        activeBehavioralCategory = chip.dataset.category || null;
+        bFilters.querySelectorAll('.lc-chip').forEach(c =>
+          c.classList.toggle('active', (c.dataset.category || null) === activeBehavioralCategory));
+        applyBehavioralFilters();
+      });
+    }
+  })();
+
+  /** Show/hide behavioral chains by the active category chip + search term. */
+  function applyBehavioralFilters() {
+    document.querySelectorAll('.behavioral-section').forEach(section => {
+      const matchCat = !activeBehavioralCategory || section.dataset.category === activeBehavioralCategory;
+      const matchSearch = !behavioralSearchTerm || (section.dataset.search || '').includes(behavioralSearchTerm);
+      section.classList.toggle('hidden', !(matchCat && matchSearch));
+    });
+  }
+
+  // ─────── View toggle (Topics ↔ LeetCode ↔ Behavioral) with URL-hash routing ───────
   const viewBtns  = document.querySelectorAll('.view-btn');
   const topicsView = document.getElementById('topics-view');
   const leetView   = document.getElementById('leetcode-view');
+  const behavioralView = document.getElementById('behavioral-view');
   const searchInput = document.getElementById('search');
+  const VIEW_EL = { topics: topicsView, leetcode: leetView, behavioral: behavioralView };
+  const VIEW_HASH = { topics: '', leetcode: '#leetcode', behavioral: '#behavioral' };
+  const VIEW_PLACEHOLDER = {
+    topics: 'Search questions...',
+    leetcode: 'Search problems...',
+    behavioral: 'Search behavioral questions...',
+  };
 
   /**
    * Switch between the Topics and LeetCode views.
@@ -1679,21 +2085,20 @@
    * LeetCode view, no hash for the Topics view. Pass `pushHash: false` to skip
    * this (used on initial load + on hashchange to avoid loops).
    *
-   * @param {'topics'|'leetcode'} view - Which view to show.
+   * @param {'topics'|'leetcode'|'behavioral'} view - Which view to show.
    * @param {{pushHash?: boolean}} [opts] - Optional flags. pushHash defaults to true.
    */
   function setView(view, opts = {}) {
-    const isLc = view === 'leetcode';
-    topicsView.hidden = isLc;
-    leetView.hidden   = !isLc;
+    if (!VIEW_EL[view]) view = 'topics';
+    Object.keys(VIEW_EL).forEach(k => { VIEW_EL[k].hidden = k !== view; });
     viewBtns.forEach(b => {
       const active = b.dataset.view === view;
       b.classList.toggle('active', active);
       b.setAttribute('aria-selected', String(active));
     });
-    searchInput.placeholder = isLc ? 'Search problems...' : 'Search questions...';
+    searchInput.placeholder = VIEW_PLACEHOLDER[view];
     if (opts.pushHash !== false) {
-      const hash = isLc ? '#leetcode' : '';
+      const hash = VIEW_HASH[view];
       const target = hash || location.pathname + location.search;
       if (location.hash !== hash) history.replaceState(null, '', target);
     }
@@ -1708,11 +2113,15 @@
   // Initial view from URL hash
   if (location.hash === '#leetcode' || location.hash === '#lc') {
     setView('leetcode', { pushHash: false });
+  } else if (location.hash === '#behavioral') {
+    setView('behavioral', { pushHash: false });
   }
-  // Hashchange — handle direct links to either view, and activate the right chip
+  // Hashchange — handle direct links to any view, and activate the right chip
   window.addEventListener('hashchange', () => {
     if (location.hash === '#leetcode' || location.hash === '#lc') {
       setView('leetcode', { pushHash: false });
+    } else if (location.hash === '#behavioral') {
+      setView('behavioral', { pushHash: false });
     } else if (location.hash) {
       const target = document.getElementById(location.hash.slice(1));
       if (target && target.closest('#topics-view')) {
@@ -1729,6 +2138,10 @@
       // LeetCode view: update the shared search term and re-apply all filters together
       lcSearchTerm = term;
       applyLcFilters();
+    } else if (!behavioralView.hidden) {
+      // Behavioral view: filter chains by search + category chip
+      behavioralSearchTerm = term;
+      applyBehavioralFilters();
     } else {
       // Topics view: update search term and re-apply the combined filter (search + chip)
       topicsSearchTerm = term;
