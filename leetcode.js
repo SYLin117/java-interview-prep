@@ -1,11 +1,13 @@
-// Top 100 popular LeetCode interview questions with idiomatic Java solutions.
+// Top 200 popular LeetCode interview questions with idiomatic Java solutions.
 // Loaded as a classic <script src="leetcode.js"></script> — 'leetcode' becomes
 // available to the inline renderer in index.html.
 //
 // Each entry has a 'bucket' field for the high-level grouping (used to render
 // section headers in the table) and a 'category' field for the per-row tag.
-// Entries are pre-sorted by bucket in display order; 'num' is the display
-// number (1..100) in that order.
+// Entries are pre-sorted by bucket in display order; 'num' is a stable internal
+// key (1..200, NOT in array order) that keys user-overrides.js,
+// descriptions.js and algorithms.js. Problems Garmin is known to ask carry
+// companies: ['Garmin'].
 //
 // Shared node definitions assumed by the tree/linked-list/graph solutions:
 //   class ListNode { int val; ListNode next; ListNode(int v) { val = v; } }
@@ -13,7 +15,7 @@
 //   class Node     { int val; Node next; Node random; List<Node> neighbors; ... }
 
 const leetcode = [
-  // ─── Arrays & Hashing (20) ───
+  // ─── Arrays & Hashing (37) ───
   {
     num: 111, lc: 14, title: 'Longest Common Prefix', d: 'easy', companies: ['Garmin'],
     bucket: 'Arrays & Hashing', category: 'String · Scan',
@@ -86,7 +88,7 @@ public List<String> fizzBuzz(int n) {
 }`
   },
   {
-    num: 1, lc: 1, title: 'Two Sum', d: 'easy', companies: ['Temu', 'Garmin'],
+    num: 1, lc: 1, title: 'Two Sum', d: 'easy', companies: ['Garmin'],
     bucket: 'Arrays & Hashing', category: 'Array · Hash Map',
     url: 'https://leetcode.com/problems/two-sum/',
     approach: 'Complement hashing in a single pass. As you scan each element nums[i], the partner you need is complement = target - nums[i]; if that complement is already in a value→index hash map you have the pair and return both indices. Otherwise record this value and index so a LATER element can discover it as its own complement. Checking before inserting keeps the two indices distinct, so nothing pairs with itself; storing the index (not mere presence) lets it return positions. Each lookup and insert is amortized O(1), turning the O(n²) double loop into O(n) time, O(n) space.',
@@ -472,7 +474,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 11, lc: 53, title: 'Maximum Subarray', d: 'medium', companies: ['Temu', 'Garmin'],
+    num: 11, lc: 53, title: 'Maximum Subarray', d: 'medium', companies: ['Garmin'],
     bucket: 'Arrays & Hashing', category: 'Array · DP (Kadane)',
     url: 'https://leetcode.com/problems/maximum-subarray/',
     approach: 'Kadane\'s algorithm — a one-pass dynamic program. Define current = the max sum of a subarray that must END at index i. The recurrence is current = max(nums[i], current + nums[i]): extending the previous run is worthwhile only while that run\'s sum stays positive; the moment it would drag nums[i] down, we discard it and restart fresh at nums[i]. \'best\' tracks the largest current ever seen, the global answer. Correct because any optimal subarray ends at some index, and current holds the best subarray ending there. Seeding both with nums[0] handles all-negative inputs (returns the least-negative element). Time O(n) one pass; space O(1), beating the O(n²) brute force.',
@@ -580,7 +582,7 @@ public void moveZeroes(int[] nums) {
 }`
   },
   {
-    num: 14, lc: 75, title: 'Sort Colors', d: 'medium',
+    num: 14, lc: 75, title: 'Sort Colors', d: 'medium', companies: ['Garmin'],
     bucket: 'Arrays & Hashing', category: 'Array · Dutch National Flag',
     url: 'https://leetcode.com/problems/sort-colors/',
     approach: 'Dutch National Flag algorithm (Dijkstra), a three-way one-pass partition. Maintain three pointers: lo (boundary after the 0-zone), hi (boundary before the 2-zone), and mid (the scanner). Invariant: everything before lo is 0, everything in [lo, mid) is 1, everything after hi is 2, and [mid, hi] is unprocessed. When nums[mid] is 0, swap it to lo and advance both lo and mid (the swapped-in value was already a processed 1). When it\'s 2, swap it to hi and decrement hi only — do NOT advance mid, since the value swapped in from hi is unexamined. When it\'s 1, just advance mid. The loop ends when mid passes hi. Time O(n) one pass; space O(1), beating a two-pass count sort.',
@@ -661,7 +663,7 @@ public int firstMissingPositive(int[] nums) {
 }`
   },
   {
-    num: 16, lc: 56, title: 'Merge Intervals', d: 'medium', companies: ['Temu', 'Garmin'],
+    num: 16, lc: 56, title: 'Merge Intervals', d: 'medium', companies: ['Garmin'],
     bucket: 'Arrays & Hashing', category: 'Array · Intervals',
     url: 'https://leetcode.com/problems/merge-intervals/',
     approach: 'Sort-and-sweep (greedy interval merging). Sort all intervals by start time so that any intervals which could overlap become adjacent; this is the key insight, because once sorted, a new interval can only overlap the most recently merged group, never an earlier one. Sweep left to right keeping a result list: if the current interval\'s start is beyond the last group\'s end there is no overlap, so append it as a new group; otherwise extend that group\'s end to max(lastEnd, curEnd) to absorb nested or partial overlaps. Sorting costs O(n log n) which dominates the single O(n) sweep; output uses O(n) space. Pitfall: take the max when extending, since a fully nested interval like [2,3] inside [1,10] must not shrink the end to 3.',
@@ -698,7 +700,7 @@ public int[][] merge(int[][] intervals) {
 }`
   },
   {
-    num: 17, lc: 54, title: 'Spiral Matrix', d: 'medium', companies: ['Temu'],
+    num: 17, lc: 54, title: 'Spiral Matrix', d: 'medium',
     bucket: 'Arrays & Hashing', category: 'Matrix',
     url: 'https://leetcode.com/problems/spiral-matrix/',
     approach: 'Boundary-shrinking simulation. Maintain four boundaries top, bottom, left, right that fence off the unvisited region. Each loop iteration peels one full ring: walk the top row left to right then increment top, walk the right column top to bottom then decrement right, walk the bottom row right to left then decrement bottom, walk the left column bottom to top then increment left. The two guards top ≤ bottom and left ≤ right before the bottom-row and left-column passes are essential, otherwise a single remaining row or column would be traversed twice in non-square matrices. Every cell is added exactly once, giving O(m·n) time and O(1) extra space beyond the output. It cleanly handles single-row and single-column inputs without special cases thanks to those mid-loop boundary checks.',
@@ -744,7 +746,7 @@ public List<Integer> spiralOrder(int[][] matrix) {
 }`
   },
   {
-    num: 18, lc: 48, title: 'Rotate Image', d: 'medium', companies: ['Temu'],
+    num: 18, lc: 48, title: 'Rotate Image', d: 'medium',
     bucket: 'Arrays & Hashing', category: 'Matrix',
     url: 'https://leetcode.com/problems/rotate-image/',
     approach: 'Transpose-then-reverse, an in-place two-step rotation. The insight is that a 90° clockwise rotation decomposes into two simple operations: first transpose the matrix (swap element [i][j] with [j][i], which reflects across the main diagonal), then reverse each row (which mirrors left-right). Composing a diagonal reflection with a horizontal reflection yields exactly a 90° clockwise turn. The transpose only swaps the upper triangle (j starts at i+1) so no swap is undone, and the row reversals are independent, so both steps run in O(n²) time using O(1) extra space — no second matrix needed. Pitfall: looping j over the full row instead of just j > i would swap each pair twice and leave the matrix unchanged.',
@@ -779,7 +781,875 @@ public void rotate(int[][] matrix) {
 }`
   },
 
-  // ─── Two Pointers (6) ───
+  {
+    num: 116, lc: 13, title: 'Roman to Integer', d: 'easy',
+    bucket: 'Arrays & Hashing', category: 'String · Hash Map',
+    url: 'https://leetcode.com/problems/roman-to-integer/',
+    approach: 'One pass with a symbol→value map and one-token lookahead. Roman numerals are mostly additive — you just sum the symbol values — but six subtractive pairs (IV, IX, XL, XC, CD, CM) break the rule: a smaller symbol written before a strictly larger one is subtracted instead of added. The key insight is that this exception has a single uniform signature, value(s[i]) < value(s[i+1]), so comparing each symbol against its successor decides the sign without pattern-matching any pair explicitly; the last symbol has no successor and is always added. The naive alternative — hard-coding all six two-character combos and jumping the index by two on a match — works but triples the branching and invites off-by-one bugs in the index bookkeeping. The problem guarantees a valid numeral in [1, 3999], so no validation is needed. The map holds a fixed seven entries, giving O(n) time and O(1) space. An equivalent alternative scans right-to-left, adding each value but negating it whenever it is smaller than the value of the symbol just processed to its right.',
+    complexity: 'O(n) time · O(1) space',
+    code: `// Worked trace for s = "MCMXCIV" (1994):
+//
+//   i  c   val    next    val<next?  action  total
+//   ────────────────────────────────────────────────
+//   0  M   1000   C=100     no       +1000    1000
+//   1  C    100   M=1000    yes      -100      900
+//   2  M   1000   X=10      no       +1000    1900
+//   3  X     10   C=100     yes      -10      1890
+//   4  C    100   I=1       no       +100     1990
+//   5  I      1   V=5       yes      -1       1989
+//   6  V      5   (none)    no       +5       1994
+//
+// Returns 1994
+
+public int romanToInt(String s) {
+  // Fixed 7-symbol alphabet — the values never change, so the map is O(1) space by definition
+  Map<Character, Integer> value = new HashMap<>();
+  value.put('I', 1);    value.put('V', 5);
+  value.put('X', 10);   value.put('L', 50);
+  value.put('C', 100);  value.put('D', 500);
+  value.put('M', 1000);
+  int total = 0;
+  for (int i = 0; i < s.length(); i++) {
+    // Value of the current symbol; validity is guaranteed, so get() never returns null
+    int cur = value.get(s.charAt(i));
+    // Subtractive rule: a smaller symbol BEFORE a strictly larger one is negated (I in IV).
+    // This one comparison covers all six pairs (IV IX XL XC CD CM) — no per-pair cases.
+    // The i + 1 bound check keeps the last symbol out, which has no successor and must add.
+    if (i + 1 < s.length() && cur < value.get(s.charAt(i + 1))) {
+      // Contribute the negative now; the larger successor adds its full value next turn,
+      // so IV nets -1 + 5 = 4 without ever skipping the index ahead by two
+      total -= cur;
+    } else {
+      // Equal or larger than what follows (or final symbol) — the plain additive case.
+      // Equal matters: III must take this branch, since 1 < 1 is false
+      total += cur;
+    }
+  }
+  // Every symbol contributed exactly once with the right sign — total is the numeral
+  return total;
+}`
+  },
+  {
+    num: 117, lc: 8, title: 'String to Integer (atoi)', d: 'medium',
+    bucket: 'Arrays & Hashing', category: 'String · Parsing',
+    url: 'https://leetcode.com/problems/string-to-integer-atoi/',
+    approach: 'Deterministic left-to-right scan with three strictly ordered phases: skip leading spaces, consume at most one sign, then accumulate digits via result = result * 10 + digit until the first non-digit. The key insight is the overflow guard checked BEFORE the multiply — if result > (Integer.MAX_VALUE - digit) / 10, appending this digit would exceed 32 bits, so clamp to MAX_VALUE or MIN_VALUE by sign right there; after the multiply the damage is already done and undetectable in an int. Accumulating a positive magnitude and applying the sign only at the end stays correct even for -2147483648, whose magnitude is one past MAX_VALUE, because the clamp fires on its last digit and returns MIN_VALUE exactly. The phase ordering makes the tricky inputs fall out for free: "+-12" consumes one sign then stops at the second, and "words and 987" never enters the digit loop, so both return 0. Naive alternatives are worse: parsing into a long merely defers the overflow question (interviewers then ask what you\'d do if long could overflow too), and Integer.parseInt throws on trailing garbage like "4193 with words" that must legally parse to 4193. An equivalent alternative is an explicit DFA with start/sign/digits/done states — the same logic drawn as a state machine, which generalizes to Valid Number (LC 65).',
+    complexity: 'O(n) time · O(1) space',
+    code: `// Worked trace for s = "   -42":
+//
+//   phase       i  char  action                       sign  result
+//   ─────────────────────────────────────────────────────────────────
+//   skip space  0  ' '   leading blank, advance        +1      0
+//   skip space  1  ' '   leading blank, advance        +1      0
+//   skip space  2  ' '   leading blank, advance        +1      0
+//   sign        3  '-'   record negative, advance      -1      0
+//   digit       4  '4'   result = 0*10 + 4             -1      4
+//   digit       5  '2'   result = 4*10 + 2             -1     42
+//   end         6  -     i == length, stop             -1     42
+//
+// Returns sign * result = -42
+
+public int myAtoi(String s) {
+  int i = 0, n = s.length();
+  // 1) Whitespace is legal ONLY at the very front, so consume it before anything else.
+  //    The i < n guard keeps charAt safe on empty or all-space input.
+  while (i < n && s.charAt(i) == ' ') i++;
+  // 2) At most ONE sign, and only immediately after the spaces. Consuming it here
+  //    means a second sign ("+-12") is later seen as a non-digit and correctly yields 0.
+  int sign = 1;
+  if (i < n && (s.charAt(i) == '+' || s.charAt(i) == '-')) {
+    sign = s.charAt(i) == '-' ? -1 : 1;
+    i++;
+  }
+  // Accumulate the POSITIVE magnitude; the sign is applied exactly once at the end
+  int result = 0;
+  // 3) Digits run until the first non-digit — trailing garbage ("4193 with words")
+  //    just terminates the loop instead of invalidating the whole parse.
+  while (i < n && Character.isDigit(s.charAt(i))) {
+    int digit = s.charAt(i) - '0';
+    // Overflow guard BEFORE the multiply: once result * 10 wraps, an int can't tell.
+    // Integer division makes the test exact: result > (MAX - digit) / 10
+    // holds if and only if result * 10 + digit would exceed Integer.MAX_VALUE.
+    if (result > (Integer.MAX_VALUE - digit) / 10) {
+      // MIN_VALUE's magnitude is one past MAX_VALUE's, so "-2147483648" trips this
+      // clamp on its final digit and still returns the exact right answer
+      return sign == 1 ? Integer.MAX_VALUE : Integer.MIN_VALUE;
+    }
+    // Shift left one decimal place and append the new digit
+    result = result * 10 + digit;
+    i++;
+  }
+  // No digits at all ("words and 987", "", "+") leaves result at 0 — the required default
+  return sign * result;
+}`
+  },
+  {
+    num: 118, lc: 28, title: 'Find the Index of the First Occurrence in a String', d: 'easy', companies: ['Garmin'],
+    bucket: 'Arrays & Hashing', category: 'String · Scan',
+    url: 'https://leetcode.com/problems/find-the-index-of-the-first-occurrence-in-a-string/',
+    approach: 'Sliding-window comparison with early exit. Anchor a window of needle\'s length at every start index i and compare it against needle character by character, bailing at the first mismatch. The key insight is the loop bound i + m <= n: any anchor past n - m cannot fit the whole needle, so those windows are skipped outright — and a needle longer than the haystack makes the loop body never run, falling straight through to -1 with no special-case code. Scanning anchors left to right guarantees the first window that fully matches is the leftmost occurrence, exactly what the problem asks for. The early mismatch exit means most windows die on their opening character in practice, though an adversarial input like haystack = "aaaa...ab" with needle = "aab" still drives it to O(n·m) worst case. The substring-slicing variant (haystack.substring(i, i + m).equals(needle)) does the same comparisons but allocates a fresh string per window, so direct charAt access is strictly better. For guaranteed linear time, the KMP algorithm precomputes a failure table over needle so a mismatch skips the anchor ahead instead of restarting, achieving O(n + m).',
+    complexity: 'O(n·m) time · O(1) space',
+    code: `// Worked trace for haystack = "hello", needle = "ll" (n = 5, m = 2):
+//
+//   i  window  char-by-char comparison         j after  full match?
+//   ─────────────────────────────────────────────────────────────────
+//   0  "he"    'h' vs 'l' → mismatch at once   0        no
+//   1  "el"    'e' vs 'l' → mismatch at once   0        no
+//   2  "ll"    'l'='l' ok, 'l'='l' ok          2        yes → return 2
+//
+// (last anchor tried would be i = 3 = n - m; never reached here)
+// Returns 2
+
+public int strStr(String haystack, String needle) {
+  int n = haystack.length(), m = needle.length();
+  // Only anchors 0..n-m can fit the whole needle. If m > n the condition is
+  // false immediately and we fall through to -1 — no separate length guard.
+  for (int i = 0; i + m <= n; i++) {
+    // How many needle chars have matched at this anchor so far
+    int j = 0;
+    // Walk forward while the chars agree; stopping at the FIRST mismatch is
+    // what keeps typical inputs fast — most windows die on their opening char.
+    while (j < m && haystack.charAt(i + j) == needle.charAt(j)) {
+      j++;
+    }
+    // j == m means every needle char matched. Anchors are tried left to
+    // right, so this is guaranteed to be the FIRST occurrence — return now.
+    if (j == m) return i;
+  }
+  // Every anchor failed — needle never occurs in haystack
+  return -1;
+}`
+  },
+  {
+    num: 119, lc: 151, title: 'Reverse Words in a String', d: 'medium', companies: ['Garmin'],
+    bucket: 'Arrays & Hashing', category: 'String · Parsing',
+    url: 'https://leetcode.com/problems/reverse-words-in-a-string/',
+    approach: 'Backward two-pointer scan that emits words in reverse order in a single pass. Walk a cursor from the end of the string toward the front: first skip any run of spaces, then mark the word\'s last character, then keep walking left until just past its first character — the slice between those two bounds is one complete word, appended to a StringBuilder with a single separating space. The key insight is that reading right-to-left makes the LAST word come out first, so no separate reversal step is ever needed, and skipping the space-run before each word normalizes leading, trailing, and repeated interior spaces with one uniform loop. Reversing the raw character sequence instead would scramble the letters inside each word, and the one-liner of trim() plus a regex split on whitespace runs works but allocates a token array and regex machinery — exactly what interviewers ask you to avoid. Appending each word by index range (not char-by-char through temporaries) keeps it to one copy per character. Runs in O(n) time and O(n) space for the output; an equivalent alternative — the O(1)-extra-space trick for mutable strings — reverses the whole char array, then re-reverses each word and compacts the spaces in place.',
+    complexity: 'O(n) time · O(n) space',
+    code: `// Worked trace for s = "  hello world  "   (indices 0..14):
+//
+//   step  action                  i moves    word slice        builder after
+//   ─────────────────────────────────────────────────────────────────────────
+//   1     skip trailing spaces    14 -> 12   -                 ""
+//   2     scan word right->left   12 -> 7    s[8..12] "world"  "world"
+//   3     skip gap spaces         7  -> 6    -                 "world"
+//   4     scan word right->left   6  -> 1    s[2..6]  "hello"  "world hello"
+//   5     skip leading spaces     1  -> -1   -                 "world hello"
+//   6     i < 0 -> loop ends
+//
+// Returns "world hello"
+
+public String reverseWords(String s) {
+  // Build the answer front-to-back while reading the input back-to-front —
+  // that single direction flip is what reverses the word order for free.
+  StringBuilder sb = new StringBuilder();
+  int i = s.length() - 1;
+  while (i >= 0) {
+    // Skip the space run sitting to the right of the next word. This ONE loop
+    // handles trailing, repeated-interior, and leading spaces uniformly.
+    while (i >= 0 && s.charAt(i) == ' ') i--;
+    // Only spaces remained — every word has been consumed, stop cleanly
+    if (i < 0) break;
+    // i now sits on the LAST character of a word; pin that boundary
+    int end = i;
+    // Walk left through the word; the loop exits one position BEFORE its first char
+    while (i >= 0 && s.charAt(i) != ' ') i--;
+    // Separator only BETWEEN words, never before the first — this guarantee is
+    // what keeps the output free of leading/trailing spaces.
+    if (sb.length() > 0) sb.append(' ');
+    // The word spans s[i+1 .. end]; append(CharSequence, from, toExclusive)
+    // copies it straight into the builder with no intermediate substring object.
+    sb.append(s, i + 1, end + 1);
+  }
+  return sb.toString();
+}`
+  },
+  {
+    num: 120, lc: 169, title: 'Majority Element', d: 'easy',
+    bucket: 'Arrays & Hashing', category: 'Array · Voting',
+    url: 'https://leetcode.com/problems/majority-element/',
+    approach: 'Boyer-Moore majority vote: keep a single candidate and a counter, scanning once. When the counter is zero, adopt the current element as the candidate; otherwise add 1 on a match and subtract 1 on a mismatch. The insight that makes this correct is pairing-off: every decrement cancels one candidate copy against one non-candidate copy, and because the true majority owns strictly more than half the slots, it can never be fully paired away — whatever candidate survives the scan must be it. When the counter hits zero the prefix just consumed had no net winner, so the majority of the remaining suffix equals the global majority and restarting there is safe. Since the problem guarantees a majority exists, the survivor needs no verification; drop that guarantee and you would add one extra pass to re-count it. A HashMap frequency table also runs in O(n) but spends O(n) extra space, and sorting costs O(n log n) — both lose to the voting scan. An equivalent alternative: sort and return nums[n/2], because an element occupying more than half the array must cover the middle index.',
+    complexity: 'O(n) time · O(1) space',
+    code: `// Worked trace for nums = [2, 2, 1, 1, 1, 2, 2]:
+//
+//   i  num  count before  candidate before  action              cand/count after
+//   ─────────────────────────────────────────────────────────────────────────────
+//   0   2        0               -          count==0 → adopt 2      2 / 1
+//   1   2        1               2          match    → count+1      2 / 2
+//   2   1        2               2          mismatch → count-1      2 / 1
+//   3   1        1               2          mismatch → count-1      2 / 0
+//   4   1        0               2          count==0 → adopt 1      1 / 1
+//   5   2        1               1          mismatch → count-1      1 / 0
+//   6   2        0               1          count==0 → adopt 2      2 / 1
+//
+// Returns 2  (2 holds 4 of the 7 slots — the guaranteed majority)
+
+public int majorityElement(int[] nums) {
+  // The current pairing-off survivor; any initial value is safe because
+  // count == 0 forces an adoption on the very first element.
+  int candidate = 0;
+  // Net vote balance: candidate copies seen minus rivals seen since adoption
+  int count = 0;
+  for (int num : nums) {
+    // Balance exhausted — the consumed prefix split evenly into cancelled pairs,
+    // so the global majority still rules the remaining suffix: adopt afresh here.
+    if (count == 0) candidate = num;
+    // Match strengthens the candidate; mismatch burns one candidate vote against
+    // one rival. The majority holds MORE than half the slots, so it can never be
+    // burned away completely — it must be the candidate left standing at the end.
+    count += (num == candidate) ? 1 : -1;
+  }
+  // A majority is guaranteed to exist, so no second verification pass is needed;
+  // without that guarantee we would re-scan and count candidate's occurrences.
+  return candidate;
+}`
+  },
+  {
+    num: 121, lc: 268, title: 'Missing Number', d: 'easy',
+    bucket: 'Arrays & Hashing', category: 'Array · Math/XOR',
+    url: 'https://leetcode.com/problems/missing-number/',
+    approach: 'XOR cancellation over indices and values. XOR has two gifts: a ^ a = 0 and full commutativity/associativity, so pairing order never matters. XOR together every loop index 0..n-1, every value nums[i], and the number n itself; each value that actually appears in the array meets its identical index somewhere in the stream and annihilates to zero. The lone survivor is the missing number, because it enters from the index side but has no partner on the value side. Seeding the accumulator with n is the subtle step — values span 0..n while indices stop at n-1, so without the seed n could never cancel, nor be reported when it is the answer. Naive alternatives are strictly worse: sorting then scanning costs O(n log n), and a HashSet membership check costs O(n) extra space, while this is one pass with a single int of state. The Gauss-sum variant — expected sum n(n+1)/2 minus the actual array sum — is an equivalent O(n)/O(1) alternative, with a mild overflow caveat for larger ranges.',
+    complexity: 'O(n) time · O(1) space',
+    code: `// Worked trace for nums = [3, 0, 1] (n = 3, range is 0..3, 2 is absent):
+//
+//   step   i   nums[i]   XOR folded in      missing after
+//   ─────────────────────────────────────────────────────
+//   seed   -     -       start with n = 3       3
+//   0      0     3       ^ 0 ^ 3            3^0^3 = 0
+//   1      1     0       ^ 1 ^ 0            0^1^0 = 1
+//   2      2     1       ^ 2 ^ 1            1^2^1 = 2
+//
+// Returns 2
+
+public int missingNumber(int[] nums) {
+  int n = nums.length;
+  // Seed with n itself: values span 0..n but loop indices only span 0..n-1,
+  // so without this n would never enter the XOR — it could neither cancel
+  // when present in nums nor survive as the answer when absent.
+  int missing = n;
+  for (int i = 0; i < n; i++) {
+    // Fold in both the index and the value sitting at it. Every value that
+    // exists in nums equals some index in 0..n (a ^ a = 0, and XOR order is
+    // irrelevant by commutativity), so all matched pairs annihilate. Only
+    // the missing number — present on the index side, partnerless on the
+    // value side — is left standing at the end.
+    missing ^= i ^ nums[i];
+  }
+  // Everything paired has cancelled to 0, and 0 ^ x = x
+  return missing;
+}`
+  },
+  {
+    num: 122, lc: 202, title: 'Happy Number', d: 'easy',
+    bucket: 'Arrays & Hashing', category: 'Math · Fast & Slow',
+    url: 'https://leetcode.com/problems/happy-number/',
+    approach: 'Floyd\'s tortoise-and-hare cycle detection run on an implicit linked list: each number "points" to the sum of the squares of its digits, so the question becomes whether that hidden chain terminates at the fixed point 1 or loops forever. The key fact that makes a decision possible is that the chain can never wander off to infinity — any value with 4 or more digits strictly shrinks under the operation (even 9,999,999,999 maps to just 810), so every chain is squeezed below 243 within a few steps and, by pigeonhole, must eventually revisit a value. A forced repeat is exactly a cycle, so advance slow one step and fast two steps per iteration: if fast reaches 1 the number is happy, and if fast catches slow the pointers are trapped in a non-1 loop and the answer is false. Seeding fast one step ahead of slow keeps the meeting test from firing before either pointer has moved, and testing fast (the leader) against 1 detects happiness as early as possible. The naive loop with no cycle check simply never terminates on unhappy inputs like 2. The standard alternative — record every value seen in a HashSet and return false on the first repeat — is equally correct but pays extra space for the set, while the two pointers use none. An equivalent (if less general) shortcut is hard-coding the single known unhappy cycle and checking whether the chain ever hits 4.',
+    complexity: 'O(log n) time · O(1) space',
+    code: `// Worked trace for n = 19  (digit-square-sum chain: 19 → 82 → 68 → 100 → 1):
+//
+//   step   slow   fast   how fast advanced           loop check
+//   ─────────────────────────────────────────────────────────────────────
+//   init    19     82    fast = next(19)             fast != 1, slow != fast → run
+//   1       82    100    next(82)=68, next(68)=100   fast != 1, slow != fast → run
+//   2       68      1    next(100)=1, next(1)=1      fast == 1 → stop
+//
+// Returns true (fast reached the fixed point 1, so 19 is happy)
+
+public boolean isHappy(int n) {
+  // Two pointers walking the implicit list n → next(n) → next(next(n)) → ...
+  // fast starts one step AHEAD: if both started at n, slow == fast would end the
+  // loop before any movement and every n != 1 would be misreported as unhappy.
+  int slow = n;
+  int fast = next(n);
+  // Happy chains end at the fixed point 1 (next(1) = 1, it never leaves).
+  // Unhappy chains are provably trapped in a cycle: one step drives any input
+  // below 243, and a bounded sequence must repeat — so this loop always exits.
+  while (fast != 1 && slow != fast) {
+    // Tortoise: one digit-square-sum step per iteration
+    slow = next(slow);
+    // Hare: two steps. It gains exactly one position on slow each iteration,
+    // so inside a cycle it cannot skip over slow — a meeting is guaranteed.
+    fast = next(next(fast));
+  }
+  // Either fast hit 1 (happy) or the pointers met inside a non-1 cycle (not happy).
+  // n = 1 never enters the loop at all: fast = next(1) = 1 from the start.
+  return fast == 1;
+}
+
+// The "next node" of the implicit list: sum of the squares of the digits of n
+private int next(int n) {
+  int sum = 0;
+  while (n > 0) {
+    // Peel off the lowest digit and square it (max sum for a 10-digit int is
+    // 10 * 81 = 810, so no overflow anywhere near Integer.MAX_VALUE)
+    int d = n % 10;
+    sum += d * d;
+    // Drop the processed digit — n strictly shrinks, so this loop terminates
+    n /= 10;
+  }
+  return sum;
+}`
+  },
+  {
+    num: 123, lc: 383, title: 'Ransom Note', d: 'easy',
+    bucket: 'Arrays & Hashing', category: 'String · Counting',
+    url: 'https://leetcode.com/problems/ransom-note/',
+    approach: 'Letter-frequency counting with a fixed 26-slot int array. First bank the magazine: one pass increments counts[c - \'a\'] for every character, recording how many copies of each letter are available to cut out. Then spend for the note: decrement the matching slot for each ransom-note character, and the instant any count dips below zero the magazine has run out of that letter — return false immediately, no need to look further. The key insight is that only multiplicities matter, not order or position, so two counting passes fully enforce the rule that each magazine letter is used at most once. Because the alphabet is fixed at 26 lowercase letters, the array is genuinely O(1) space and beats a HashMap on constant factors (no hashing, no Integer boxing). A cheap length pre-check — a note longer than the magazine can never be built — short-circuits obvious failures before any counting. Naive alternatives, like rescanning the magazine for every note character or deleting matched characters from a mutable copy, degrade to O(m·n). Building a HashMap<Character, Integer> of counts is the equivalent alternative, and the right reach when the alphabet is unbounded.',
+    complexity: 'O(m + n) time (note + magazine) · O(1) space',
+    code: `// Worked trace for ransomNote = "aab", magazine = "abb":
+//
+// Bank phase — count every magazine letter:
+//   c    counts after
+//   ─────────────────
+//   'a'  a:1
+//   'b'  a:1 b:1
+//   'b'  a:1 b:2
+//
+// Spend phase — decrement per note letter, fail on any negative:
+//   c    before  after  negative?
+//   ──────────────────────────────
+//   'a'    1       0    no
+//   'a'    0      -1    YES → return false
+//
+// Returns false ("aab" needs two a's; "abb" supplies only one)
+
+public boolean canConstruct(String ransomNote, String magazine) {
+  // A note longer than the magazine is impossible by pigeonhole — bail before counting
+  if (ransomNote.length() > magazine.length()) return false;
+  // Fixed 26-slot table: the problem guarantees lowercase a-z only, so this is O(1)
+  // space and avoids the hashing + Integer-boxing overhead of a HashMap
+  int[] counts = new int[26];
+  // Bank phase: counts[x] = how many unspent copies of letter x the magazine offers
+  for (char c : magazine.toCharArray()) {
+    counts[c - 'a']++;
+  }
+  // Spend phase: each note character consumes one banked copy — "used at most once"
+  for (char c : ransomNote.toCharArray()) {
+    // Dropping below zero means the note demands more copies of c than were banked.
+    // Without this check a later surplus of other letters would wrongly mask the deficit.
+    if (--counts[c - 'a'] < 0) return false;
+  }
+  // Every note letter was covered with copies to spare
+  return true;
+}`
+  },
+  {
+    num: 124, lc: 73, title: 'Set Matrix Zeroes', d: 'medium',
+    bucket: 'Arrays & Hashing', category: 'Matrix · In-place',
+    url: 'https://leetcode.com/problems/set-matrix-zeroes/',
+    approach: 'In-place marking that reuses the matrix\'s own first row and first column as the flag arrays. First record in two booleans whether the first row or first column themselves contain a zero — their cells are about to be overloaded as flags, so that information must be captured before it is destroyed. Then scan the interior: every zero at (r, c) stamps a 0 into its row head matrix[r][0] and its column head matrix[0][c]. A second interior pass wipes any cell whose row head or column head is stamped, and finally the two saved booleans decide whether the first row and column themselves get wiped. The key insight making this correct is that a stamped flag is self-consistent — matrix[0][c] == 0 as a flag means column c genuinely must become all zeros, so the flag cell needs no restoring afterward. The truly naive approach of zeroing a row the moment you see a 0 is outright wrong (the freshly written zeros cascade and can wipe the whole matrix), and the safe naive version needs O(m + n) extra boolean arrays just to remember which rows and columns to clear; borrowing the border achieves the same bookkeeping in O(1) extra space. Keeping those explicit O(m + n) marker arrays is the equivalent alternative — same time bound, easier to reason about, and a fine first answer before the constant-space follow-up.',
+    complexity: 'O(m·n) time · O(1) space',
+    code: `// Worked trace for matrix = [[1,1,1],
+//                            [1,0,1],
+//                            [1,1,1]]:
+//
+//   phase             event                        matrix after
+//   ─────────────────────────────────────────────────────────────────────────
+//   scan first row    no 0 found                   firstRowZero = false
+//   scan first col    no 0 found                   firstColZero = false
+//   mark (1,1)==0     stamp [1][0]=0, [0][1]=0     [[1,0,1],[0,0,1],[1,1,1]]
+//   wipe (1,1)        row head is 0                already 0, unchanged
+//   wipe (1,2)        row head is 0                [[1,0,1],[0,0,0],[1,1,1]]
+//   wipe (2,1)        col head is 0                [[1,0,1],[0,0,0],[1,0,1]]
+//   wipe (2,2)        both heads are 1             unchanged
+//   border flags      both false                   first row/col left as-is
+//
+// matrix ends as [[1,0,1],[0,0,0],[1,0,1]] — modified in place, returns void
+
+public void setZeroes(int[][] matrix) {
+  // Constraints guarantee at least 1x1, so matrix[0] is always safe to read
+  int m = matrix.length, n = matrix[0].length;
+  // The first row and column are about to double as flag storage, which destroys
+  // the answer to "did THEY originally contain a zero?" — capture that first.
+  boolean firstRowZero = false, firstColZero = false;
+  for (int c = 0; c < n; c++) if (matrix[0][c] == 0) firstRowZero = true;
+  for (int r = 0; r < m; r++) if (matrix[r][0] == 0) firstColZero = true;
+
+  // Mark pass over the interior: every zero stamps its row head matrix[r][0]
+  // and column head matrix[0][c]. Stamping needs no undo because a head being 0
+  // is exactly what the final answer demands anyway — that row/column really
+  // does contain a zero, so the head cell must end up 0 regardless.
+  for (int r = 1; r < m; r++)
+    for (int c = 1; c < n; c++)
+      if (matrix[r][c] == 0) { matrix[r][0] = 0; matrix[0][c] = 0; }
+
+  // Wipe pass, driven purely by the heads — never by the cells themselves.
+  // Reading only the flags is what stops freshly written zeros from cascading
+  // into rows/columns that were originally zero-free.
+  for (int r = 1; r < m; r++)
+    for (int c = 1; c < n; c++)
+      if (matrix[r][0] == 0 || matrix[0][c] == 0) matrix[r][c] = 0;
+
+  // Border last: only after the interior wipe is it safe to overwrite the flag
+  // cells. Clearing the first row/col any earlier would corrupt the very heads
+  // the wipe pass above depends on.
+  if (firstRowZero) for (int c = 0; c < n; c++) matrix[0][c] = 0;
+  if (firstColZero) for (int r = 0; r < m; r++) matrix[r][0] = 0;
+}`
+  },
+  {
+    num: 125, lc: 944, title: 'Delete Columns to Make Sorted', d: 'easy', companies: ['Garmin'],
+    bucket: 'Arrays & Hashing', category: 'String · Scan',
+    url: 'https://leetcode.com/problems/delete-columns-to-make-sorted/',
+    approach: 'Independent column checks with early exit. Picture the equal-length strings as a grid and ask, for each column j, whether the characters read top to bottom are non-decreasing — the column survives only if strs[i].charAt(j) >= strs[i-1].charAt(j) for every adjacent pair of rows. The key insight is that deletions never interact: removing one column shifts nothing in any other column, so each can be judged in isolation and the answer is simply the count of unsorted columns, with no global reasoning needed. Comparing only adjacent rows suffices because pairwise non-decreasing order chains transitively into a fully sorted column. The moment one pair violates the order the column is condemned, so break immediately — scanning further down that column can only re-confirm the verdict, and forgetting the break would double-count a column with two inversions. A naive alternative that extracts each column into an array and sorts a copy to compare pays O(n log n) per column for information a linear adjacent-pair scan gets for free. Total work is at most one look per grid character: O(n·m) time and O(1) extra space. An equivalent formulation builds each column as a string and checks it against its sorted self, trading the early exit for extra allocations.',
+    complexity: 'O(n·m) time (n strings of length m) · O(1) space',
+    code: `// Worked trace for strs = ["cba", "daf", "ghi"] — as a grid:
+//
+//          col0  col1  col2
+//   row0    c     b     a
+//   row1    d     a     f
+//   row2    g     h     i
+//
+//   j  column (top→bottom)  adjacent checks            verdict  deletions
+//   ─────────────────────────────────────────────────────────────────────
+//   0  c, d, g              c<=d ok, d<=g ok           keep     0
+//   1  b, a, h              a < b at row 1 → break     delete   1
+//   2  a, f, i              a<=f ok, f<=i ok           keep     1
+//
+// Returns 1
+
+public int minDeletionSize(String[] strs) {
+  // All strings are guaranteed the same length, so strs[0] safely defines the column count
+  int cols = strs[0].length();
+  int deletions = 0;
+  // Columns are independent: deleting one never reorders another, so judge each in isolation
+  for (int j = 0; j < cols; j++) {
+    // Compare adjacent rows only — pairwise non-decreasing chains into a fully sorted column.
+    // Starting at i = 1 also makes a single-row grid trivially keep every column.
+    for (int i = 1; i < strs.length; i++) {
+      // One inversion condemns the whole column — count it and stop scanning
+      if (strs[i].charAt(j) < strs[i - 1].charAt(j)) {
+        deletions++;
+        // break, not continue: without it a column with two inversions would count twice
+        break;
+      }
+    }
+  }
+  // Every column that survived the scan is already non-decreasing top to bottom
+  return deletions;
+}`
+  },
+  {
+    num: 126, lc: 706, title: 'Design HashMap', d: 'easy', companies: ['Garmin'],
+    bucket: 'Arrays & Hashing', category: 'Design · Hashing',
+    url: 'https://leetcode.com/problems/design-hashmap/',
+    approach: 'Separate chaining over a fixed array of buckets. Map each key to a slot with key % BUCKETS, where every slot holds a small singly linked chain of (key, value) nodes, so colliding keys simply coexist in the same chain and are told apart by comparing stored keys. put must walk the chain BEFORE inserting and overwrite in place if the key exists — blindly prepending would leave two nodes for one key and get could return a stale value forever; a genuinely new key is prepended in O(1). get and remove walk the same single chain, with remove re-linking either the predecessor or the bucket head around the victim node. The key insight is that hashing confines every operation to one bucket while chaining absorbs collisions, so with 10^4 operations spread over 769 slots the chains stay a few nodes long and each op is O(1) on average. The naive alternatives each fail on one axis: a flat array indexed by key is O(1) but burns 10^6+ slots for a handful of entries, while one unsorted list of pairs is compact but makes every operation O(n). A prime bucket count spreads patterned keys (multiples of a stride) more evenly than a power of two would. Open addressing — one flat array probed linearly, with lazy deletion markers — is the equivalent alternative design.',
+    complexity: 'O(1) average per op · O(n + b) space (b = 769 buckets)',
+    code: `// Worked trace (BUCKETS = 769, so keys 1 and 770 collide: 770 % 769 = 1):
+//
+//   op            bucket-1 chain after op        returned
+//   ─────────────────────────────────────────────────────
+//   put(1, 10)    (1,10)                         -
+//   put(770, 20)  (770,20) → (1,10)              -
+//   get(1)        walk: 770? no, 1? yes          10
+//   put(1, 99)    (770,20) → (1,99)  overwrite   -
+//   remove(770)   (1,99)   head unlinked         -
+//   get(770)      walk: 1? no, chain ends        -1
+//
+// Final state: get(1) returns 99, get(770) returns -1
+
+class MyHashMap {
+  // Prime bucket count spreads patterned keys (e.g. multiples of a stride) more
+  // evenly than a power of two — short chains are the whole speed guarantee
+  private static final int BUCKETS = 769;
+  // One chain head per slot; null means empty. Sized once, never resized — fine
+  // here because at most 10^4 ops keep the average chain a handful of nodes.
+  private final Node[] table = new Node[BUCKETS];
+
+  // Chain node must store the KEY too, not just the value: colliding keys share
+  // a slot and can only be told apart by comparing keys during the walk
+  private static class Node {
+    int key, value;
+    Node next;
+    Node(int key, int value) { this.key = key; this.value = value; }
+  }
+
+  // Keys are guaranteed 0..10^6 (never negative), so plain % is a safe index
+  private int hash(int key) { return key % BUCKETS; }
+
+  public void put(int key, int value) {
+    int h = hash(key);
+    // Walk the chain FIRST: an existing key must be overwritten in place.
+    // Blindly prepending would leave two nodes for one key, and get() could
+    // then keep returning the stale older value.
+    for (Node cur = table[h]; cur != null; cur = cur.next) {
+      if (cur.key == key) { cur.value = value; return; }
+    }
+    // Genuinely new key — prepend at the head in O(1); order within a chain
+    // never matters because lookups scan the whole chain anyway
+    Node node = new Node(key, value);
+    node.next = table[h];
+    table[h] = node;
+  }
+
+  public int get(int key) {
+    // Only this one bucket can possibly hold the key — the point of hashing
+    for (Node cur = table[hash(key)]; cur != null; cur = cur.next) {
+      if (cur.key == key) return cur.value;
+    }
+    // Miss sentinel demanded by the problem; unambiguous because stored
+    // values are constrained to be >= 0, so -1 can never be a real value
+    return -1;
+  }
+
+  public void remove(int key) {
+    int h = hash(key);
+    // Track the predecessor so the victim can be spliced out of the chain
+    Node prev = null;
+    for (Node cur = table[h]; cur != null; prev = cur, cur = cur.next) {
+      if (cur.key == key) {
+        // Head removal has no predecessor — re-point the bucket slot itself
+        if (prev == null) table[h] = cur.next;
+        // Interior removal: link the predecessor around the victim
+        else prev.next = cur.next;
+        return;
+      }
+    }
+    // Key absent — remove() is defined as a silent no-op
+  }
+}`
+  },
+  {
+    num: 127, lc: 432, title: 'All O`one Data Structure', d: 'hard', companies: ['Garmin'],
+    bucket: 'Arrays & Hashing', category: 'Design · DLL + Hash Map',
+    url: 'https://leetcode.com/problems/all-oone-data-structure/',
+    approach: 'Doubly-linked list of count buckets plus a hash map. Each bucket stores one distinct count and the set of keys currently at that count, and buckets are kept in strictly increasing count order — so head.next is always the minimum bucket and tail.prev the maximum, turning getMinKey/getMaxKey into O(1) peeks. The hash map points each key at its bucket; because inc and dec change a count by exactly ±1, the destination bucket is always the immediate neighbor (reuse it if its count matches, otherwise splice a fresh one in place), and that adjacency is the key insight that makes every move O(1). Emptied buckets are removed on the spot — leaving one behind would break the neighbors-differ-by-reachable-counts invariant and let stale nodes pollute the min/max ends. A naive key→count map gives O(1) inc/dec but forces an O(n) scan for min and max, and a TreeMap keyed by count fixes the scan only by charging O(log n) on every operation. When a key\'s count drops to 0 it leaves the structure entirely, and ties at either extreme may return any qualifying key. An equivalent alternative is the LFU-cache layout — HashMap of count → LinkedHashSet plus explicitly tracked min/max counts — though keeping max correct on dec is fiddlier there.',
+    complexity: 'O(1) per operation · O(k) space (k = live keys)',
+    code: `// Worked trace for: inc("a"), inc("a"), inc("b"), getMaxKey(), getMinKey(),
+//                   dec("a"), getMinKey()
+//
+//   op            buckets after (min → max)      bucketOf       returned
+//   ─────────────────────────────────────────────────────────────────────
+//   inc("a")      {1:[a]}                        a→1            -
+//   inc("a")      {2:[a]}     (bucket 1 empt.)   a→2            -
+//   inc("b")      {1:[b]} {2:[a]}                a→2, b→1       -
+//   getMaxKey()   {1:[b]} {2:[a]}                (unchanged)    "a"
+//   getMinKey()   {1:[b]} {2:[a]}                (unchanged)    "b"
+//   dec("a")      {1:[a,b]}   (bucket 2 empt.)   a→1, b→1       -
+//   getMinKey()   {1:[a,b]}                      (unchanged)    "a" (or "b" — tied at count 1, either is valid)
+
+class AllOne {
+  // One node per DISTINCT count; all keys sharing that count live in one set.
+  // Grouping by count (not one node per key) is what bounds moves to one hop.
+  private static class Bucket {
+    int count;
+    Set<String> keys = new HashSet<>();
+    Bucket prev, next;
+    Bucket(int count) { this.count = count; }
+  }
+
+  // Sentinels dodge every null check: head.next is ALWAYS the min-count bucket,
+  // tail.prev ALWAYS the max — that invariant is the whole O(1) min/max trick.
+  private final Bucket head = new Bucket(Integer.MIN_VALUE);
+  private final Bucket tail = new Bucket(Integer.MAX_VALUE);
+  // key → the bucket currently holding it, so inc/dec find their start in O(1)
+  private final Map<String, Bucket> bucketOf = new HashMap<>();
+
+  public AllOne() {
+    // Empty list is just the two sentinels linked to each other
+    head.next = tail;
+    tail.prev = head;
+  }
+
+  // Splice a brand-new bucket immediately after node — counts along the list
+  // stay strictly increasing because callers only insert at the correct spot.
+  private Bucket insertAfter(Bucket node, int count) {
+    Bucket b = new Bucket(count);
+    b.prev = node;
+    b.next = node.next;
+    node.next.prev = b;
+    node.next = b;
+    return b;
+  }
+
+  // Unlink a drained bucket right away; a lingering empty node at either end
+  // would make getMinKey/getMaxKey report a count no key actually has.
+  private void removeIfEmpty(Bucket b) {
+    if (!b.keys.isEmpty()) return;
+    b.prev.next = b.next;
+    b.next.prev = b.prev;
+  }
+
+  public void inc(String key) {
+    Bucket cur = bucketOf.get(key);
+    if (cur == null) {
+      // Brand-new key enters at count 1, i.e. at the minimum end of the list.
+      // Reuse the first bucket only if it is EXACTLY count 1; otherwise a new
+      // count-1 bucket goes right after head so ordering stays intact.
+      Bucket first = head.next;
+      Bucket target = (first != tail && first.count == 1) ? first : insertAfter(head, 1);
+      target.keys.add(key);
+      bucketOf.put(key, target);
+    } else {
+      // count+1 can only live in the immediate next node (counts are strictly
+      // increasing), so this is a one-hop move — never a search.
+      Bucket next = cur.next;
+      Bucket target = (next != tail && next.count == cur.count + 1)
+          ? next : insertAfter(cur, cur.count + 1);
+      target.keys.add(key);
+      bucketOf.put(key, target);
+      // Pull the key out of its old bucket AFTER placing it, then reap the
+      // old bucket if that was its last occupant.
+      cur.keys.remove(key);
+      removeIfEmpty(cur);
+    }
+  }
+
+  public void dec(String key) {
+    // Problem guarantees dec is only called on keys that exist
+    Bucket cur = bucketOf.get(key);
+    if (cur.count == 1) {
+      // 1 → 0 means the key leaves the structure entirely, not "count 0"
+      bucketOf.remove(key);
+    } else {
+      // Mirror of inc: count-1 can only be the immediate previous node
+      Bucket prev = cur.prev;
+      Bucket target = (prev != head && prev.count == cur.count - 1)
+          ? prev : insertAfter(cur.prev, cur.count - 1);
+      target.keys.add(key);
+      bucketOf.put(key, target);
+    }
+    cur.keys.remove(key);
+    removeIfEmpty(cur);
+  }
+
+  public String getMaxKey() {
+    // tail.prev IS the max bucket by invariant; only the empty structure
+    // (sentinels adjacent) needs the "" fallback
+    return tail.prev == head ? "" : tail.prev.keys.iterator().next();
+  }
+
+  public String getMinKey() {
+    // Symmetric: head.next is the min bucket, any member of it qualifies
+    return head.next == tail ? "" : head.next.keys.iterator().next();
+  }
+}`
+  },
+  {
+    num: 128, lc: 1455, title: 'Check If a Word Occurs As a Prefix of Any Word in a Sentence', d: 'easy', companies: ['Garmin'],
+    bucket: 'Arrays & Hashing', category: 'String · Scan',
+    url: 'https://leetcode.com/problems/check-if-a-word-occurs-as-a-prefix-of-any-word-in-a-sentence/',
+    approach: 'Split the sentence on single spaces and linearly scan the words, returning the 1-indexed position of the first word where words[i].startsWith(searchWord) holds. The key insight is that a prefix match must be ANCHORED at a word start — the naive sentence.indexOf(searchWord) is outright wrong, not just slow, because it happily matches in the middle of a word (e.g. finding \'ell\' inside \'hello\'), which is exactly the trap the problem sets. startsWith already returns false when searchWord is longer than the word, so no explicit length guard is needed, and full equality counts as a prefix too. Returning on the first hit guarantees the minimal index the problem demands. Splitting is safe because the input promises exactly one space between words and no leading or trailing spaces, so no empty tokens appear. An equivalent split-free variant walks the raw sentence tracking word starts with indexOf(\' \') and compares characters in place for O(1) extra space; a regex match on (^| ) + searchWord is another equivalent formulation.',
+    complexity: 'O(n) time · O(n) space (split array)',
+    code: `// Worked trace for sentence = "i love eating burger", searchWord = "burg":
+//
+//   i  words[i]   startsWith("burg")?   action
+//   ────────────────────────────────────────────────────
+//   0  "i"        no                    keep scanning
+//   1  "love"     no                    keep scanning
+//   2  "eating"   no                    keep scanning
+//   3  "burger"   yes                   return 3 + 1 = 4
+//
+// Returns 4
+
+public int isPrefixOfWord(String sentence, String searchWord) {
+  // The problem guarantees single spaces between words and none at the ends,
+  // so a plain split(" ") yields exactly the word list — no empty tokens to filter.
+  String[] words = sentence.split(" ");
+  for (int i = 0; i < words.length; i++) {
+    // startsWith anchors the match to the word START — a raw indexOf over the whole
+    // sentence would falsely match searchWord buried mid-word ("ell" in "hello").
+    // It also returns false when searchWord is longer than the word, so no length guard.
+    if (words[i].startsWith(searchWord)) {
+      // First hit wins, satisfying the "minimal index" rule; convert the 0-indexed
+      // loop counter to the 1-indexed position the problem asks for.
+      return i + 1;
+    }
+  }
+  // Scanned every word and none had searchWord as a prefix
+  return -1;
+}`
+  },
+  {
+    num: 129, lc: 2109, title: 'Adding Spaces to a String', d: 'medium', companies: ['Garmin'],
+    bucket: 'Arrays & Hashing', category: 'String · Two Pointers',
+    url: 'https://leetcode.com/problems/adding-spaces-to-a-string/',
+    approach: 'Merge-style two pointers over the string and the spaces array. Walk i across s while a second pointer j watches the next pending space index; whenever spaces[j] == i, append a space before appending s.charAt(i) and advance j. The key insight is that spaces is guaranteed strictly increasing, so both pointers only ever move forward and one left-to-right sweep consumes everything — no searching, sorting, or lookup structure needed. Build into a StringBuilder pre-sized to s.length() + spaces.length so the buffer never reallocates mid-append. The naive alternative — calling insert() at each index on a mutable string — shifts everything after the cut right on every insertion, an O(n) cost per space that turns the whole job quadratic and times out at 3·10^5 characters with 3·10^5 spaces; looped String concatenation dies the same way. Checking the space BEFORE appending the character is what makes spaces[j] == 0 (a space in front of the very first character) fall out naturally instead of needing a special case. An equivalent alternative is to allocate a char[n + m] up front and arraycopy the segments between consecutive space indices, dropping a space after each — same linear cost, just more index arithmetic.',
+    complexity: 'O(n + m) time · O(n + m) space (output)',
+    code: `// Worked trace for s = "abcde", spaces = [0, 2]:
+//
+//   i  s[i]  j  spaces[j]  space first?   sb after
+//   ────────────────────────────────────────────────
+//   0  'a'   0     0       yes  (j→1)     " a"
+//   1  'b'   1     2       no             " ab"
+//   2  'c'   1     2       yes  (j→2)     " ab c"
+//   3  'd'   2     —       no (j done)    " ab cd"
+//   4  'e'   2     —       no (j done)    " ab cde"
+//
+// Returns " ab cde"   (leading space because spaces[0] = 0)
+
+public String addSpaces(String s, int[] spaces) {
+  // Pre-size to the exact final length: every original char plus one space per
+  // entry in spaces. Skipping this forces repeated grow-and-copy on huge inputs.
+  StringBuilder sb = new StringBuilder(s.length() + spaces.length);
+  // j = the next unconsumed space position. spaces is strictly increasing, so a
+  // single forward-only pointer is enough — the two scans merge in one pass.
+  int j = 0;
+  for (int i = 0; i < s.length(); i++) {
+    // A space belongs BEFORE the char at index i, so test before appending the
+    // char — that ordering is what makes spaces[j] == 0 (leading space) just work.
+    // The j < spaces.length guard prevents overrun once all spaces are placed.
+    if (j < spaces.length && spaces[j] == i) {
+      sb.append(' ');
+      j++;
+    }
+    // The original character always comes through unchanged, space or not
+    sb.append(s.charAt(i));
+  }
+  // Constraint spaces[k] <= s.length() - 1 guarantees every space was consumed
+  return sb.toString();
+}`
+  },
+  {
+    num: 130, lc: 2825, title: 'Make String a Subsequence Using Cyclic Increments', d: 'medium', companies: ['Garmin'],
+    bucket: 'Arrays & Hashing', category: 'String · Two Pointers',
+    url: 'https://leetcode.com/problems/make-string-a-subsequence-using-cyclic-increments/',
+    approach: 'Two pointers in one greedy pass. The operation reads "at most once", but it applies to any SET of indices simultaneously, so it collapses to a per-position choice: every character of str1 independently offers exactly two letters — itself or its cyclic successor (\'z\' wraps to \'a\'). Walk str1 with pointer i and str2 with pointer j; whenever str1.charAt(i) equals str2.charAt(j) either directly or after one cyclic bump, consume str2[j] by advancing j, and advance i regardless. Matching at the earliest eligible position is safe by the standard subsequence exchange argument: deferring a match only shrinks the suffix of str1 left for the remaining characters of str2, so greed can never turn a winnable case into a loss. If j reaches the end of str2, every character found an in-order partner and the answer is true. Naive alternatives are hopeless or wasteful — enumerating the 2^n index subsets is exponential, and a DP over (i, j) states spends O(n·m) work on a decision the greedy resolves locally in O(1); note also that no "operation used?" flag is needed, since selecting the empty set covers the do-nothing case. An equivalent alternative is a memoized recursive subsequence check over (i, j) with the same two-letter matching rule — identical logic, just with the exchange argument replaced by explicit state exploration.',
+    complexity: 'O(n + m) time · O(1) space',
+    code: `// Worked trace for str1 = "zc", str2 = "ad":
+//
+//   i  str1[i]  cyclic +1  str2[j]  match?             j after
+//   ────────────────────────────────────────────────────────────
+//   0    'z'      'a'        'a'    yes (wrap z → a)     1
+//   1    'c'      'd'        'd'    yes (increment)      2
+//
+// j == str2.length() == 2, all of str2 matched — Returns true
+
+public boolean canMakeSubsequence(String str1, String str2) {
+  // j = next unmatched char of str2; driving it to m is the whole goal
+  int j = 0, m = str2.length();
+  // Single left-to-right pass over str1; bail early once str2 is fully consumed
+  for (int i = 0; i < str1.length() && j < m; i++) {
+    char c = str1.charAt(i);
+    // The ONLY two letters this position can ever offer: itself, or one cyclic
+    // step up. The % 26 is what wraps 'z' to 'a' — drop it and "zc" vs "ad" fails.
+    char bumped = (char) ('a' + (c - 'a' + 1) % 26);
+    // Greedy: take the earliest position able to match str2[j]. Waiting for a
+    // later match only shrinks the str1 suffix left for the rest of str2
+    // (exchange argument), so this can never miss a valid selection of indices.
+    if (c == str2.charAt(j) || bumped == str2.charAt(j)) {
+      j++;   // str2[j] matched — hunt for the next character
+    }
+    // No match: i still advances — a subsequence may skip str1 chars freely
+  }
+  // True iff every str2 char found an in-order partner. No used-operation flag:
+  // the one operation covers ANY set of indices (empty set = no-op), so each
+  // match independently chose raw vs +1 above.
+  return j == m;
+}`
+  },
+  {
+    num: 131, lc: 1072, title: 'Flip Columns For Maximum Number of Equal Rows', d: 'medium', companies: ['Garmin'],
+    bucket: 'Arrays & Hashing', category: 'Matrix · Hash Map',
+    url: 'https://leetcode.com/problems/flip-columns-for-maximum-number-of-equal-rows/',
+    approach: 'Canonical-form hashing. A column flip toggles the same position in every row at once, so the relative pattern between two rows is frozen — two rows can end up all-equal under the same flip set exactly when they are already identical or exact bit-complements of each other. That collapses the problem to counting: normalize each row into a canonical key by XOR-ing every cell with the row\'s first element (rows starting with 1 get fully complemented, so every key begins with 0), tally the keys in a hash map, and the answer is the largest bucket. Rows sharing a key really are jointly fixable: flip precisely the columns where the canonical pattern holds a 1 and each of them becomes all-0s or all-1s. Brute force over column subsets is exponential (2^n choices), and even comparing every pair of rows costs O(m² · n) — the canonical hash needs just one O(m·n) sweep. The always-≥-1 edge case falls out for free, since any single row is equalizable by flipping its own 1-columns. An equivalent alternative keys each row on min(pattern, complement) as a string or bitset — same complement-classes, different normalization.',
+    complexity: 'O(m·n) time · O(m·n) space',
+    code: `// Worked trace for matrix = [[0,0,0],[0,0,1],[1,1,0]]:
+//
+//   row       row[0]  canonical key   count after       best
+//   ──────────────────────────────────────────────────────────
+//   [0,0,0]     0        "000"        {000:1}            1
+//   [0,0,1]     0        "001"        {000:1, 001:1}     1
+//   [1,1,0]     1        "001"        {000:1, 001:2}     2
+//
+// [0,0,1] and [1,1,0] are exact complements — flipping column 2 turns
+// them into [0,0,0] and [1,1,1], both uniform.
+//
+// Returns 2
+
+public int maxEqualRowsAfterFlips(int[][] matrix) {
+  // Bucket counter: canonical pattern → how many rows share it.
+  // Every row in one bucket can be made uniform by the SAME flip set.
+  Map<String, Integer> count = new HashMap<>();
+  int best = 0;
+  for (int[] row : matrix) {
+    // XOR mask taken from the row's own first cell: rows starting with 1 get
+    // fully complemented. This maps a row and its exact complement to the same
+    // key — and complement-or-identical is precisely "equalizable together".
+    int flip = row[0];
+    // String key keeps the map hashable and cheap; n <= 300 so length is tiny
+    StringBuilder key = new StringBuilder(row.length);
+    for (int cell : row) {
+      // cell ^ flip leaves the row untouched when it starts with 0 and inverts
+      // it otherwise, so every canonical key begins with 0 by construction
+      key.append(cell ^ flip);
+    }
+    // merge returns the bucket's new size, so the running max updates inline —
+    // no second pass over the map needed at the end
+    best = Math.max(best, count.merge(key.toString(), 1, Integer::sum));
+  }
+  // Largest complement-class wins; always >= 1 because a lone row is trivially
+  // fixable by flipping exactly its 1-columns
+  return best;
+}`
+  },
+  {
+    num: 132, lc: 3356, title: 'Zero Array Transformation II', d: 'medium', companies: ['Garmin'],
+    bucket: 'Arrays & Hashing', category: 'Difference Array · Binary Search',
+    url: 'https://leetcode.com/problems/zero-array-transformation-ii/',
+    approach: 'Binary search on the answer k, with a difference array powering each feasibility check. The key observation is that a query decrements each covered index by AT MOST val, chosen independently per index — so the first k queries can zero the array iff, for every i, the summed val of the queries covering i is at least nums[i]; ordering and interaction between queries are irrelevant. That coverage test is monotone: an extra query never shrinks any index\'s budget, so if k queries suffice then k+1 do too — exactly the structure binary search needs. To test one k, replay the first k queries into a difference array (+val at l, -val at r+1), prefix-sum it into per-index budgets, and compare against nums, costing O(n + k) instead of touching every element of every range. Naively simulating queries one at a time and rescanning the array after each is O(q · n), hopeless at 10^5 × 10^5; the diff array kills the per-range cost and the binary search kills the linear scan over k. Check first that ALL q queries are enough, returning -1 immediately if not, so the search always has a feasible right endpoint. An equivalent alternative is a single left-to-right sweep that lazily consumes queries in order only when the running budget at index i falls short of nums[i], which is O(n + q) with the same difference array.',
+    complexity: 'O((n + q) log q) time · O(n) space',
+    code: `// Worked trace for nums = [2, 0, 2], queries = [[0,2,1], [0,2,1], [1,1,3]]:
+//
+// canZero(k): build diff from the first k queries, prefix-sum into avail[i]
+// (total decrement budget at i), require avail[i] >= nums[i] at every i.
+//
+//   k   diff[0..3]        avail      vs nums [2,0,2]     feasible?
+//   ─────────────────────────────────────────────────────────────────
+//   3   [+2, +3, -3, -2]  [2, 5, 2]  2>=2, 5>=0, 2>=2    yes → search runs
+//   1   [+1,  0,  0, -1]  [1, 1, 1]  1 < 2 at i = 0      no  → lo = 2
+//   2   [+2,  0,  0, -2]  [2, 2, 2]  all covered         yes → hi = 2
+//
+//   Binary search: lo=0, hi=3 → mid=1 infeasible → lo=2;
+//                  mid=2 feasible → hi=2; lo == hi, stop.
+//
+// Returns 2
+
+public int minZeroArray(int[] nums, int[][] queries) {
+  // If even ALL q queries can't cover nums, no prefix can either — bail now
+  // so the binary search's invariant "hi is always feasible" holds from the start.
+  if (!canZero(nums, queries, queries.length)) return -1;
+  // Smallest-feasible-k search. lo starts at 0 on purpose: an already-all-zero
+  // nums needs no queries, and the problem asks for the minimum NON-NEGATIVE k.
+  int lo = 0, hi = queries.length;
+  while (lo < hi) {
+    // Overflow-safe midpoint (harmless here, but the idiomatic habit)
+    int mid = lo + (hi - lo) / 2;
+    // Monotonicity makes halving valid: extra queries only ADD budget, so
+    // feasible(mid) implies the answer is mid or to its left; infeasible
+    // implies it is strictly to the right.
+    if (canZero(nums, queries, mid)) hi = mid;
+    else lo = mid + 1;
+  }
+  // lo == hi is the first k where feasibility flips to true
+  return lo;
+}
+
+// Can the first k queries zero out nums? Since each query decrements covered
+// indices by AT MOST val (amount chosen per index), order never matters —
+// index i is fixable iff its total available budget >= nums[i].
+private boolean canZero(int[] nums, int[][] queries, int k) {
+  int n = nums.length;
+  // Difference array: +val at l, -val at r+1 marks an entire range in O(1)
+  // instead of O(r-l+1). Size n+1 so the r+1 write never needs a bounds check.
+  int[] diff = new int[n + 1];
+  for (int j = 0; j < k; j++) {
+    diff[queries[j][0]] += queries[j][2];
+    diff[queries[j][1] + 1] -= queries[j][2];
+  }
+  // Prefix-sum the diff: budget = total decrement available at index i.
+  // Max possible is 10^5 queries × val <= 5 = 5·10^5, so int can't overflow.
+  int budget = 0;
+  for (int i = 0; i < n; i++) {
+    budget += diff[i];
+    // Index i can drop by at most budget; if that's short of nums[i] it can
+    // never reach 0, and one stuck index sinks this whole prefix of queries.
+    if (budget < nums[i]) return false;
+  }
+  return true;
+}`
+  },
+  // ─── Two Pointers (11) ───
   {
     num: 19, lc: 125, title: 'Valid Palindrome', d: 'easy', companies: ['Garmin'],
     bucket: 'Two Pointers', category: 'String',
@@ -998,7 +1868,221 @@ public int removeDuplicates(int[] nums) {
 }`
   },
 
-  // ─── Sliding Window (8) ───
+  {
+    num: 133, lc: 344, title: 'Reverse String', d: 'easy', companies: ['Garmin'],
+    bucket: 'Two Pointers', category: 'String · Two Pointers',
+    url: 'https://leetcode.com/problems/reverse-string/',
+    approach: 'Two pointers converging from opposite ends of the array. Keep a left index at 0 and a right index at the last position; swap the characters they point at, then move both inward, stopping as soon as they meet or cross. The key insight is that reversing is pure mirroring: position i must end up holding what position n-1-i held, so one swap fixes TWO positions at once and the loop runs only n/2 times. Doing it with swaps means no second array is ever allocated, which matters because the problem explicitly demands in-place modification with O(1) extra memory — building a reversed copy (or leaning on StringBuilder.reverse()) answers a different, easier question. The strict left < right condition also handles odd lengths for free: the middle character is its own mirror image and is correctly left untouched. Single-character arrays never enter the loop, so no special-casing is needed. An equivalent alternative is a single for-loop over i from 0 to n/2 swapping s[i] with s[n-1-i], or a recursive helper that swaps the outermost pair — same idea, but recursion burns O(n) stack and forfeits the O(1)-space guarantee.',
+    complexity: 'O(n) time · O(1) space',
+    code: `// Worked trace for s = ['h','e','l','l','o']:
+//
+//   step  left  right  swap                array after
+//   ──────────────────────────────────────────────────────
+//   1      0     4     'h' <-> 'o'         [o, e, l, l, h]
+//   2      1     3     'e' <-> 'l'         [o, l, l, e, h]
+//   3      2     2     left < right fails  loop exits
+//
+// s is now ['o','l','l','e','h'] — reversed in place (method returns void)
+
+public void reverseString(char[] s) {
+  // Two pointers pinned to the opposite ends — every element gets touched exactly once
+  int left = 0;
+  int right = s.length - 1;
+  // Strict < is the point: when the pointers meet (odd length) the middle char is its
+  // own mirror and needs no swap. It also makes length-1 input a natural no-op, and
+  // stopping at the meet is the habit that keeps other in-place problems from
+  // double-processing elements once the pointers cross.
+  while (left < right) {
+    // Classic three-step swap — no new array is allocated, which is exactly what the
+    // problem's O(1) extra memory requirement forbids a reversed-copy solution from doing
+    char tmp = s[left];
+    s[left] = s[right];
+    s[right] = tmp;
+    // One swap settles BOTH ends, so shrinking the window from both sides at once
+    // is why the loop body executes only n/2 times
+    left++;
+    right--;
+  }
+  // Nothing to return: the contract is mutating the caller's array in place
+}`
+  },
+  {
+    num: 134, lc: 88, title: 'Merge Sorted Array', d: 'easy',
+    bucket: 'Two Pointers', category: 'Array · Two Pointers',
+    url: 'https://leetcode.com/problems/merge-sorted-array/',
+    approach: 'Three pointers merging from the back. Read pointers i and j sit on the last real elements of nums1 and nums2, and a write pointer k sits on the last slot of nums1\'s buffer; each step copies the larger of the two tail values into k and retreats that side. The key insight is that the spare room lives at the END of nums1, so filling largest-first means k always stays ahead of i (k = i + j + 1, and j >= 0 inside the loop), and the write can never clobber a nums1 value that hasn\'t been read yet — that invariant is what makes the merge safe in-place. A front-to-back merge would trample unread nums1 elements unless you first copy them to an O(m) scratch array, and the lazy fix of dumping nums2 in and sorting costs O((m+n) log(m+n)). Looping only while j >= 0 is enough: once nums2 is drained, any leftover nums1 prefix is already sorted and already sitting in its final position. The i >= 0 guard handles m = 0 (or nums1 exhausting early) by draining the rest of nums2 without reading nums1[-1]. An equivalent alternative is to copy nums1\'s first m elements into an auxiliary array and forward-merge into nums1 — same O(m+n) time, but O(m) extra space.',
+    complexity: 'O(m + n) time · O(1) space',
+    code: `// Worked trace for nums1 = [1,2,3,0,0,0], m = 3, nums2 = [2,5,6], n = 3:
+//
+//   step  i  nums1[i]  j  nums2[j]  k   bigger tail  write         nums1 after
+//   ───────────────────────────────────────────────────────────────────────────
+//    1    2     3      2     6      5   nums2        nums1[5] = 6  [1,2,3,0,0,6]
+//    2    2     3      1     5      4   nums2        nums1[4] = 5  [1,2,3,0,5,6]
+//    3    2     3      0     2      3   nums1        nums1[3] = 3  [1,2,3,3,5,6]
+//    4    1     2      0     2      2   tie -> nums2 nums1[2] = 2  [1,2,2,3,5,6]
+//    5    j = -1: nums2 drained; leftover [1,2] already sits in place, stop
+//
+// nums1 ends as [1,2,2,3,5,6] (void method — mutating nums1 IS the answer)
+
+public void merge(int[] nums1, int m, int[] nums2, int n) {
+  // Read cursors on the LAST real element of each array — indices m..m+n-1
+  // of nums1 are padding zeros, not data, so i must start at m-1, not length-1
+  int i = m - 1;
+  int j = n - 1;
+  // Write cursor on the final slot of the buffer. Filling from the back is the
+  // whole trick: the free space is at the tail, so the writer starts in it.
+  int k = m + n - 1;
+  // Only nums2 running dry ends the work: whatever remains of nums1 is already
+  // sorted AND already in its final position, so it never needs to move.
+  while (j >= 0) {
+    // Guard i >= 0 first: when m = 0 or nums1's reads are exhausted, we must
+    // keep draining nums2 without touching nums1[-1]
+    if (i >= 0 && nums1[i] > nums2[j]) {
+      // nums1's tail is strictly larger — it belongs at slot k. Safe because
+      // k = i + j + 1 > i while j >= 0, so we never overwrite an unread value.
+      nums1[k--] = nums1[i--];
+    } else {
+      // nums2's tail wins (ties land here too — equal values, either is fine)
+      nums1[k--] = nums2[j--];
+    }
+  }
+  // No return: the problem wants nums1 mutated in place
+}`
+  },
+  {
+    num: 135, lc: 27, title: 'Remove Element', d: 'easy',
+    bucket: 'Two Pointers', category: 'Array · Two Pointers',
+    url: 'https://leetcode.com/problems/remove-element/',
+    approach: 'Overwrite-forward two pointers: a read pointer scans every element while a write pointer marks the next slot to fill with a keeper. Whenever nums[read] != val, copy it into nums[write] and advance write; when it equals val, just walk past it — the unwanted value gets overwritten by a later keeper or stranded in the ignored tail. The invariant that makes this correct: at every step nums[0..write-1] holds exactly the non-val elements seen so far, in their original order, so when the scan ends write IS the answer k. Because write can never pass read, each copy lands on a slot the read pointer has already consumed, so no keeper is ever destroyed. The naive alternative — shifting the whole remaining array left on every removal — degrades to O(n²) when val is frequent, and allocating a second array violates the O(1)-extra-space requirement. Copying an element onto itself when no vals have been skipped yet is harmless, so no guard is needed. An equivalent alternative when removals are rare: swap nums[read] with the last unprocessed element and shrink from the right, minimizing writes at the cost of scrambling order.',
+    complexity: 'O(n) time · O(1) space',
+    code: `// Worked trace for nums = [3, 2, 2, 3], val = 3:
+//
+//   read  nums[read]  == val?  action                 write  nums after
+//   ─────────────────────────────────────────────────────────────────────
+//    0        3        yes     skip                     0    [3,2,2,3]
+//    1        2        no      nums[0]=2, write→1       1    [2,2,2,3]
+//    2        2        no      nums[1]=2, write→2       2    [2,2,2,3]
+//    3        3        yes     skip                     2    [2,2,2,3]
+//
+// Returns 2 — the first 2 slots hold [2, 2]; the tail is never read by the judge
+
+public int removeElement(int[] nums, int val) {
+  // Next slot to fill with a kept element. Invariant: nums[0..write-1] is exactly
+  // the non-val elements seen so far, in original order — so at the end, write IS k.
+  int write = 0;
+  for (int read = 0; read < nums.length; read++) {
+    // Only keepers earn a copy; val occurrences are simply walked past, which is
+    // what "removes" them — they get overwritten later or left beyond index k-1.
+    if (nums[read] != val) {
+      // Safe even when write == read (a harmless self-copy): write never passes
+      // read, so the target slot has always already been consumed by the scan.
+      nums[write] = nums[read];
+      // Grow the kept region by one; this counter doubles as the return value
+      write++;
+    }
+  }
+  // Falls out naturally for the edge cases: empty array and all-val both return 0
+  return write;
+}`
+  },
+  {
+    num: 136, lc: 977, title: 'Squares of a Sorted Array', d: 'easy',
+    bucket: 'Two Pointers', category: 'Array · Two Pointers',
+    url: 'https://leetcode.com/problems/squares-of-a-sorted-array/',
+    approach: 'Two pointers converging from both ends while the output fills from the back. Squaring breaks the sorted order because negatives flip magnitude — -4 comes before 3 in the input, yet 16 > 9 after squaring. The rescuing insight: in a sorted array the LARGEST square must live at one of the two ends (most-negative left or most-positive right), so compare the end squares, write the bigger into the last unfilled slot, and step that pointer inward. Each round claims the maximum of what remains, so the array fills back-to-front already in ascending order with no sort at all. It must fill from the back because the minimum square hides somewhere in the middle near the sign change, while the maximum is always exposed at an end. The naive square-everything-then-sort works but costs O(n log n) and throws away the sortedness the problem hands you. An equivalent alternative locates the negative/positive boundary first and merges the two halves outward, exactly like the merge step of merge sort.',
+    complexity: 'O(n) time · O(n) space (output)',
+    code: `// Worked trace for nums = [-4, -1, 0, 3, 10]:
+//
+//   pos  left  right  leftSq  rightSq  bigger  result after write
+//   ──────────────────────────────────────────────────────────────
+//    4    0     4       16      100    right   [ _,  _, _,  _, 100]
+//    3    0     3       16        9    left    [ _,  _, _, 16, 100]
+//    2    1     3        1        9    right   [ _,  _, 9, 16, 100]
+//    1    1     2        1        0    left    [ _,  1, 9, 16, 100]
+//    0    2     2        0        0    right   [ 0,  1, 9, 16, 100]
+//
+// Returns [0, 1, 9, 16, 100]
+
+public int[] sortedSquares(int[] nums) {
+  int n = nums.length;
+  // Separate output array — the answer is built largest-first, so it can't be done
+  // in place without clobbering values the pointers still need to read.
+  int[] result = new int[n];
+  // The input is sorted, so the biggest SQUARE must sit at an end: the most
+  // negative value squares huge on the left, the largest positive on the right.
+  int left = 0, right = n - 1;
+  // Write position walks from the last slot down. Back-to-front is forced: we can
+  // always identify the remaining MAXIMUM (it's at an end), never the minimum
+  // (the smallest square hides mid-array, near the sign change).
+  for (int pos = n - 1; pos >= 0; pos--) {
+    // |nums[i]| <= 10^4, so the square <= 10^8 — comfortably fits in an int
+    int leftSq = nums[left] * nums[left];
+    int rightSq = nums[right] * nums[right];
+    if (leftSq > rightSq) {
+      // Left end holds the current maximum square — claim it, move inward
+      result[pos] = leftSq;
+      left++;
+    } else {
+      // Ties can go either way safely; folding them right keeps one branch.
+      // This branch also handles the final step when left == right.
+      result[pos] = rightSq;
+      right--;
+    }
+  }
+  // Every slot written exactly once, largest to smallest → ascending order
+  return result;
+}`
+  },
+  {
+    num: 137, lc: 680, title: 'Valid Palindrome II', d: 'easy', companies: ['Garmin'],
+    bucket: 'Two Pointers', category: 'String · Two Pointers',
+    url: 'https://leetcode.com/problems/valid-palindrome-ii/',
+    approach: 'Two pointers with a single forgiveness fork. Walk left and right pointers inward from both ends; while the characters match the string is behaving like a palindrome and there is nothing to decide. At the FIRST mismatch, the one allowed deletion must remove one of the two clashing characters — deleting any other index leaves this mismatched pair intact — so the whole decision space collapses to exactly two candidates: skip s[left] or skip s[right]. Run a plain strict-palindrome scan on each remaining window and return true if either passes. That collapse is what makes the greedy correct: no backtracking, no trying deletions at other positions. The naive alternative — delete every index in turn and re-check the whole string — costs O(n²) and wastes n − 2 attempts that cannot possibly fix the pair already found. Each helper scan covers at most the remaining window once, so the total is O(n) time and O(1) space. A recursive version that threads a remaining-deletions budget k is the equivalent alternative and generalizes directly to Valid Palindrome III.',
+    complexity: 'O(n) time · O(1) space',
+    code: `// Worked trace for s = "abca":
+//
+//   left  right  s[left]  s[right]  match?  action
+//   ─────────────────────────────────────────────────────────────
+//    0      3       a        a      yes     shrink: left=1, right=2
+//    1      2       b        c      no      fork on the mismatch
+//
+//   fork 1: skip s[left]  -> strict check of window 2..2 ("c") -> left >= right, palindrome -> true
+//   fork 2: skip s[right] -> never runs, || short-circuits on fork 1
+//
+// Returns true
+
+public boolean validPalindrome(String s) {
+  // Converging pointers, one at each end of the string
+  int left = 0, right = s.length() - 1;
+  while (left < right) {
+    // A mismatch is the only place a deletion can help — and it MUST remove
+    // one of these two characters, or the pair would still clash afterwards.
+    if (s.charAt(left) != s.charAt(right)) {
+      // Exactly two candidates: drop s[left] or drop s[right]. If either
+      // leftover window reads as a clean palindrome, one deletion sufficed.
+      return isPalindrome(s, left + 1, right) || isPalindrome(s, left, right - 1);
+    }
+    // Matched pair — locked in on both sides, shrink the window
+    left++;
+    right--;
+  }
+  // Pointers met (or crossed) with no mismatch: already a palindrome, zero deletions
+  return true;
+}
+
+// Strict palindrome check on s[left..right] — the deletion budget is spent,
+// so any mismatch here means one removal was not enough.
+private boolean isPalindrome(String s, int left, int right) {
+  while (left < right) {
+    // Second clashing pair overall — a single deletion cannot fix two pairs
+    if (s.charAt(left) != s.charAt(right)) return false;
+    left++;
+    right--;
+  }
+  return true;
+}`
+  },
+  // ─── Sliding Window (11) ───
   {
     num: 114, lc: 209, title: 'Minimum Size Subarray Sum', d: 'medium', companies: ['Garmin'],
     bucket: 'Sliding Window', category: 'Array · Sliding Window',
@@ -1223,7 +2307,7 @@ public boolean checkInclusion(String s1, String s2) {
 }`
   },
   {
-    num: 30, lc: 560, title: 'Subarray Sum Equals K', d: 'medium', companies: ['Temu'],
+    num: 30, lc: 560, title: 'Subarray Sum Equals K', d: 'medium',
     bucket: 'Sliding Window', category: 'Array · Prefix Sum · Hash Map',
     url: 'https://leetcode.com/problems/subarray-sum-equals-k/',
     approach: 'Prefix sums plus a hash map of counts. A subarray (j, i] sums to k exactly when prefix[i] − prefix[j] = k, i.e. prefix[j] = prefix[i] − k. So as we sweep left to right maintaining the running prefix sum, the number of valid subarrays ending at i is how many earlier prefixes equal (sum − k); we look that up in O(1) and add it, then record the current prefix. Seeding the map with {0: 1} accounts for subarrays starting at index 0. One pass gives O(n) time and O(n) space. The hash map is essential because negative numbers break the monotonic sliding window — the two-pointer shrink trick does not apply, whereas this method handles negatives cleanly and beats the O(n²) pair scan.',
@@ -1254,7 +2338,7 @@ public int subarraySum(int[] nums, int k) {
 }`
   },
   {
-    num: 31, lc: 239, title: 'Sliding Window Maximum', d: 'hard', companies: ['Temu'],
+    num: 31, lc: 239, title: 'Sliding Window Maximum', d: 'hard',
     bucket: 'Sliding Window', category: 'Monotonic Deque',
     url: 'https://leetcode.com/problems/sliding-window-maximum/',
     approach: 'Monotonic decreasing deque holding INDICES, not values. The invariant is that values at the stored indices strictly decrease from front to back, so the front index is always the maximum of the current window. For each i: first evict the front if it has slid out of the window (index ≤ i − k); then pop from the back every index whose value is less than nums[i], because a newer, larger element makes them irrelevant for all future windows; finally push i. Once the first window is complete (i ≥ k − 1) read the front as that window\'s max. Each index is pushed and popped at most once, so O(n) time and O(k) space — far better than O(n·k) re-scanning or an O(n log k) heap.',
@@ -1292,7 +2376,131 @@ public int[] maxSlidingWindow(int[] nums, int k) {
 }`
   },
 
-  // ─── Stack (6) ───
+  {
+    num: 138, lc: 438, title: 'Find All Anagrams in a String', d: 'medium',
+    bucket: 'Sliding Window', category: 'String · Sliding Window',
+    url: 'https://leetcode.com/problems/find-all-anagrams-in-a-string/',
+    approach: 'Fixed-size sliding window over s with letter-frequency histograms. Build a 26-slot need array from p, then slide a window of exactly p.length() across s: each step increments the count of the entering character and, once the window is full, decrements the one falling off the left edge, so the counts update in O(1) instead of being recounted. Whenever the window\'s histogram equals need, that window is a permutation of p and its start index i - m + 1 is recorded. The key insight is that an anagram is fully characterized by its letter multiset — two matching 26-entry histograms are both necessary and sufficient, so character order never needs to be examined. The naive alternative of sorting or recounting every length-m substring costs O(n·m log m) or O(n·m) and rescans characters the window has already seen; the incremental update touches each character of s exactly twice (once entering, once leaving). Comparing two fixed 26-slot arrays is O(26) per step, effectively constant, keeping the whole scan linear. An equivalent refinement keeps a single running matched counter over the 26 letters so each slide is truly O(1); the same histogram-window idea solves Permutation in String (LC 567), which asks for a boolean instead of all start indices.',
+    complexity: 'O(n) time · O(1) space',
+    code: `// Worked trace for s = "abab", p = "ab"  (m = 2, need = {a:1, b:1}):
+//
+//   i  s[i]  window after add  evict s[i-m]  window now   == need?      result
+//   ──────────────────────────────────────────────────────────────────────────
+//   0  'a'   {a:1}             -             {a:1}        not full yet  []
+//   1  'b'   {a:1,b:1}         -             {a:1,b:1}    yes → add 0   [0]
+//   2  'a'   {a:2,b:1}         'a'           {a:1,b:1}    yes → add 1   [0,1]
+//   3  'b'   {a:1,b:2}         'b'           {a:1,b:1}    yes → add 2   [0,1,2]
+//
+// Returns [0, 1, 2]
+
+public List<Integer> findAnagrams(String s, String p) {
+  List<Integer> result = new ArrayList<>();
+  // If p doesn't even fit inside s, no start index can possibly work
+  if (s.length() < p.length()) return result;
+  // Window length is fixed at m — every candidate substring has exactly this size
+  int m = p.length();
+  // Target histogram: an anagram of p means "same 26 letter counts", order irrelevant,
+  // so this array is the entire definition of a match
+  int[] need = new int[26];
+  for (int i = 0; i < m; i++) need[p.charAt(i) - 'a']++;
+  // Live histogram of the current window of s — maintained incrementally, never recounted
+  int[] window = new int[26];
+  for (int i = 0; i < s.length(); i++) {
+    // Right edge: s[i] enters the window
+    window[s.charAt(i) - 'a']++;
+    // Once more than m chars would be inside, the leftmost (s[i-m]) must leave.
+    // Without this eviction the window keeps growing and can never equal need again.
+    if (i >= m) window[s.charAt(i - m) - 'a']--;
+    // Only compare once the window is exactly full — the first full window ends at i = m-1.
+    // Equal histograms <=> the substring s[i-m+1..i] is a permutation of p.
+    if (i >= m - 1 && Arrays.equals(window, need)) {
+      // Record the START of the window, not i — the problem asks for left indices
+      result.add(i - m + 1);
+    }
+  }
+  return result;
+}`
+  },
+  {
+    num: 139, lc: 643, title: 'Maximum Average Subarray I', d: 'easy',
+    bucket: 'Sliding Window', category: 'Array · Sliding Window',
+    url: 'https://leetcode.com/problems/maximum-average-subarray-i/',
+    approach: 'Fixed-size sliding window over running sums. Every length-k window shares the same denominator k, so maximizing the average is exactly maximizing the window SUM — track sums and divide once at the very end. Seed the sum with the first k elements, then slide right one index at a time: the new window differs from the old by one entering element (nums[i]) and one leaving element (nums[i - k]), so each step is an O(1) add-and-subtract rather than an O(k) re-sum. That single observation collapses the naive recompute-every-window approach from O(n·k) to O(n). Initialize the best with the first window\'s sum, not 0 — the array can be all-negative, and a zero seed would silently beat every real window. Accumulating in a long sidesteps the near-int-limit worst case of 10^5 values at magnitude 10^4. A prefix-sum array gives an equivalent O(n) answer at the cost of O(n) extra space.',
+    complexity: 'O(n) time · O(1) space',
+    code: `// Worked trace for nums = [1, 12, -5, -6, 50, 3], k = 4:
+//
+//   i   enters  leaves  windowSum            maxSum
+//   ─────────────────────────────────────────────────
+//   -   (seed)   -      1+12-5-6 = 2         2
+//   4    50      1      2 + 50 - 1  = 51     51
+//   5     3     12      51 + 3 - 12 = 42     51
+//
+// Returns 51 / 4.0 = 12.75
+
+public double findMaxAverage(int[] nums, int k) {
+  // Running sum of the current window. long, because 10^5 values of
+  // magnitude 10^4 brush the int ceiling (10^9 vs ~2.1x10^9) — long
+  // removes the overflow question entirely.
+  long windowSum = 0;
+  // Seed with the first k elements — the constraint k <= nums.length
+  // guarantees this window exists, so no emptiness guard is needed.
+  for (int i = 0; i < k; i++) windowSum += nums[i];
+  // Best must start at the FIRST window's sum, not 0: with an all-negative
+  // array every window sums below zero, and a 0 seed would win incorrectly.
+  long maxSum = windowSum;
+  // Slide right one step at a time. Consecutive windows differ by exactly
+  // one entering and one leaving element, so each move is an O(1) update
+  // instead of an O(k) re-sum — that is the whole win over the naive O(n·k).
+  for (int i = k; i < nums.length; i++) {
+    // nums[i] enters on the right, nums[i - k] falls off the left
+    windowSum += nums[i] - nums[i - k];
+    // Comparing raw sums is valid because every window has the same
+    // length k: the largest sum IS the largest average.
+    maxSum = Math.max(maxSum, windowSum);
+  }
+  // Divide exactly once, in floating point — dividing per-window would
+  // just add rounding noise and cost for no benefit. k >= 1 by constraint.
+  return maxSum / (double) k;
+}`
+  },
+  {
+    num: 140, lc: 219, title: 'Contains Duplicate II', d: 'easy',
+    bucket: 'Sliding Window', category: 'Array · Sliding Window',
+    url: 'https://leetcode.com/problems/contains-duplicate-ii/',
+    approach: 'Slide a HashSet window across the array that holds only the values from the last k indices. At each index i, first evict nums[i - k - 1] once i > k — that element is now more than k positions behind and can never legally pair with anything from here on. Then attempt to add nums[i]: HashSet.add returns false when the value is already present, and since everything in the set is by construction within distance k, a collision immediately proves a valid pair. The key insight is that you never need to compare indices at all — membership in the k-wide window already certifies |i - j| <= k. The naive double loop checks each element against up to k neighbors for O(n·k) time, which blows up when k approaches n; the window instead lets each element enter and leave the set exactly once. The set is capped at k + 1 entries, giving O(n) time and O(min(n, k)) space. An equivalent alternative keeps a HashMap of value → most recent index and tests i - lastSeen <= k on every repeat.',
+    complexity: 'O(n) time · O(min(n, k)) space',
+    code: `// Worked trace for nums = [1, 0, 1, 1], k = 1:
+//
+//   i  nums[i]  evict? (i > k)        window after evict  add ok?  window after / action
+//   ─────────────────────────────────────────────────────────────────────────────────────
+//   0    1      no (0 > 1 false)      {}                  yes      {1}
+//   1    0      no (1 > 1 false)      {1}                 yes      {1, 0}
+//   2    1      yes, drop nums[0]=1   {0}                 yes      {0, 1}
+//   3    1      yes, drop nums[1]=0   {1}                 no       return true
+//
+// Returns true — nums[2] == nums[3] and |3 - 2| = 1 <= k
+
+public boolean containsNearbyDuplicate(int[] nums, int k) {
+  // Invariant: the set holds exactly the values at indices [i-k, i-1] — every value close
+  // enough that matching it satisfies |i - j| <= k. Membership alone proves the distance.
+  Set<Integer> window = new HashSet<>();
+  for (int i = 0; i < nums.length; i++) {
+    // Evict the value that just slid out of range: index i-k-1 is now k+1 behind, so it
+    // can never legally pair with nums[i] or anything later. Skipping this would let a
+    // stale far-away duplicate produce a false positive.
+    if (i > k) window.remove(nums[i - k - 1]);
+    // add() returns false iff the value is already present — and everything in the set is
+    // within k by the invariant above, so a collision IS the answer; no index math needed.
+    // (The eviction is safe too: the set never holds a value twice, because we return
+    // here the moment a second copy tries to enter.)
+    if (!window.add(nums[i])) return true;
+  }
+  // Every k-wide window held all-distinct values — no qualifying pair exists.
+  // Also covers k = 0 (window always emptied) and single-element arrays.
+  return false;
+}`
+  },
+  // ─── Stack (10) ───
   {
     num: 32, lc: 20, title: 'Valid Parentheses', d: 'easy',
     bucket: 'Stack', category: 'String',
@@ -1483,7 +2691,7 @@ public int largestRectangleArea(int[] heights) {
 }`
   },
   {
-    num: 37, lc: 394, title: 'Decode String', d: 'medium', companies: ['Temu'],
+    num: 37, lc: 394, title: 'Decode String', d: 'medium',
     bucket: 'Stack', category: 'String',
     url: 'https://leetcode.com/problems/decode-string/',
     approach: 'Two parallel stacks (counts + prefix-strings) plus a running buffer. Walk the input one char at a time: digits build the current count (shift-and-add for multi-digit numbers); "[" snapshots the count + prefix-so-far onto the stacks and resets the inner state to empty; "]" pops the matching count and prefix and appends the inner segment that many times to the prefix; letters extend the current buffer. The dual stacks naturally handle arbitrary nesting because each "[" pushes a frame and each "]" pops back to the parent level. Time is O(n times max_k) for building the output and space is O(depth) for the stack frames.',
@@ -1542,7 +2750,204 @@ public String decodeString(String s) {
 }`
   },
 
-  // ─── Binary Search (6) ───
+  {
+    num: 141, lc: 232, title: 'Implement Queue using Stacks', d: 'easy',
+    bucket: 'Stack', category: 'Design · Two Stacks',
+    url: 'https://leetcode.com/problems/implement-queue-using-stacks/',
+    approach: 'Two stacks with lazy reversal: an in stack that receives every push, and an out stack that serves every pop and peek. The key insight is that draining one stack into another reverses its order, so two LIFO reversals reproduce FIFO — the bottom of in surfaces as the top of out. Transfer lazily: only when out runs completely empty do you drain ALL of in into it; while out still holds elements they are already in correct queue order and must not be disturbed. This makes every operation amortized O(1), because each element is pushed and popped at most twice in its lifetime (once per stack), even though one individual pop can occasionally cost O(n). The naive alternative — shuffling all elements between the stacks on every push so one stack always holds queue order — is correct but pays O(n) on every single insertion instead of only occasionally. empty() must check both stacks, since pending elements can be sitting in either one. An equivalent alternative makes push the expensive side instead (drain out into in, push, drain back), guaranteeing O(1) pops at the cost of O(n) pushes.',
+    complexity: 'O(1) amortized time per op · O(n) space',
+    code: `// Worked trace for push(1), push(2), peek(), pop(), empty():
+//
+//   op        what happens                     in (top→bot)   out (top→bot)   returns
+//   ──────────────────────────────────────────────────────────────────────────────────
+//   push(1)   in.push(1)                       [1]            []              -
+//   push(2)   in.push(2)                       [2, 1]         []              -
+//   peek()    out empty → drain in into out    []             [1, 2]          1
+//   pop()     out non-empty → out.pop()        []             [2]             1
+//   empty()   in empty, but out is not         []             [2]             false
+//
+// FIFO preserved: 1 exits first even though 2 was stacked on top of it in "in"
+
+class MyQueue {
+  // "in" absorbs every push; "out" serves pops/peeks in reversed (= FIFO) order.
+  // ArrayDeque over java.util.Stack: Stack is a synchronized legacy Vector subclass.
+  private final Deque<Integer> in = new ArrayDeque<>();
+  private final Deque<Integer> out = new ArrayDeque<>();
+
+  // Nothing to wire up — both stacks start empty, which correctly means "empty queue"
+  public MyQueue() {}
+
+  public void push(int x) {
+    // Always O(1): new arrivals just pile onto "in" — reversal is deferred until
+    // someone actually asks for the front, which is what makes the cost amortized
+    in.push(x);
+  }
+
+  public int pop() {
+    // Make sure the OLDEST element is sitting on top of "out" before removing it
+    shift();
+    return out.pop();
+  }
+
+  public int peek() {
+    // Same repositioning as pop, but the element stays where it is
+    shift();
+    return out.peek();
+  }
+
+  public boolean empty() {
+    // Elements can be waiting in EITHER stack — checking only one misreports the state
+    return in.isEmpty() && out.isEmpty();
+  }
+
+  // Refill "out" ONLY when it has run dry. Draining "in" flips LIFO into FIFO once;
+  // transferring while "out" still has items would interleave newer elements in front
+  // of older ones. Each element moves at most once, so every op is amortized O(1).
+  private void shift() {
+    if (out.isEmpty()) {
+      while (!in.isEmpty()) out.push(in.pop());
+    }
+  }
+}`
+  },
+  {
+    num: 142, lc: 71, title: 'Simplify Path', d: 'medium',
+    bucket: 'Stack', category: 'String · Stack',
+    url: 'https://leetcode.com/problems/simplify-path/',
+    approach: 'Split the path on \'/\' and replay each token against a stack that models the current directory stack. A token of \'.\' or an empty token (produced by repeated slashes) means "stay here" and is simply skipped; \'..\' means "go up one level," which pops the stack if it is non-empty and is silently ignored at the root since you cannot go above it; any other token is a real directory name and gets pushed. The stack is the key insight: it naturally cancels a directory against a later \'..\' the same way the filesystem would, without ever needing to look ahead or backtrack with string surgery. A naive approach that repeatedly searches for and removes "dir/.." substrings is quadratic and fragile around edge cases like trailing slashes or "..." (a valid, non-special directory name); splitting first sidesteps all of that. Once every token is processed, join the surviving stack entries with \'/\' and prefix a leading \'/\' to rebuild the canonical absolute path. Runs in O(n) time and O(n) space for the stack and split tokens. An equivalent alternative walks the string manually with two pointers to extract tokens instead of calling split, avoiding the intermediate array at the cost of fiddlier index bookkeeping.',
+    complexity: 'O(n) time · O(n) space',
+    code: `// Worked trace for path = "/a/./b/../../c/":
+// split("/+") on the leading/repeated slashes yields tokens:
+//   ["", "a", ".", "b", "..", "..", "c"]   (the trailing '/' produces no token at all)
+//
+//   token   action                          stack (bottom→top)
+//   ─────────────────────────────────────────────────────────────
+//   ""      empty (from leading '/') skip   []
+//   "a"     real name → push                [a]
+//   "."     current dir → skip              [a]
+//   "b"     real name → push                [a, b]
+//   ".."    up → pop "b"                    [a]
+//   ".."    up → pop "a"                    []
+//   "c"     real name → push                [c]
+//
+// Rebuild bottom→top with leading '/' → returns "/c"
+
+public String simplifyPath(String path) {
+  // Splitting on one-or-more slashes hands us clean tokens and folds away
+  // both "//" runs and any leading/trailing slash into empty strings we skip.
+  String[] tokens = path.split("/+");
+  // Stack of directory names still "in scope" after resolving every ".." and "."
+  Deque<String> stack = new ArrayDeque<>();
+  for (String token : tokens) {
+    // Empty (from split artifacts) or "." both mean "no-op, stay put"
+    if (token.isEmpty() || token.equals(".")) {
+      continue;
+    } else if (token.equals("..")) {
+      // Go up one level — but only if there is a level to go up to.
+      // At the root, ".." is a no-op instead of an error.
+      if (!stack.isEmpty()) stack.pop();
+    } else {
+      // Anything else is a legitimate directory/file name, including
+      // odd-looking but valid names like "..." or "...."
+      stack.push(token);
+    }
+  }
+  // Rebuild the canonical path from the bottom of the stack upward
+  StringBuilder sb = new StringBuilder();
+  for (String dir : stack) {
+    sb.insert(0, "/" + dir);
+  }
+  // An empty stack means everything canceled out — the canonical root path
+  return sb.length() == 0 ? "/" : sb.toString();
+}`
+  },
+  {
+    num: 143, lc: 496, title: 'Next Greater Element I', d: 'easy',
+    bucket: 'Stack', category: 'Monotonic Stack',
+    url: 'https://leetcode.com/problems/next-greater-element-i/',
+    approach: 'Monotonic decreasing stack over nums2, plus a value→answer hash map to serve the nums1 queries. Scan nums2 left to right, keeping a stack of values still waiting for their next greater element; the stack stays strictly decreasing from bottom to top. When a new value x arrives, every stacked value smaller than x is popped and recorded in the map with x as its answer — x really is the FIRST greater element to their right, because anything between a popped value and x was smaller (it sat above that value on the stack and popped first). Whatever remains on the stack at the end never met a larger element, so those lookups simply miss and default to -1. Since all nums2 values are unique and nums1 is a subset of nums2, the map resolves each query in O(1). The naive approach — locate each nums1 element in nums2 and scan rightward — costs O(n1 · n2), while the stack pushes and pops each nums2 element exactly once, making the whole pass linear. An equivalent alternative scans nums2 right-to-left, popping smaller values off the stack and recording the surviving top as the answer.',
+    complexity: 'O(n1 + n2) time · O(n2) space',
+    code: `// Worked trace for nums1 = [4, 1, 2], nums2 = [1, 3, 4, 2]:
+//
+//   x   stack before   pops (value:answer)   stack after   map after
+//   (stack shown bottom -> top)
+//   ─────────────────────────────────────────────────────────────────
+//   1   []             —                     [1]           {}
+//   3   [1]            1:3                   [3]           {1:3}
+//   4   [3]            3:4                   [4]           {1:3, 3:4}
+//   2   [4]            — (4 > 2)             [4, 2]        {1:3, 3:4}
+//
+//   Leftovers 4 and 2 never met a greater value -> map misses -> -1.
+//   nums1 lookups: 4 -> -1, 1 -> 3, 2 -> -1
+//
+// Returns [-1, 3, -1]
+
+public int[] nextGreaterElement(int[] nums1, int[] nums2) {
+  // value -> its next greater element in nums2. Unique values make the value itself a
+  // safe key; precomputing turns every nums1 query into an O(1) lookup instead of a rescan.
+  Map<Integer, Integer> nextGreater = new HashMap<>();
+  // Values still waiting for something bigger to appear on their right.
+  // Invariant: strictly decreasing bottom -> top — the moment that would break, we pop.
+  Deque<Integer> stack = new ArrayDeque<>();
+  for (int x : nums2) {
+    // x resolves EVERY waiting value smaller than it, and x is their FIRST greater
+    // element: anything between a popped value and x was smaller, or it would have
+    // popped that value off the stack already.
+    while (!stack.isEmpty() && stack.peek() < x) {
+      nextGreater.put(stack.pop(), x);
+    }
+    // x itself now waits — only a later, larger element can resolve it
+    stack.push(x);
+  }
+  // Values still stacked never saw anything greater. Leaving them OUT of the map is
+  // deliberate: the getOrDefault below then yields the required -1 for them.
+  int[] ans = new int[nums1.length];
+  for (int i = 0; i < nums1.length; i++) {
+    // nums1 is a subset of nums2, so a map miss can only mean "no greater element exists"
+    ans[i] = nextGreater.getOrDefault(nums1[i], -1);
+  }
+  return ans;
+}`
+  },
+  {
+    num: 144, lc: 1762, title: 'Buildings With an Ocean View', d: 'medium', companies: ['Garmin'],
+    bucket: 'Stack', category: 'Monotonic Stack',
+    url: 'https://leetcode.com/problems/buildings-with-an-ocean-view/',
+    approach: 'Sweep left to right maintaining a monotonic strictly-decreasing stack of building indices. A building sees the ocean (which sits to the right of everything) exactly when every building to its right is strictly shorter, so when building i arrives it permanently blocks every stacked candidate whose height is <= heights[i] — pop them all before pushing i. The <= (rather than <) is the correctness crux: an equal-height building also ruins a view that demands strictly smaller neighbors. Whatever survives on the stack after the full sweep is taller than everything to its own right, and bottom-to-top the stack already lists those indices in increasing order, so it converts straight into the answer. Each index is pushed once and popped at most once, so the sweep is O(n) despite the nested-looking while loop. The naive per-building scan of its entire right side is O(n²) and times out at 10^5 elements. An equivalent alternative is a right-to-left pass carrying the running maximum — keep i whenever heights[i] beats it, then reverse — which uses O(1) auxiliary space, though the stack form also answers the classic follow-up where buildings stream in left to right.',
+    complexity: 'O(n) time · O(n) space',
+    code: `// Worked trace for heights = [4, 2, 3, 1] (ocean is to the right):
+//
+//   i  h[i]  pops (now blocked)  stack after (idx:h)
+//   ──────────────────────────────────────────────────
+//   0   4    -                   [0:4]
+//   1   2    -                   [0:4, 1:2]
+//   2   3    idx 1 (2 <= 3)      [0:4, 2:3]
+//   3   1    -                   [0:4, 2:3, 3:1]
+//
+// Stack bottom→top = surviving indices, already increasing
+// Returns [0, 2, 3]
+
+public int[] findBuildings(int[] heights) {
+  int n = heights.length;
+  // Index stack whose heights are strictly decreasing bottom→top. Sized n because
+  // the worst case (strictly decreasing skyline) keeps every single building on it.
+  int[] stack = new int[n];
+  // Top-of-stack pointer; -1 means empty
+  int top = -1;
+  for (int i = 0; i < n; i++) {
+    // Building i permanently blocks every stacked candidate not strictly taller
+    // than it. Must be <= not <: the view demands all buildings to the right be
+    // strictly SHORTER, so an equal-height building to the right blocks too.
+    while (top >= 0 && heights[stack[top]] <= heights[i]) top--;
+    // i can see the ocean so far — a later, taller building may still evict it
+    stack[++top] = i;
+  }
+  // Survivors are taller than everything to their right, and bottom→top the stack
+  // is already in increasing index order — slice it off as the answer.
+  return Arrays.copyOf(stack, top + 1);
+}`
+  },
+  // ─── Binary Search (11) ───
   {
     num: 38, lc: 704, title: 'Binary Search', d: 'easy',
     bucket: 'Binary Search', category: 'Array',
@@ -1718,7 +3123,7 @@ public double findMedianSortedArrays(int[] a, int[] b) {
 }`
   },
   {
-    num: 43, lc: 50, title: 'Pow(x, n)', d: 'medium', companies: ['Temu'],
+    num: 43, lc: 50, title: 'Pow(x, n)', d: 'medium',
     bucket: 'Binary Search', category: 'Math · Fast Exponentiation',
     url: 'https://leetcode.com/problems/powx-n/',
     approach: 'Fast exponentiation by squaring (binary exponentiation). Writing n in binary, x^n is the product of x^(2^k) over the bit positions k that are set, so you only need log n multiplications instead of n. Iterate over the bits of |n|: each step squares x (advancing x to the next power of two) and, when the current low bit is 1, multiplies it into the result. Negative exponents invert x and negate n. The key pitfall is Integer.MIN_VALUE, whose negation overflows int — promoting n to long before negating avoids that. Total cost is O(log n) time and O(1) space, beating the naive O(n) repeated-multiply loop.',
@@ -1757,7 +3162,260 @@ public double myPow(double x, int n) {
 }`
   },
 
-  // ─── Linked List (11) ───
+  {
+    num: 145, lc: 35, title: 'Search Insert Position', d: 'easy',
+    bucket: 'Binary Search', category: 'Binary Search',
+    url: 'https://leetcode.com/problems/search-insert-position/',
+    approach: 'This is plain binary search repurposed to also answer "where would it go if absent". Maintain window [lo, hi] over the sorted array and probe mid each step: an exact match returns mid immediately, otherwise the comparison against target still tells you which half to keep, exactly like standard binary search. The key insight is what lo equals the moment the loop exits without a match — since every discard step that moves lo does so because nums[mid] < target, lo always advances to sit just past every element smaller than target, and hi always retreats to sit just before every element greater than or equal to it once nums[mid] > target; when the window collapses (lo > hi), lo is precisely the first index whose value is not less than target, i.e. the correct insertion point. A naive linear scan comparing target against every element also works but costs O(n); a separate post-loop scan to "find the insert point" is redundant, since lo already lands there for free. This keeps everything to a single O(log n) pass with O(1) space. A library alternative is Arrays.binarySearch, which returns the same information encoded as -(insertionPoint) - 1 on a miss.',
+    complexity: 'O(log n) time · O(1) space',
+    code: `// Worked trace for nums = [1, 3, 5, 6], target = 5 (exact match case):
+//
+//   lo  hi  mid  nums[mid]  action
+//   ──────────────────────────────────────────────
+//   0   3   1    3          3 < 5  → lo = mid+1 = 2
+//   2   3   2    5          5 == 5 → return 2
+//
+// Returns 2
+//
+// Edge case, same array, target = 2 (no match, must insert):
+//
+//   lo  hi  mid  nums[mid]  action
+//   ──────────────────────────────────────────────
+//   0   3   1    3          3 > 2  → hi = mid-1 = 0
+//   0   0   0    1          1 < 2  → lo = mid+1 = 1
+//   1   0   -    -          lo > hi, loop ends → return lo = 1
+//
+// Returns 1 (insert 2 between index 0 and the old index 1)
+
+public int searchInsert(int[] nums, int target) {
+  // [lo, hi] is the inclusive window that may still contain target
+  int lo = 0, hi = nums.length - 1;
+  while (lo <= hi) {
+    // Unsigned shift avoids overflow on (lo + hi) for very large arrays
+    int mid = (lo + hi) >>> 1;
+    // Exact match — this is both the search hit and the insertion index
+    if (nums[mid] == target) return mid;
+    if (nums[mid] < target) {
+      // mid (and everything before it) is too small, so the answer is past mid
+      lo = mid + 1;
+    } else {
+      // mid (and everything from it onward) is too big, keep it as a candidate
+      hi = mid - 1;
+    }
+  }
+  // No exact match: the window collapsed with lo just past every element smaller
+  // than target and hi just before every element >= target, so lo IS the
+  // correct insertion index — no extra pass needed to compute it separately.
+  return lo;
+}`
+  },
+  {
+    num: 146, lc: 74, title: 'Search a 2D Matrix', d: 'medium', companies: ['Garmin'],
+    bucket: 'Binary Search', category: 'Matrix · Binary Search',
+    url: 'https://leetcode.com/problems/search-a-2d-matrix/',
+    approach: 'Treat the whole m×n grid as one flattened sorted array of length m*n and binary search it directly, without ever materializing the flattened array. Each row is sorted and the first element of every row is greater than the last element of the previous row, so reading the matrix left-to-right, top-to-bottom visits every value in strictly increasing order — exactly the invariant plain binary search needs. A candidate flat index mid maps back to a cell via mid / n (row) and mid % n (column), so the search still only touches O(1) extra memory. This beats the naive approach of binary searching each row individually (O(m log n)) or scanning the whole matrix (O(mn)), collapsing everything into a single O(log(mn)) search. The key insight that makes the flattening valid is the cross-row ordering guarantee in the problem statement — without it you would be forced to binary search each row or use the staircase (start top-right, step left/down) technique instead, which runs in O(m + n) and works even when rows are only individually sorted.',
+    complexity: 'O(log(m*n)) time · O(1) space',
+    code: `// Worked trace for matrix = [[1,3,5,7],[10,11,16,20],[23,30,34,60]], target = 3:
+//
+//   lo  hi  mid  row=mid/4  col=mid%4  value  action
+//   ────────────────────────────────────────────────────────
+//   0   11   5    1          1          11     11 > 3  → hi = mid-1 = 4
+//   0   4    2    0          2          5      5 > 3   → hi = mid-1 = 1
+//   0   1    0    0          0          1      1 < 3   → lo = mid+1 = 1
+//   1   1    1    0          1          3      3 == 3  → return true
+//
+// Returns true
+
+public boolean searchMatrix(int[][] matrix, int target) {
+  // Guard the degenerate empty-matrix case before touching matrix[0]
+  if (matrix == null || matrix.length == 0 || matrix[0].length == 0) return false;
+  int rows = matrix.length, cols = matrix[0].length;
+  // Treat the grid as one flattened sorted array of length rows*cols.
+  // This is valid ONLY because each row is sorted AND the first element of
+  // every row is greater than the last element of the previous row.
+  int lo = 0, hi = rows * cols - 1;
+  while (lo <= hi) {
+    // Unsigned shift avoids overflow, same as plain binary search
+    int mid = (lo + hi) >>> 1;
+    // Map the flat index back to its 2D cell: row = mid / cols, col = mid % cols
+    int row = mid / cols;
+    int col = mid % cols;
+    int value = matrix[row][col];
+    if (value == target) return true;
+    // Discard the half of the flattened array that can't contain target
+    if (value < target) lo = mid + 1;   // target is further along the flattened order
+    else hi = mid - 1;                  // target is earlier in the flattened order
+  }
+  // Window collapsed without a hit — target isn't anywhere in the matrix
+  return false;
+}`
+  },
+  {
+    num: 147, lc: 34, title: 'Find First and Last Position of Element in Sorted Array', d: 'medium',
+    bucket: 'Binary Search', category: 'Binary Search',
+    url: 'https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array/',
+    approach: 'Two independent binary searches, each biased toward one edge of the target run instead of stopping at the first match found. To find the left boundary, whenever nums[mid] == target you record mid as the best-so-far answer but still move hi = mid - 1 to keep probing further left, because an earlier occurrence might still exist. To find the right boundary you mirror this: on a match, record mid and move lo = mid + 1 to keep probing further right. The key insight is that a plain "return on first match" binary search gives you AN index inside the run, but not necessarily an edge, and which index you land on depends on array shape — so the two searches must be biased searches for a boundary condition (leftmost/rightmost true value of nums[i] >= target and nums[i] > target), not searches for equality. A naive alternative — linear-scan outward from any found index — is correct but degrades to O(n) when the target run is large, defeating the point of the sorted input. Running two O(log n) searches keeps the whole solution O(log n) time and O(1) space. An equivalent alternative is to implement a single lowerBound(x) helper returning the first index with nums[i] >= x, then call it with target and target + 1 to derive both the start and (one past) the end.',
+    complexity: 'O(log n) time · O(1) space',
+    code: `// Worked trace for nums = [5,7,7,8,8,10], target = 8:
+//
+//   Left-boundary search (bias hi = mid-1 on match):
+//   lo  hi  mid  nums[mid]  action                    best
+//   ──────────────────────────────────────────────────────
+//   0   5   2    7          7<8  → lo = mid+1 = 3      -
+//   3   5   4    8          match → best=4, hi=mid-1=3 4
+//   3   3   3    8          match → best=3, hi=mid-1=2 3
+//   3   2   -    (lo>hi, stop)                         3
+//
+//   Right-boundary search (bias lo = mid+1 on match):
+//   lo  hi  mid  nums[mid]  action                    best
+//   ──────────────────────────────────────────────────────
+//   0   5   2    7          7<8  → lo = mid+1 = 3      -
+//   3   5   4    8          match → best=4, lo=mid+1=5 4
+//   5   5   5    10         10>8 → hi = mid-1 = 4      4
+//   5   4   -    (lo>hi, stop)                         4
+//
+// Returns [3, 4]
+
+public int[] searchRange(int[] nums, int target) {
+  // Find the leftmost index whose value equals target (or -1 if absent)
+  int first = findBound(nums, target, true);
+  // No need to run the second search at all if target isn't present
+  if (first == -1) return new int[]{ -1, -1 };
+  // Find the rightmost index whose value equals target
+  int last = findBound(nums, target, false);
+  return new int[]{ first, last };
+}
+
+// Biased binary search: on a match, record it but keep searching toward
+// one edge instead of returning immediately. That bias is what turns an
+// equality search into a boundary search.
+private int findBound(int[] nums, int target, boolean findFirst) {
+  int lo = 0, hi = nums.length - 1;
+  int result = -1;
+  while (lo <= hi) {
+    // Unsigned shift avoids overflow on (lo + hi) for very large arrays
+    int mid = (lo + hi) >>> 1;
+    if (nums[mid] == target) {
+      // Remember this as the best candidate so far...
+      result = mid;
+      // ...then keep narrowing toward the requested edge instead of stopping,
+      // because an earlier (or later) occurrence of target may still exist.
+      if (findFirst) hi = mid - 1;   // look further left for an earlier match
+      else lo = mid + 1;             // look further right for a later match
+    } else if (nums[mid] < target) {
+      // Whole left half including mid is too small — discard it
+      lo = mid + 1;
+    } else {
+      // Whole right half including mid is too large — discard it
+      hi = mid - 1;
+    }
+  }
+  // -1 if target never matched; otherwise the boundary index found
+  return result;
+}`
+  },
+  {
+    num: 148, lc: 162, title: 'Find Peak Element', d: 'medium',
+    bucket: 'Binary Search', category: 'Binary Search',
+    url: 'https://leetcode.com/problems/find-peak-element/',
+    approach: 'Binary search that climbs toward a peak using the local slope at mid, exploiting the guarantee that nums[-1] and nums[n] are treated as -infinity so a peak always exists. Compare nums[mid] to its right neighbor nums[mid+1]: if nums[mid] < nums[mid+1] the sequence is still rising, so a peak must exist somewhere to the right (worst case the last element, whose right neighbor is -infinity), and lo moves to mid+1; otherwise nums[mid] > nums[mid+1] (values are distinct, so equality never happens), meaning mid is on a descending slope or is itself a peak, so a peak must exist at mid or to its left, and hi collapses to mid. The key insight is that this local comparison is enough to discard half the array without ever looking at the whole sequence, because at least one direction from any ascending or descending point is guaranteed to lead to a peak. A linear scan comparing every element to both neighbors also works but only in O(n) time, throwing away the sorted-slope structure that binary search exploits; here the window halves each step for O(log n) time and O(1) space. An equivalent recursive divide-and-conquer formulation picks the larger side\'s half and recurses into it.',
+    complexity: 'O(log n) time · O(1) space',
+    code: `// Worked trace for nums = [1, 2, 1, 3, 5, 6, 4]:
+//
+//   lo  hi  mid  nums[mid]  nums[mid+1]  compare        action
+//   ──────────────────────────────────────────────────────────────────
+//   0   6   3    3          5            3 < 5 (rising) lo = mid+1 = 4
+//   4   6   5    6          4            6 > 4 (falling) hi = mid = 5
+//   4   5   4    5          6            5 < 6 (rising) lo = mid+1 = 5
+//   5   5   -    loop ends (lo == hi)    return lo = 5
+//
+// Returns 5 (nums[5] = 6 is a peak: 6 > 5 and 6 > 4)
+
+public int findPeakElement(int[] nums) {
+  // [lo, hi] always contains at least one peak index — true initially because
+  // nums[-1] and nums[n] are conceptually -infinity, so the array's global
+  // max is always a peak, and it lies somewhere in [0, n-1].
+  int lo = 0, hi = nums.length - 1;
+  while (lo < hi) {
+    // Unsigned shift avoids overflow on (lo + hi) for very large arrays
+    int mid = (lo + hi) >>> 1;
+    // mid+1 is always valid here since mid < hi <= nums.length - 1
+    if (nums[mid] < nums[mid + 1]) {
+      // Still climbing: mid itself can't be a peak, but the ascent guarantees
+      // a peak exists to its right, so it's safe to drop everything up to mid.
+      lo = mid + 1;
+    } else {
+      // Descending (or nums[mid] is a local max): a peak exists at mid or to
+      // its left, so keep mid in the window instead of excluding it like above.
+      hi = mid;
+    }
+  }
+  // Window collapsed to a single index — that index must be a peak
+  return lo;
+}`
+  },
+  {
+    num: 149, lc: 410, title: 'Split Array Largest Sum', d: 'hard', companies: ['Garmin'],
+    bucket: 'Binary Search', category: 'Binary Search on Answer',
+    url: 'https://leetcode.com/problems/split-array-largest-sum/',
+    approach: 'Binary search on the ANSWER rather than on the array itself: the thing being searched for is not an index but the minimum possible value of "the largest subarray sum", call it cap. The search space for cap is [max(nums), sum(nums)] — it can never be smaller than the single biggest element (that element has to live in some subarray) and never needs to exceed the total sum (one subarray holding everything). For a candidate cap, a greedy scan can check feasibility in O(n): walk the array accumulating a running sum, and start a new subarray the moment adding the next element would exceed cap; the number of subarrays produced is the minimum possible for that cap, because delaying a split as long as legally possible can only reduce or match the split count of any other valid partition. If that count is ≤ m, cap is achievable (and everything larger than cap is also achievable, since a looser cap only merges pieces), so search the lower half by shrinking hi; otherwise cap is too tight, so search the upper half. Monotonicity of "pieces needed" as a non-increasing function of cap is exactly what makes binary search valid here. This turns an exponential search over partitions into O(n log(sum − max)) time and O(1) space. Trying to DP directly over "best split of the first i elements into k groups" also works (O(n^2 · m) time) but is asymptotically worse and more code; binary-searching the answer while reusing a simple greedy feasibility check is the standard interview-favored approach.',
+    complexity: 'O(n log(sum − max)) time · O(1) space',
+    code: `// Worked trace for nums = [7, 2, 5, 10, 8], m = 2:
+//
+//   lo  hi  mid  pieces(mid)  feasible?  action
+//   ───────────────────────────────────────────────────────
+//   10  32   21       2          yes     hi = 21 (try smaller)
+//   10  21   15       3          no      lo = 16 (need bigger)
+//   16  21   18       2          yes     hi = 18 (try smaller)
+//   16  18   17       3          no      lo = 18 (loop ends, lo == hi)
+//
+// Returns 18  (split as [7,2,5] and [10,8], largest sum = 18)
+
+public int splitArray(int[] nums, int m) {
+  // The cap can never beat the single largest element — that element
+  // must sit alone in whichever subarray contains it.
+  int lo = 0;
+  // The cap never needs to exceed putting everything in one subarray.
+  int hi = 0;
+  for (int x : nums) {
+    lo = Math.max(lo, x);
+    hi += x;
+  }
+  // Binary search the smallest cap for which m (or fewer) subarrays suffice.
+  // Feasibility is monotonic in cap: a looser cap only merges pieces, never splits more.
+  while (lo < hi) {
+    int mid = lo + (hi - lo) / 2;
+    if (countPiecesWithinCap(nums, mid) <= m) {
+      // mid works — it might still be improvable, so keep it as a candidate
+      hi = mid;
+    } else {
+      // mid is too tight to fit in m pieces — need more headroom
+      lo = mid + 1;
+    }
+  }
+  // lo == hi: the minimum cap for which the greedy split needs at most m pieces
+  return lo;
+}
+
+// Greedily packs nums into the fewest subarrays whose sum never exceeds cap.
+// Greedy is optimal here: pushing an element into the current run whenever
+// it still fits can never require MORE subarrays than stopping earlier would.
+private int countPiecesWithinCap(int[] nums, int cap) {
+  int pieces = 1;
+  long currentSum = 0;
+  for (int x : nums) {
+    // Adding x would blow the cap — close out the current subarray and start fresh
+    if (currentSum + x > cap) {
+      pieces++;
+      currentSum = x;
+    } else {
+      currentSum += x;
+    }
+  }
+  return pieces;
+}`
+  },
+  // ─── Linked List (15) ───
   {
     num: 44, lc: 206, title: 'Reverse Linked List', d: 'easy', companies: ['Garmin'],
     bucket: 'Linked List', category: 'Two Pointers',
@@ -1792,7 +3450,7 @@ public ListNode reverseList(ListNode head) {
 }`
   },
   {
-    num: 45, lc: 21, title: 'Merge Two Sorted Lists', d: 'easy', companies: ['Temu'],
+    num: 45, lc: 21, title: 'Merge Two Sorted Lists', d: 'easy',
     bucket: 'Linked List', category: 'Two Pointers',
     url: 'https://leetcode.com/problems/merge-two-sorted-lists/',
     approach: 'Two-pointer merge with a dummy head. The dummy sentinel removes the special case of choosing the very first node: a tail pointer always has somewhere to append. Each step compares the two current heads and splices the smaller one onto the tail, advancing only that list — picking with a non-strict ≤ keeps the merge stable when values tie. When one list is exhausted the other is, by assumption, already sorted, so you attach its entire remainder in O(1) instead of walking it. Total work is O(n+m) time and O(1) extra space since nodes are relinked in place; dummy.next skips the sentinel to give the real head.',
@@ -2093,7 +3751,7 @@ public int findDuplicate(int[] nums) {
 }`
   },
   {
-    num: 53, lc: 146, title: 'LRU Cache', d: 'medium', companies: ['Temu'],
+    num: 53, lc: 146, title: 'LRU Cache', d: 'medium',
     bucket: 'Linked List', category: 'Design',
     url: 'https://leetcode.com/problems/lru-cache/',
     approach: 'Hash map plus doubly-linked list ordered by recency, here obtained for free by subclassing LinkedHashMap in access-order mode. The map gives O(1) key lookup while the linked list records usage order; constructing the parent with accessOrder=true makes every get() and put() relink the touched entry to the most-recent end, so the head is always the least-recently-used candidate. Overriding removeEldestEntry to return size() > capacity lets the library evict that head automatically right after each insertion, preserving the size bound. Every operation is O(1) amortized because hashing and list relinking are constant work, and space is O(capacity). The hand-rolled alternative wires the same hash-map-plus-linked-list by hand, which is more code for identical behavior.',
@@ -2134,7 +3792,7 @@ class LRUCache extends LinkedHashMap<Integer, Integer> {
 }`
   },
   {
-    num: 54, lc: 148, title: 'Sort List', d: 'medium', companies: ['Temu'],
+    num: 54, lc: 148, title: 'Sort List', d: 'medium',
     bucket: 'Linked List', category: 'Merge Sort',
     url: 'https://leetcode.com/problems/sort-list/',
     approach: 'Top-down merge sort adapted to linked lists, which suits them because splitting and merging only require pointer relinking, never random indexing. Each call splits the list into two near-equal halves with the slow/fast (tortoise & hare) technique, severing the link after slow so the two halves become independent lists. It recursively sorts each half, then merges them with a dummy-headed two-pointer walk that always splices the smaller front node, guaranteeing a stable ascending order. The recursion depth is log n and each of those levels does O(n) merge work, giving O(n log n) time; space is O(log n) for the call stack rather than the O(n) buffers an array merge sort needs. A subtle pitfall is forgetting to set prev.next = null, which leaves the halves entangled and loops forever.',
@@ -2185,7 +3843,214 @@ private ListNode merge(ListNode a, ListNode b) {
 }`
   },
 
-  // ─── Trees (17) ───
+  {
+    num: 150, lc: 234, title: 'Palindrome Linked List', d: 'easy',
+    bucket: 'Linked List', category: 'Linked List · Fast & Slow',
+    url: 'https://leetcode.com/problems/palindrome-linked-list/',
+    approach: 'Find the middle with slow/fast pointers, reverse the second half in place, then compare the two halves from their outer ends inward. Slow advances one node per step and fast advances two, so when fast falls off the end slow is resting at the middle node (on odd lengths) or the start of the true second half (on even lengths); reversing everything from slow onward gives a list that reads back-to-front. Walking the original front half against this reversed back half node-by-node is exactly equivalent to comparing the sequence against its own reverse, which is the definition of a palindrome. Driving the comparison loop off the reversed half\'s length is the key trick: on an odd-length list that half is one node shorter than the front, so it simply runs out first — the loop never needs to know the total length or treat the middle element as a special case, since it plays the role of both halves\' shared border. This runs in O(n) time and O(1) extra space, beating the naive approach of copying every value into an array or stack and checking it against itself, which costs O(n) space. The one thing to watch is that the reversal permanently mutates the list, so a caller who needs the original order back should reverse the tail a second time before returning (optional, and skipped here since the problem only asks for the boolean).',
+    complexity: 'O(n) time · O(1) space',
+    code: `// Worked trace for head = 1 -> 2 -> 2 -> 1:
+//
+//   step             slow   fast    note
+//   ──────────────────────────────────────────────────
+//   start             1(a)   1(a)
+//   iter 1            2(b)   2(c)   fast advanced 2 nodes
+//   iter 2            2(c)   null   fast.next was null, loop stops
+//
+//   slow rests on the second "2" (node c). Reverse c -> d:
+//     before: c(2) -> d(1) -> null
+//     after:  d(1) -> c(2) -> null      (secondHalf head = d)
+//
+//   compare front (1 -> 2) against reversed back (1 -> 2):
+//     1 == 1, advance both
+//     2 == 2, advance both
+//     secondHalf pointer hits null -> stop, no mismatch found
+//
+// Returns true
+
+public boolean isPalindrome(ListNode head) {
+  // A list of 0 or 1 nodes reads the same forwards and backwards
+  if (head == null || head.next == null) return true;
+
+  // Slow/fast to find the middle: fast moves twice as far as slow, so when
+  // fast runs out slow is sitting on the middle node (odd length) or the
+  // start of the second half (even length).
+  ListNode slow = head, fast = head;
+  while (fast != null && fast.next != null) {
+    slow = slow.next;
+    fast = fast.next.next;
+  }
+
+  // Reverse the second half in place starting at slow. Standard three-pointer
+  // flip; no dummy node needed since we never touch the front half's links.
+  ListNode prev = null, curr = slow;
+  while (curr != null) {
+    ListNode next = curr.next;   // stash successor before rewiring curr.next
+    curr.next = prev;
+    prev = curr;
+    curr = next;
+  }
+  // prev is now the head of the reversed second half
+
+  // Walk the original front half against the reversed back half. The reversed
+  // half is the same length or one shorter, so it always runs out first (or
+  // together) — the loop condition on secondHalf alone is enough to stop safely.
+  ListNode firstHalf = head, secondHalf = prev;
+  while (secondHalf != null) {
+    // Any mismatch means the sequence isn't its own reverse
+    if (firstHalf.val != secondHalf.val) return false;
+    firstHalf = firstHalf.next;
+    secondHalf = secondHalf.next;
+  }
+  // Every paired value matched all the way through — it's a palindrome
+  return true;
+}`
+  },
+  {
+    num: 151, lc: 160, title: 'Intersection of Two Linked Lists', d: 'easy',
+    bucket: 'Linked List', category: 'Linked List · Two Pointers',
+    url: 'https://leetcode.com/problems/intersection-of-two-linked-lists/',
+    approach: 'Two-pointer length equalization done implicitly by switching heads. Walk pA down list A and pB down list B one step at a time; when a pointer falls off the end of its own list, redirect it to the HEAD of the other list instead of stopping. The key insight is that this switch makes both pointers travel the exact same total distance before reaching the intersection: pA covers (lenA - c) + c + (lenB - c) and pB covers (lenB - c) + c + (lenA - c), where c is the shared suffix length — the extra c cancels out and both walk lenA + lenB - c nodes overall, landing on the intersection node at the same step. If the lists never intersect, both pointers still traverse lenA + lenB nodes total and hit null simultaneously, so the loop naturally terminates with null instead of looping forever. This avoids the need to first compute both lengths and manually advance the longer list by the difference, which works but takes two extra passes and more bookkeeping. It runs in O(n + m) time and O(1) space, beating a hash-set-of-visited-nodes approach that needs O(n) extra memory.',
+    complexity: 'O(n + m) time · O(1) space',
+    code: `// Worked trace for A = 4 -> 1 -> 8 -> 4 -> 5,
+//                    B = 5 -> 6 -> 1 -> 8 -> 4 -> 5,
+// where A and B share the tail starting at the node holding 8:
+//
+//   step  pA (before)   pB (before)   pA==pB?   action
+//   ─────────────────────────────────────────────────────────────
+//    0        4              5           no      start at each head
+//    1        1              6           no      advance both by 1
+//    2        8              1           no      advance both by 1
+//    3        4              8           no      advance both by 1
+//    4        5              4           no      advance both by 1
+//    5      null              5          no      pA fell off A -> jump to B head
+//    6        5              null        no      pB fell off B -> jump to A head
+//    7        6              4           no      advance both by 1
+//    8        1              1           no      advance both by 1
+//    9        8              8          yes      pA == pB == node(8) -> stop
+//
+// Returns the node holding 8 (the true intersection node)
+
+public ListNode getIntersectionNode(ListNode headA, ListNode headB) {
+  // Guard the trivial case: no intersection is possible without both lists
+  if (headA == null || headB == null) return null;
+  // Two pointers, one per list, each starting at its own head
+  ListNode pA = headA, pB = headB;
+  // They meet either at the true intersection node or at null (no intersection) —
+  // never loop forever because each pointer switches lists at most once.
+  while (pA != pB) {
+    // Walk one step, or jump to the OTHER list's head once this one runs out.
+    // Switching heads (not restarting the same list) is what equalizes the
+    // total distance each pointer travels, canceling out the length difference.
+    pA = (pA == null) ? headB : pA.next;
+    pB = (pB == null) ? headA : pB.next;
+  }
+  // Either the shared node (pA == pB != null) or null if the lists never intersect
+  return pA;
+}`
+  },
+  {
+    num: 152, lc: 92, title: 'Reverse Linked List II', d: 'medium',
+    bucket: 'Linked List', category: 'Linked List · In-place Reversal',
+    url: 'https://leetcode.com/problems/reverse-linked-list-ii/',
+    approach: 'Dummy head plus head-insertion (bridge-and-rewire) reversal, done in one pass with no extra list. First walk a prev pointer left-1 steps from a dummy node placed before head, so prev always lands on the node just before the sublist regardless of whether left is 1 (the dummy absorbs that edge case). Then repeatedly take the node right after curr and splice it to the front of the sublist, right after prev: save next = curr.next, unlink it with curr.next = next.next, then hook it in with next.next = prev.next and prev.next = next. Doing this right-left times threads each freed node onto the front of the growing reversed segment while curr itself never moves, so it naturally ends up as the tail connecting to the untouched remainder. The key invariant is that prev.next always points at the current head of the (partially) reversed sublist, so each iteration only needs three pointer writes and no values are ever copied. This beats the naive approach of reversing the whole list, or extracting the sublist into a new structure and splicing it back, because it touches each node exactly once and needs O(1) extra space; an equally valid alternative is to reverse the sublist with the classic three-pointer technique first and then rewire both boundary connections afterward.',
+    complexity: 'O(n) time · O(1) space',
+    code: `// Worked trace for head = 1 -> 2 -> 3 -> 4 -> 5, left = 2, right = 4:
+//
+//   step   prev  curr  next   list after splice
+//   ──────────────────────────────────────────────────────────────
+//   init    1     2     -     dummy->1->2->3->4->5   (prev walked left-1=1 step)
+//    1      1     2     3     dummy->1->3->2->4->5   (3 moved to front of sublist)
+//    2      1     2     4     dummy->1->4->3->2->5   (4 moved to front of sublist)
+//   loop ran right-left = 2 times, curr never moved
+//
+// Returns 1 -> 4 -> 3 -> 2 -> 5
+
+public ListNode reverseBetween(ListNode head, int left, int right) {
+  // Dummy sits before head so "prev" has somewhere valid to point even when left == 1
+  ListNode dummy = new ListNode(0);
+  dummy.next = head;
+  ListNode prev = dummy;
+  // Walk prev to the node immediately BEFORE position left (1-indexed)
+  for (int i = 0; i < left - 1; i++) {
+    prev = prev.next;
+  }
+  // curr marks the start of the sublist; it will end up as the sublist's tail
+  ListNode curr = prev.next;
+  // Reverse by repeatedly moving the node right after curr to the front of the sublist.
+  // curr itself never advances, so it slides from head of the sublist to its tail.
+  for (int i = 0; i < right - left; i++) {
+    // The node we are about to relocate to the front
+    ListNode next = curr.next;
+    // Unlink it from its current spot, skipping over it
+    curr.next = next.next;
+    // Hook it in right after prev, ahead of whatever prev currently points to
+    next.next = prev.next;
+    // prev.next always tracks the current head of the reversed portion
+    prev.next = next;
+  }
+  // dummy.next skips the sentinel and returns the true (possibly unchanged) head
+  return dummy.next;
+}`
+  },
+  {
+    num: 153, lc: 25, title: 'Reverse Nodes in k-Group', d: 'hard',
+    bucket: 'Linked List', category: 'Linked List · In-place Reversal',
+    url: 'https://leetcode.com/problems/reverse-nodes-in-k-group/',
+    approach: 'Group-wise iterative reversal with a dummy head and a lookahead check. Walk a pointer k steps ahead of each group\'s start to confirm a full group of k nodes actually exists — if the pointer falls off the end early, that final short group must be left untouched, which is the detail that trips up naive recursive solutions that reverse first and patch up second. Once a full group is confirmed, reverse just those k links using the same prev/curr/next three-pointer dance as plain list reversal, then splice the reversed block back between the node before the group (tracked via a groupPrev pointer that starts at the dummy) and the head of the next group (the original first node of this group, which becomes its tail after reversal). Using a dummy node avoids a special case for rewriting the overall head when the very first group gets reversed. Advancing groupPrev to that same original-first-node keeps the loop moving forward by exactly one group each iteration. This runs in O(n) time, since every node is visited a constant number of times, and O(1) extra space, since nodes are relinked in place with no recursion stack or auxiliary buffer — the recursive formulation is equivalent in time but costs O(n/k) stack frames.',
+    complexity: 'O(n) time · O(1) space',
+    code: `// Worked trace for head = 1 -> 2 -> 3 -> 4 -> 5, k = 2:
+//
+//   group    nodes checked   full?  reversed segment   groupPrev after   list so far
+//   ────────────────────────────────────────────────────────────────────────────────
+//   1st      1, 2            yes    2 -> 1             node "1"          2 -> 1 -> 3 -> 4 -> 5
+//   2nd      3, 4            yes    4 -> 3             node "3"          2 -> 1 -> 4 -> 3 -> 5
+//   3rd      5, (null)       no     left as-is         (loop ends)       2 -> 1 -> 4 -> 3 -> 5
+//
+// Returns 2 -> 1 -> 4 -> 3 -> 5
+
+public ListNode reverseKGroup(ListNode head, int k) {
+  // Dummy sentinel avoids a special case when the very first group is reversed
+  // and the overall head of the list changes.
+  ListNode dummy = new ListNode(0);
+  dummy.next = head;
+  // groupPrev is the node right before the group currently being reversed —
+  // the reversed block gets spliced back in right after it.
+  ListNode groupPrev = dummy;
+
+  while (true) {
+    // Look k nodes ahead WITHOUT reversing anything yet, so a short final
+    // group (fewer than k nodes) can be detected and left untouched.
+    ListNode kth = groupPrev;
+    for (int i = 0; i < k && kth != null; i++) {
+      kth = kth.next;
+    }
+    // Fewer than k nodes remain — this partial group stays in its original order.
+    if (kth == null) break;
+
+    // Reverse exactly this group using the standard three-pointer dance,
+    // stopping the moment curr passes the group's last node (groupNext).
+    ListNode groupNext = kth.next;   // first node of the NEXT group; reversal must stop here
+    ListNode prev = groupNext, curr = groupPrev.next;
+    while (curr != groupNext) {
+      // Save curr's successor before curr.next gets overwritten below
+      ListNode next = curr.next;
+      curr.next = prev;   // flip this node's pointer to face backward
+      prev = curr;         // advance the trailing pointer onto the node just reversed
+      curr = next;         // advance the leading pointer to the saved successor
+    }
+
+    // groupPrev.next currently still points at the OLD head of this group,
+    // which is now the group's TAIL after reversal — perfect as the new groupPrev.
+    ListNode newGroupPrev = groupPrev.next;
+    groupPrev.next = kth;        // kth was the group's last node, now its new head
+    groupPrev = newGroupPrev;    // move groupPrev forward by exactly one group
+  }
+  // dummy.next always tracks the true head, even after the first group flips
+  return dummy.next;
+}`
+  },
+  // ─── Trees (24) ───
   {
     num: 55, lc: 226, title: 'Invert Binary Tree', d: 'easy',
     bucket: 'Trees', category: 'Recursion',
@@ -2615,7 +4480,7 @@ public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
 }`
   },
   {
-    num: 67, lc: 105, title: 'Construct Binary Tree from Preorder and Inorder', d: 'medium', companies: ['Temu'],
+    num: 67, lc: 105, title: 'Construct Binary Tree from Preorder and Inorder', d: 'medium',
     bucket: 'Trees', category: 'Recursion',
     url: 'https://leetcode.com/problems/construct-binary-tree-from-preorder-and-inorder-traversal/',
     approach: 'Recursive divide-and-conquer driven by the two traversal orders. Preorder visits root first, so consuming its entries left to right always hands us the next subtree\'s root; a shared preIdx pointer advances through preorder in exactly that order. Inorder lists left-subtree values, root, then right-subtree values, so locating the root inside inorder splits the remaining range into the left and right spans we recurse into. The one subtlety is order: build the LEFT child first so preIdx consumes preorder\'s left block before the right. A HashMap from value to inorder index makes each root lookup O(1), giving O(n) time and space; without it, scanning inorder each time degrades to O(n²).',
@@ -2664,7 +4529,7 @@ private TreeNode build(int[] pre, int lo, int hi) {
 }`
   },
   {
-    num: 68, lc: 124, title: 'Binary Tree Maximum Path Sum', d: 'hard',
+    num: 68, lc: 124, title: 'Binary Tree Maximum Path Sum', d: 'hard', companies: ['Garmin'],
     bucket: 'Trees', category: 'DFS',
     url: 'https://leetcode.com/problems/binary-tree-maximum-path-sum/',
     approach: 'Bottom-up DFS that distinguishes two quantities at every node. The candidate answer pivoting here is left + node.val + right (a U-shape that turns at this node and cannot extend further up). But the value RETURNED to the parent is node.val + max(left, right), because a path passing through the parent may only continue down ONE branch — you cannot fork. The key trick is clamping each subtree gain to 0 with Math.max(0, ...): a negative subtree is simply snipped off rather than dragging the sum down. A global \'best\' is updated at each node so the optimum can sit anywhere in the tree, not just at the root. Each node is visited once, giving O(n) time and O(h) recursion-stack space.',
@@ -2770,7 +4635,7 @@ private TreeNode deserializeHelper(Deque<String> tokens) {
 }`
   },
   {
-    num: 70, lc: 236, title: 'Lowest Common Ancestor of a Binary Tree', d: 'medium', companies: ['Temu'],
+    num: 70, lc: 236, title: 'Lowest Common Ancestor of a Binary Tree', d: 'medium',
     bucket: 'Trees', category: 'Recursion',
     url: 'https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-tree/',
     approach: 'Single post-order DFS that returns a \'found\' signal up the call stack. Base case: a null subtree finds nothing, and hitting p or q returns that node as the signal. For an internal node, recurse into both children. The crux: if the left recursion returns non-null AND the right recursion returns non-null, then p and q were located in DIFFERENT subtrees, so the current node is the lowest node that contains both — return it as the LCA. If only one side is non-null, bubble that result upward; it represents either a single target or an already-found LCA from deeper down. The self-descendant case falls out naturally because matching p or q returns immediately before descending. One pass, O(n) time, O(h) stack.',
@@ -2809,7 +4674,7 @@ public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
 }`
   },
   {
-    num: 71, lc: 543, title: 'Diameter of Binary Tree', d: 'easy', companies: ['Temu'],
+    num: 71, lc: 543, title: 'Diameter of Binary Tree', d: 'easy',
     bucket: 'Trees', category: 'DFS',
     url: 'https://leetcode.com/problems/diameter-of-binary-tree/',
     approach: 'Post-order DFS where each call returns the subtree\'s height in edges while a global \'diameter\' is updated as a side effect. The insight is that the longest path bending at any node equals leftDepth + rightDepth (the edge counts down each side meeting at that node), so by testing this U-shape at every node we are guaranteed to consider the true diameter wherever it lies. What we return to the parent is different — 1 + max(left, right) — because the parent can only extend through one branch, not fork into both. Computing height and updating the answer in the same traversal avoids the naive O(n^2) of recomputing depth at each node. One pass gives O(n) time and O(h) recursion-stack space.',
@@ -2852,7 +4717,353 @@ private int depth(TreeNode node) {
 }`
   },
 
-  // ─── Tries (3) ───
+  {
+    num: 154, lc: 108, title: 'Convert Sorted Array to Binary Search Tree', d: 'easy',
+    bucket: 'Trees', category: 'BST · Divide & Conquer',
+    url: 'https://leetcode.com/problems/convert-sorted-array-to-binary-search-tree/',
+    approach: 'Recursive divide-and-conquer that turns the sort order directly into tree shape. The array is already sorted, so an in-order traversal of any BST built from it must reproduce that same sequence — the only real decision is which element becomes the root at each level. Picking the MIDDLE element of the current range as the root guarantees the left half (smaller values) becomes the left subtree and the right half (larger values) becomes the right subtree, and recursing on each half keeps splitting the range in two every call. That halving is what bounds the recursion depth to O(log n) and makes the result height-balanced, since neither side can ever hold more than one extra element than the other. A naive approach that always roots at the first or last element degenerates into a plain linked list (a valid BST, but unbalanced, with O(n) height) — choosing the midpoint is the whole trick. When the range has an even count there are two valid middle indices; either produces a correct balanced tree, just a different (equally valid) shape. Building bottom-up from a doubly linked list instead of index math is an equivalent alternative some solutions use to avoid recomputing mid.',
+    complexity: 'O(n) time · O(log n) space (recursion stack)',
+    code: `// Worked trace for nums = [-10, -3, 0, 5, 9]:
+//
+//   call build(lo, hi)   mid = (lo+hi)/2   root value   recurses into
+//   ──────────────────────────────────────────────────────────────────────
+//   build(0, 4)           2                 0            left=build(0,1), right=build(3,4)
+//     build(0, 1)          0                -10           left=build(0,-1)=null, right=build(1,1)
+//       build(1, 1)        1                -3            leaf
+//     build(3, 4)          3                5             left=build(3,2)=null, right=build(4,4)
+//       build(4, 4)        4                9              leaf
+//
+// Reconstructs:        0
+//                     /   \\
+//                  -10     5
+//                     \\      \\
+//                    -3       9
+//
+// In-order of this tree is -10, -3, 0, 5, 9 — matches the input, confirming BST validity
+
+public TreeNode sortedArrayToBST(int[] nums) {
+  // Kick off the recursion over the full array range
+  return build(nums, 0, nums.length - 1);
+}
+
+private TreeNode build(int[] nums, int lo, int hi) {
+  // Empty range (lo has crossed past hi) — no subtree here
+  if (lo > hi) return null;
+  // Middle of the current range becomes this subtree's root. Splitting here — rather
+  // than always taking lo or hi — is what keeps both sides within one node of each
+  // other in size, so the recursion depth (and resulting tree height) stays O(log n).
+  int mid = lo + (hi - lo) / 2;
+  TreeNode node = new TreeNode(nums[mid]);
+  // Everything left of mid is smaller (array is sorted) — becomes the left subtree
+  node.left = build(nums, lo, mid - 1);
+  // Everything right of mid is larger — becomes the right subtree
+  node.right = build(nums, mid + 1, hi);
+  return node;
+}`
+  },
+  {
+    num: 155, lc: 103, title: 'Binary Tree Zigzag Level Order Traversal', d: 'medium',
+    bucket: 'Trees', category: 'Tree · BFS',
+    url: 'https://leetcode.com/problems/binary-tree-zigzag-level-order-traversal/',
+    approach: 'Standard level-order BFS with one twist: alternate the reading direction of every other level. Snapshot the queue size at the top of each outer iteration exactly as in plain level-order traversal — that count isolates the current level even as its children get enqueued behind it. The key insight is that reversing the ORDER a level is emitted in is purely a presentation step; it does not change which nodes belong to that level or how their children get discovered, so the underlying traversal (always enqueue left-then-right, always dequeue in FIFO order) stays identical to #102. A boolean flag toggled once per level decides whether that level\'s values get appended to the end of a list or inserted at the front (or, cheaper, whether the finished level list gets reversed before being added to the result). Naively trying to alternate the traversal itself — swapping enqueue order or using two stacks per level — works but is harder to reason about and more error-prone than just flipping a flag on an already-correct BFS. Each node is still enqueued and dequeued exactly once, so the algorithm remains O(n) time and O(n) space. An equivalent alternative uses two stacks (current level / next level), pushing children in an order that depends on the current direction, which naturally reverses alternate levels without a post-hoc list reversal.',
+    complexity: 'O(n) time · O(n) space',
+    code: `// Worked trace for [3,9,20,null,null,15,7]:
+//
+//        3
+//       / \\
+//      9   20
+//         /  \\
+//        15   7
+//
+//   outer iter  size  leftToRight  popped (FIFO)   level emitted     result so far
+//   ──────────────────────────────────────────────────────────────────────────────
+//    1           1     true         [3]             [3]               [[3]]
+//    2           2     false        [9, 20]         [20, 9]           [[3],[20,9]]
+//    3           2     true         [15, 7]         [15, 7]           [[3],[20,9],[15,7]]
+//
+// Returns [[3],[20,9],[15,7]]
+
+public List<List<Integer>> zigzagLevelOrder(TreeNode root) {
+  List<List<Integer>> result = new ArrayList<>();
+  // No nodes → no levels, nothing to traverse
+  if (root == null) return result;
+  Queue<TreeNode> q = new ArrayDeque<>();
+  q.offer(root);
+  // Level 0 reads left-to-right; this flips every iteration below
+  boolean leftToRight = true;
+  while (!q.isEmpty()) {
+    // Snapshot the size BEFORE enqueuing children — same trick as plain level-order:
+    // it's exactly how many nodes belong to this level, however we choose to emit them
+    int size = q.size();
+    List<Integer> level = new LinkedList<>();
+    for (int i = 0; i < size; i++) {
+      TreeNode node = q.poll();
+      // The traversal itself never changes direction — always FIFO dequeue,
+      // always left-child-then-right-child enqueue. Only the OUTPUT order flips.
+      if (leftToRight) {
+        level.add(node.val);
+      } else {
+        // Front-insert reverses this level's order without touching how children
+        // are discovered, so the rest of the tree is explored exactly as normal
+        level.add(0, node.val);
+      }
+      if (node.left != null)  q.offer(node.left);
+      if (node.right != null) q.offer(node.right);
+    }
+    result.add(level);
+    // Toggle direction for the next level down
+    leftToRight = !leftToRight;
+  }
+  return result;
+}`
+  },
+  {
+    num: 156, lc: 113, title: 'Path Sum II', d: 'medium',
+    bucket: 'Trees', category: 'Tree · DFS Backtracking',
+    url: 'https://leetcode.com/problems/path-sum-ii/',
+    approach: 'DFS with backtracking that maintains one mutable path list shared across the whole recursion, instead of copying a new list at every call. Each call appends the current node, subtracts its value from the remaining target, and recurses into both children with that reduced target; when a leaf is reached with residue equal to that leaf\'s value, the shared path is exactly the root-to-leaf sequence that sums to targetSum, so it gets copied into the result. The key discipline is that every append is undone with a matching remove of the last element after both children return, so siblings and ancestors never see stale entries left over from an unrelated branch — this is what makes the shared-list trick safe. Copying the list only at a successful leaf (via new ArrayList<>(path)) rather than at every call keeps the extra work proportional to the number of valid paths, not the number of nodes visited. A naive alternative that passes a brand-new list (or a running sum) into each recursive call is correct too, but allocates a list at every node, doing much more copying for equivalent output. The whole tree is visited once, so this runs in O(n) time overall, plus O(n) extra for copying out valid paths in the worst case (a tree where every path qualifies), and O(h) for the recursion stack, where h is the tree height.',
+    complexity: 'O(n) time · O(h) space (excluding the output)',
+    code: `// Worked trace for targetSum = 22, path-bearing tree:
+//
+//          5            path=[5]     remaining after 5  = 17
+//         / \\           path=[5,4]   remaining after 4  = 13
+//        4   8          path=[5,4,11] remaining after 11 = 2
+//       /                  left  7: leaf, 2==7? no        -> backtrack, path=[5,4,11]
+//      11                   right 2: leaf, 2==2? YES      -> record [5,4,11,2]
+//     /  \\                backtrack path back to [5,4], then to [5], then to []
+//    7    2               node 8: path=[5,8], remaining 22-5-8=9, leaf 8==9? no (no such leaf here)
+//
+// Returns [[5, 4, 11, 2]]
+
+public List<List<Integer>> pathSum(TreeNode root, int targetSum) {
+  List<List<Integer>> result = new ArrayList<>();
+  // One list reused across the whole recursion; entries are added/removed as we descend/backtrack
+  dfs(root, targetSum, new ArrayList<>(), result);
+  return result;
+}
+
+private void dfs(TreeNode node, int remaining, List<Integer> path, List<List<Integer>> result) {
+  // Nothing to add on a null child — mirrors the base case in the single-path version
+  if (node == null) return;
+  // Commit to this node being part of the current candidate path
+  path.add(node.val);
+  // Reduce the target by this node's value so children solve the identical smaller problem
+  remaining -= node.val;
+  // Leaf check: a path can only "complete" at a leaf, never partway through
+  if (node.left == null && node.right == null) {
+    // Exact match means path (root..this leaf) sums to the original targetSum
+    if (remaining == 0) {
+      // Copy now, not a reference — path keeps mutating as the recursion continues
+      result.add(new ArrayList<>(path));
+    }
+  } else {
+    // Explore both children with the reduced target; each may itself branch further
+    dfs(node.left, remaining, path, result);
+    dfs(node.right, remaining, path, result);
+  }
+  // Undo this node's contribution before returning to the parent call.
+  // Without this, siblings and later branches would see stale nodes from this branch.
+  path.remove(path.size() - 1);
+}`
+  },
+  {
+    num: 157, lc: 129, title: 'Sum Root to Leaf Numbers', d: 'medium',
+    bucket: 'Trees', category: 'Tree · DFS',
+    url: 'https://leetcode.com/problems/sum-root-to-leaf-numbers/',
+    approach: 'Depth-first search that carries a running number down from the root instead of assembling and summing strings afterward. At each node, fold the accumulated value one decimal digit to the left and drop in the current node\'s digit: number = number * 10 + node.val — the same trick used to build an integer from a digit stream left-to-right. A leaf is the win condition: with no children left to extend the digit string, whatever number has accumulated by that point IS one full root-to-leaf number, so it gets added straight into a running total. Passing the partial number down as a parameter (rather than storing it on the node or in a shared field) keeps each recursive branch\'s state independent, so sibling subtrees never see each other\'s digits. A null child simply contributes 0 to the total, which lets the two recursive calls be summed unconditionally without special-casing missing children. Each node is visited exactly once, giving O(n) time, and the call stack depth is the tree height, giving O(h) space. Naively converting each path to a String and parsing it back to an int would waste time on string allocation and boxing for no benefit; carrying the running int is strictly cheaper and avoids the risk of leading-zero or overflow surprises. An equivalent alternative is an explicit iterative DFS with a stack of (node, partialNumber) pairs, which avoids recursion but tracks the exact same state.',
+    complexity: 'O(n) time · O(h) space',
+    code: `// Worked trace for tree [4,9,0,5,1] (root 4, left child 9, right child 0, 9's children 5 and 1):
+//
+//          4
+//         / \\
+//        9   0
+//       / \\
+//      5   1
+//
+//   call                  number in   number out (node.val folded in)   action
+//   ────────────────────────────────────────────────────────────────────────────────
+//   dfs(4, 0)              0           0*10+4  = 4                       recurse both children with 4
+//   dfs(9, 4)              4           4*10+9  = 49                      recurse both children with 49
+//   dfs(5, 49)             49          49*10+5 = 495                     leaf → return 495
+//   dfs(1, 49)             49          49*10+1 = 491                     leaf → return 491
+//   dfs(9, 4) total                                                      495 + 491 = 986
+//   dfs(0, 4)              4           4*10+0  = 40                      leaf → return 40
+//   dfs(4, 0) total                                                      986 + 40 = 1026
+//
+// Returns 1026 (paths 4-9-5=495, 4-9-1=491, 4-0=40; 495+491+40=1026)
+
+public int sumNumbers(TreeNode root) {
+  // Kick off the walk with an empty accumulated number
+  return dfs(root, 0);
+}
+
+private int dfs(TreeNode node, int number) {
+  // A null child contributes nothing to the sum — lets the caller add both
+  // recursive results unconditionally instead of special-casing missing children.
+  if (node == null) return 0;
+  // Shift the accumulated digits left one place and append this node's digit,
+  // the same left-to-right construction used to parse an integer from text.
+  number = number * 10 + node.val;
+  // Leaf reached: no more digits to append, so this IS one complete root-to-leaf number.
+  if (node.left == null && node.right == null) return number;
+  // Not a leaf yet — keep extending the same running number down both subtrees,
+  // then combine whatever each branch resolves to (their own completed leaf sums).
+  return dfs(node.left, number) + dfs(node.right, number);
+}`
+  },
+  {
+    num: 158, lc: 617, title: 'Merge Two Binary Trees', d: 'easy',
+    bucket: 'Trees', category: 'Tree · DFS',
+    url: 'https://leetcode.com/problems/merge-two-binary-trees/',
+    approach: 'Simultaneous pre-order DFS over both trees, building (or mutating into) a merged tree as the recursion unwinds. At each call, if either node is null the merge collapses to just the other tree\'s subtree — that is the base case, and it is what lets the trees be different shapes: a branch present in only one tree is copied over untouched instead of forcing an artificial zero-node. When both nodes exist, their values are summed into the surviving node and the function recurses on the two left children and the two right children independently, wiring the results back as root1.left and root1.right. The key insight is that merging is entirely local and shape-driven: there is no need to know sibling values or tree depth, only whether a node exists on each side, so a single pass suffices with no auxiliary bookkeeping. Reusing root1 as the output node avoids allocating a third tree, though an interview-safe non-mutating variant instead allocates fresh TreeNode(val) objects if the inputs must stay intact. Each node pair is visited once, giving O(min(m, n)) time — nodes beyond the smaller tree\'s structure are never touched, just linked in directly — and O(min(m, n)) space for the recursion stack in the worst case of two skewed trees. An equivalent alternative is an iterative version using an explicit stack (or two synchronized queues for BFS) that pushes pairs of nodes and performs the same null-check-then-sum logic without recursion, useful when stack depth is a concern.',
+    complexity: 'O(min(m, n)) time · O(min(m, n)) space',
+    code: `// Worked trace for root1 = [1,3,2,5], root2 = [2,1,3,null,4,null,7]:
+//
+//   root1:        root2:            merged (root1 reused):
+//       1              2                    3
+//      / \\            / \\                  / \\
+//     3   2          1   3                4   5
+//    /                \\   \\              /  \\   \\
+//   5                  4    7            5    4    7
+//
+//   call                          n1    n2   action
+//   ──────────────────────────────────────────────────────────
+//   mergeTrees(1, 2)              1     2    sum=3, recurse L/R
+//   mergeTrees(3, 1)  [left]      3     1    sum=4, recurse L/R
+//   mergeTrees(5, null) [L.L]     5     null n1 null → return 5 (copy)
+//   mergeTrees(null, 4) [L.R]     null  4    n2 null → return 4 (copy)
+//   mergeTrees(2, 3)  [right]     2     3    sum=5, recurse L/R
+//   mergeTrees(null,null)[R.L]    null  null both null → return null
+//   mergeTrees(null, 7) [R.R]     null  7    n1 null → return 7 (copy)
+//
+// Returns the merged tree [3,4,5,5,4,null,7]
+
+public TreeNode mergeTrees(TreeNode root1, TreeNode root2) {
+  // If one side is missing, the merge is just whatever remains on the other side —
+  // this is what lets the two trees have completely different shapes.
+  if (root1 == null) return root2;
+  if (root2 == null) return root1;
+  // Both nodes exist: fold root2's value into root1 so no third tree is allocated.
+  root1.val += root2.val;
+  // Recurse independently down each side; each call only needs its own pair of nodes,
+  // never siblings or ancestors, so the merge can be computed in a single top-down pass.
+  root1.left = mergeTrees(root1.left, root2.left);
+  root1.right = mergeTrees(root1.right, root2.right);
+  // root1 now IS the merged subtree rooted here
+  return root1;
+}`
+  },
+  {
+    num: 159, lc: 114, title: 'Flatten Binary Tree to Linked List', d: 'medium', companies: ['Garmin'],
+    bucket: 'Trees', category: 'Tree · Preorder',
+    url: 'https://leetcode.com/problems/flatten-binary-tree-to-linked-list/',
+    approach: 'In-place rewiring that threads the tree into a right-leaning list, following preorder order, using O(1) extra space. Walk a cursor down the tree; whenever the cursor has a left child, that left subtree must be spliced in between the cursor and its current right subtree so the final order stays root, left, right. Find the rightmost node of the left subtree (its preorder predecessor of whatever comes after the left subtree finishes) by walking right pointers, attach the cursor\'s original right subtree there, then swing the whole left subtree up into the right pointer and clear left. Advancing the cursor into the (now relinked) right child repeats the process one node at a time until every node has been folded down, without ever recursing or allocating a stack, list, or extra tree nodes. The naive alternative — a recursive preorder traversal into an ArrayList of nodes, then a second pass re-linking left = null, right = next — gets the same result but costs O(n) auxiliary space for the list (or O(h) recursion stack) where this approach spends none. A Morris-traversal mindset is exactly what\'s at play here: use the otherwise-idle right pointers of the predecessor as temporary threads instead of a stack.',
+    complexity: 'O(n) time · O(1) space',
+    code: `// Worked trace for root = [1,2,5,3,4,null,6]:
+//
+//         1                  1                    1
+//        / \\                 \\                    \\
+//       2   5      -->        2          -->        2
+//      / \\   \\               / \\                   \\
+//     3   4   6              3   4                   3
+//                                 \\                   \\
+//                                  5                    4
+//                                   \\                    \\
+//                                    6                     5
+//                                                           \\
+//                                                            6
+//
+//   cur   cur.left   rightmost of left   predecessor.right = cur.right   cur.right = cur.left   cur.left   next cur
+//   ─────────────────────────────────────────────────────────────────────────────────────────────────────────────
+//   1     2          4                   4.right = 5                    1.right = 2             null       2
+//   2     3          3                   3.right = 4                    2.right = 3              null       3
+//   3     null       -                   -                               -                        -          4
+//   4     null       -                   -                               -                        -          5
+//   5     null       -                   -                               -                        -          6
+//   6     null       -                   -                               -                        -          null (done)
+//
+// Returns the tree rewired in place into 1 -> 2 -> 3 -> 4 -> 5 -> 6 (all via .right, .left == null)
+
+public void flatten(TreeNode root) {
+  // Cursor walks the tree top to bottom; each iteration folds one node's left subtree away
+  TreeNode cur = root;
+  while (cur != null) {
+    if (cur.left != null) {
+      // The left subtree must end up BEFORE the right subtree in the final list,
+      // so find where the left subtree's preorder traversal would finish: its rightmost node
+      TreeNode rightmost = cur.left;
+      while (rightmost.right != null) {
+        rightmost = rightmost.right;
+      }
+      // Splice cur's original right subtree in after the left subtree finishes —
+      // this is what preserves the correct preorder order without a second pass
+      rightmost.right = cur.right;
+      // Move the entire left subtree up into the right pointer; it now leads the chain
+      cur.right = cur.left;
+      // Left must be null on every node in the final singly linked shape
+      cur.left = null;
+    }
+    // Whether or not a left subtree existed, advance into the (possibly just-relinked) right child
+    cur = cur.right;
+  }
+}`
+  },
+  {
+    num: 160, lc: 314, title: 'Binary Tree Vertical Order Traversal', d: 'medium', companies: ['Garmin'],
+    bucket: 'Trees', category: 'Tree · BFS + Hash Map',
+    url: 'https://leetcode.com/problems/binary-tree-vertical-order-traversal/',
+    approach: 'Assign every node a column index — the root is column 0, a left child is parent-column minus 1, a right child is parent-column plus 1 — then group node values by that column and read the groups out from leftmost to rightmost column. The technique is a standard level-order BFS (queue holds node+column pairs) that buckets each dequeued value into a TreeMap<Integer, List<Integer>> keyed by column; the sorted TreeMap gives the left-to-right column order for free once traversal finishes. The reason BFS (not DFS) is essential: within a single column, nodes from a shallower level must be listed before nodes from a deeper level, and BFS visits level-by-level so values land in each bucket in exactly that top-to-bottom order; a DFS would reach some deep left-column node before a shallow right-column node lands in the same bucket, corrupting the vertical order. Enqueuing the left child before the right child at every step also resolves the remaining tie — two nodes in the same column on the SAME level — by guaranteeing the left one is appended to the bucket first. Each node is visited once and each column index requires O(1) work to update, so this runs in O(n log n) time overall (the log n comes from TreeMap insertions/iteration; using a HashMap plus tracking min/max column and sorting once at the end gets it down to O(n) time, O(n) space). A DFS with an explicit (row, column) pair recorded per node and a stable sort by (column, row) afterward is an equivalent alternative.',
+    complexity: 'O(n log n) time · O(n) space',
+    code: `// Worked trace for root = [3,9,20,null,null,15,7]:
+//
+//         3                columns:  3->0   9->-1   20->1
+//        / \\                        15->0   7->2
+//       9   20
+//          /  \\
+//         15   7
+//
+//   dequeued  col  queue enqueued (child, col)     columns map after
+//   ─────────────────────────────────────────────────────────────────────
+//   3          0   (9,-1) (20,1)                   {0:[3]}
+//   9         -1   (none)                          {-1:[9], 0:[3]}
+//   20         1   (15,0) (7,2)                     {-1:[9], 0:[3], 1:[20]}
+//   15         0   (none)                          {-1:[9], 0:[3,15], 1:[20]}
+//   7          2   (none)                          {-1:[9], 0:[3,15], 1:[20], 2:[7]}
+//
+// TreeMap iterates keys ascending: -1, 0, 1, 2
+// Returns [[9],[3,15],[20],[7]]
+
+public List<List<Integer>> verticalOrder(TreeNode root) {
+  List<List<Integer>> result = new ArrayList<>();
+  // Nothing to traverse — no columns to report
+  if (root == null) return result;
+  // Column -> values in that column, top-to-bottom. TreeMap keeps keys sorted
+  // ascending so the final iteration already yields leftmost-to-rightmost order.
+  Map<Integer, List<Integer>> columns = new TreeMap<>();
+  // BFS queue carries the node paired with the column it belongs to,
+  // since column is a property of the path taken, not of the node itself.
+  Queue<Object[]> queue = new ArrayDeque<>();
+  queue.offer(new Object[]{ root, 0 });
+  while (!queue.isEmpty()) {
+    Object[] entry = queue.poll();
+    TreeNode node = (TreeNode) entry[0];
+    int col = (int) entry[1];
+    // Appending here (not overwriting) is what accumulates every node that
+    // shares a column; BFS order guarantees shallower rows are appended first.
+    columns.computeIfAbsent(col, k -> new ArrayList<>()).add(node.val);
+    // Left shifts the column left, right shifts it right — this is the whole
+    // definition of "vertical column" for this problem.
+    // Left is enqueued before right so two same-column nodes on the same level
+    // still land in left-to-right order within their bucket.
+    if (node.left != null)  queue.offer(new Object[]{ node.left, col - 1 });
+    if (node.right != null) queue.offer(new Object[]{ node.right, col + 1 });
+  }
+  // TreeMap.values() walks keys in ascending order — exactly leftmost to rightmost
+  result.addAll(columns.values());
+  return result;
+}`
+  },
+  // ─── Tries (5) ───
   {
     num: 112, lc: 1268, title: 'Search Suggestions System', d: 'medium', companies: ['Garmin'],
     bucket: 'Tries', category: 'String · Trie',
@@ -3009,7 +5220,171 @@ class WordDictionary {
 }`
   },
 
-  // ─── Heap / Priority Queue (4) ───
+  {
+    num: 161, lc: 212, title: 'Word Search II', d: 'hard',
+    bucket: 'Tries', category: 'Trie · DFS',
+    url: 'https://leetcode.com/problems/word-search-ii/',
+    approach: 'Build one Trie from all target words first, then run a single DFS sweep over the board instead of re-searching the grid once per word. Each Trie node caches the full word at the node where it terminates, so the moment a DFS path lands on a node with a non-null word, that word can be recorded immediately without re-walking or re-joining characters. The key optimization is pruning: after collecting a match, null out that node\'s word so the same word is never added twice, and after a DFS branch returns, if the child node it just visited turned into a leaf with no word of its own, unlink it from the parent so future searches from other cells skip that dead branch entirely. Boards are marked visited by temporarily overwriting the cell with a sentinel character and restoring it on backtrack, avoiding a separate boolean grid. Searching per word with a fresh board DFS (call the existing Word Search I routine once per word) would be O(words · rows · cols · 4^L) and re-walks shared prefixes redundantly; merging the words into a Trie lets overlapping prefixes share work across the single sweep, which is what makes this tractable at up to 3×10^4 words. Overall cost is O(rows · cols · 4^L) for the DFS sweep plus O(sum of word lengths) to build the Trie, where L is the longest word. An equivalent alternative is a Trie keyed by boolean end-flags plus a separate StringBuilder path instead of caching the word string on the node, though that trades a little memory savings for extra string-building work at every match.',
+    complexity: 'O(rows · cols · 4^L) time (L = longest word) · O(sum of word lengths) space',
+    code: `// Worked trace for board = [["o","a"],["e","t"]], words = ["oat","oath"]:
+//
+//   Trie built from "oat","oath":
+//     root -o-> -a-> -t(word="oat") -h(word="oath")
+//
+//   DFS from (0,0)='o':
+//     step  cell(r,c)  char  trie node reached  node.word   action
+//     ────────────────────────────────────────────────────────────────
+//     1     (0,0)      'o'   root->o             null        recurse neighbors
+//     2     (0,1)      'a'   root->o->a          null        recurse neighbors
+//     3     (1,1)      't'   root->o->a->t       "oat"       add "oat", null out word
+//     4     (no 'h' neighbor of (1,1) other than visited) -> branch ends, backtrack
+//     (DFS also tries (1,0)='e' from step1 but root has no 'e' child -> prunes immediately)
+//
+// Returns ["oat"]  ("oath" is never found: no 'h' cell is adjacent to the "oat" path)
+
+public List<String> findWords(char[][] board, String[] words) {
+  // Build one Trie holding every target word so the board is walked only once
+  TrieNode root = new TrieNode();
+  for (String w : words) insert(root, w);
+
+  List<String> result = new ArrayList<>();
+  int rows = board.length, cols = board[0].length;
+  // Try every cell as a potential starting letter of some word
+  for (int r = 0; r < rows; r++) {
+    for (int c = 0; c < cols; c++) {
+      dfs(board, r, c, root, result);
+    }
+  }
+  return result;
+}
+
+// Trie node caches the completed word at its terminal node instead of a bare boolean,
+// so a match can be reported without rebuilding the string from the path taken
+private static class TrieNode {
+  TrieNode[] children = new TrieNode[26];
+  String word = null;
+}
+
+private void insert(TrieNode root, String word) {
+  TrieNode cur = root;
+  for (char ch : word.toCharArray()) {
+    int i = ch - 'a';
+    // Lazily create only the nodes actually needed by this word
+    if (cur.children[i] == null) cur.children[i] = new TrieNode();
+    cur = cur.children[i];
+  }
+  // Store the word itself at its terminal node — doubles as the "is a word" flag
+  cur.word = word;
+}
+
+private void dfs(char[][] board, int r, int c, TrieNode parent, List<String> result) {
+  // Out of bounds, or this cell was already consumed on the current path
+  if (r < 0 || r >= board.length || c < 0 || c >= board[0].length) return;
+  char ch = board[r][c];
+  if (ch == '#') return;   // '#' marks a cell already used earlier on this path
+
+  TrieNode node = parent.children[ch - 'a'];
+  // No word in the Trie continues with this letter — nothing more to explore here
+  if (node == null) return;
+
+  // Found a complete word at this node; record it and clear the slot so it can't be added twice
+  if (node.word != null) {
+    result.add(node.word);
+    node.word = null;
+  }
+
+  // Mark this cell visited by overwriting it, restoring the original letter on backtrack
+  board[r][c] = '#';
+  dfs(board, r + 1, c, node, result);
+  dfs(board, r - 1, c, node, result);
+  dfs(board, r, c + 1, node, result);
+  dfs(board, r, c - 1, node, result);
+  board[r][c] = ch;
+
+  // Prune: if this child node has no word of its own left and no children of its own,
+  // it can never contribute another match, so unlink it to speed up later searches
+  boolean hasChildren = false;
+  for (TrieNode child : node.children) {
+    if (child != null) { hasChildren = true; break; }
+  }
+  if (!hasChildren && node.word == null) {
+    parent.children[ch - 'a'] = null;
+  }
+}`
+  },
+  {
+    num: 162, lc: 648, title: 'Replace Words', d: 'medium',
+    bucket: 'Tries', category: 'Trie · Scan',
+    url: 'https://leetcode.com/problems/replace-words/',
+    approach: 'Insert every root into a 26-ary Trie, then walk each sentence word one character at a time following the Trie from its root pointer. The key insight: because roots are inserted with no notion of "shortest," you must stop and return the very first end-of-word marker you hit while descending — that is guaranteed to be the shortest matching root, since any longer root sharing the same prefix path would only be reached AFTER passing through the shorter one\'s end flag. If the descent falls off the Trie (a child pointer is null) before hitting any end flag, no root matches and the original word passes through unchanged. Naively checking the word against every root string with startsWith would cost O(words · roots · length) and get worse as the dictionary grows, whereas the Trie walk is bounded purely by the word\'s own length regardless of how many roots exist. Building the Trie costs O(R) where R is total root characters, and processing the sentence costs O(W) where W is total sentence characters, for O(R + W) time and O(R) space. Storing roots in a HashSet and testing each prefix of the word from shortest to longest is an equivalent alternative with the same asymptotic behavior.',
+    complexity: 'O(R + W) time (R = root chars, W = sentence chars) · O(R) space',
+    code: `// Worked trace for dictionary = ["cat","bat","rat"], sentence = "the cattle was rattled by the battery":
+//
+// Trie after inserting cat, bat, rat (end flag shown as *):
+//   root -c-> a -> t(*)
+//        -b-> a -> t(*)
+//        -r-> a -> t(*)
+//
+//   word       walk                              first end-flag hit   replacement
+//   ──────────────────────────────────────────────────────────────────────────────
+//   "the"      't': no child at root               none                "the" (unchanged)
+//   "cattle"   c->a->t(*)                          "cat"                "cat"
+//   "was"      'w': no child at root                none                "was" (unchanged)
+//   "rattled"  r->a->t(*)                           "rat"                "rat"
+//   "by"       b->'y': no child under b             none                "by" (unchanged)
+//   "the"      (same as above)                      none                "the"
+//   "battery"  b->a->t(*)                           "bat"                "bat"
+//
+// Returns "the cat was rat by the bat"
+
+class TrieNode {
+  // Fixed fan-out for lowercase letters keeps lookups O(1) per character
+  TrieNode[] children = new TrieNode[26];
+  // Marks that a complete root word ends at this node
+  boolean isEnd = false;
+}
+
+public String replaceWords(List<String> dictionary, String sentence) {
+  TrieNode root = new TrieNode();
+  // Load every root into the Trie once, up front, so lookups are shared work
+  for (String word : dictionary) {
+    TrieNode node = root;
+    for (char c : word.toCharArray()) {
+      int idx = c - 'a';
+      // Lazily create the child only when this path hasn't been walked before
+      if (node.children[idx] == null) node.children[idx] = new TrieNode();
+      node = node.children[idx];
+    }
+    // Flag the final node so a later walk knows a root terminates exactly here
+    node.isEnd = true;
+  }
+
+  StringBuilder result = new StringBuilder();
+  for (String word : sentence.split(" ")) {
+    if (result.length() > 0) result.append(' ');
+    result.append(shortestRoot(root, word));
+  }
+  return result.toString();
+}
+
+// Walks the Trie along word's characters and returns the shortest stored root
+// that prefixes it, or the original word if no root matches.
+private String shortestRoot(TrieNode root, String word) {
+  TrieNode node = root;
+  for (int i = 0; i < word.length(); i++) {
+    int idx = word.charAt(i) - 'a';
+    // Path breaks before any root completed — nothing in the dictionary applies
+    if (node.children[idx] == null) return word;
+    node = node.children[idx];
+    // Stop at the FIRST end flag reached: any longer root sharing this prefix
+    // would only be found deeper, so this is necessarily the shortest match
+    if (node.isEnd) return word.substring(0, i + 1);
+  }
+  // Walked the entire word inside the Trie without ever hitting an end flag
+  return word;
+}`
+  },
+  // ─── Heap / Priority Queue (8) ───
   {
     num: 74, lc: 215, title: 'Kth Largest Element in an Array', d: 'medium',
     bucket: 'Heap / Priority Queue', category: 'Heap',
@@ -3164,7 +5539,191 @@ public String reorganizeString(String s) {
 }`
   },
 
-  // ─── Backtracking (6) ───
+  {
+    num: 163, lc: 973, title: 'K Closest Points to Origin', d: 'medium',
+    bucket: 'Heap / Priority Queue', category: 'Heap · Top-K',
+    url: 'https://leetcode.com/problems/k-closest-points-to-origin/',
+    approach: 'Bounded max-heap of size k, mirroring the "kth largest" pattern but flipped for smallest-k. Key every point by its squared Euclidean distance (dist = x*x + y*y) — the square root only preserves ordering, never changes it, so skipping sqrt avoids floating-point work entirely. Push each point into a max-heap ordered by that distance; whenever the heap exceeds size k, poll the farthest point out. The heap therefore always retains exactly the k closest points seen so far, since anything farther than the current worst-of-k gets evicted the moment a closer point arrives. This is strictly better than sorting all n points by distance (O(n log n)) because the heap never grows past k+1 entries, giving O(n log k) time and O(k) space. Quickselect (partition around the kth distance, Hoare-style) is the equivalent O(n) average-case alternative when the order of the returned points does not matter.',
+    complexity: 'O(n log k) time · O(k) space',
+    code: `// Worked trace for points = [[1,3],[-2,2],[2,-2]], k = 2 (max-heap keeps 2 closest):
+//
+//   point     dist=x*x+y*y  offer   size>k?  poll (farthest)   maxHeap (root = farthest kept)
+//   ──────────────────────────────────────────────────────────────────────────────────────────
+//   [1,3]     1+9=10        yes     no                          [(10,[1,3])]
+//   [-2,2]    4+4=8         yes     no                          [(10,[1,3]), (8,[-2,2])]
+//   [2,-2]    4+4=8         yes     yes      poll (10,[1,3])    [(8,[-2,2]), (8,[2,-2])]
+//
+// Heap now holds the 2 closest points → Returns [[-2,2],[2,-2]] (order may vary)
+
+public int[][] kClosest(int[][] points, int k) {
+  // Max-heap ordered by squared distance, so the FARTHEST of our k-closest sits at the root
+  // ready to be evicted the moment a closer point shows up.
+  PriorityQueue<int[]> maxHeap = new PriorityQueue<>(
+    (a, b) -> (b[0] * b[0] + b[1] * b[1]) - (a[0] * a[0] + a[1] * a[1])
+  );
+  for (int[] point : points) {
+    // Tentatively admit this point into the running closest-k set
+    maxHeap.offer(point);
+    // Once we exceed k, evict the farthest — heap always holds the closest k so far.
+    // Squared distance (no sqrt) is enough: sqrt is monotonic, so it never changes the ordering.
+    if (maxHeap.size() > k) maxHeap.poll();
+  }
+  // Drain the heap into the result array — whatever remains is the k closest points
+  int[][] result = new int[k][2];
+  for (int i = 0; i < k; i++) {
+    result[i] = maxHeap.poll();
+  }
+  return result;
+}`
+  },
+  {
+    num: 164, lc: 1046, title: 'Last Stone Weight', d: 'easy',
+    bucket: 'Heap / Priority Queue', category: 'Heap · Simulation',
+    url: 'https://leetcode.com/problems/last-stone-weight/',
+    approach: 'Max-heap simulation, since the rule "smash the two heaviest" is really asking for repeated access to the current maximum and its runner-up. Load every stone into a max-heap (Java\'s PriorityQueue is a min-heap by default, so seed it with Comparator.reverseOrder()), then repeatedly poll the two largest, y and x with y >= x, and if they are unequal push the leftover y-x back in as a brand-new stone that must re-enter the same competition. Using a heap avoids re-sorting the whole array after every smash, which is what a naive simulation on a plain sorted list would force; the heap instead pays only O(log n) to restore order per operation. The loop stops once at most one stone remains, since a lone stone has nothing left to smash into. Each of the n-1 smashes costs O(log n) for two polls and at most one offer, giving O(n log n) time and O(n) space overall. A sorted TreeMap/multiset of counts is an equivalent alternative, sometimes chosen to dodge PriorityQueue\'s per-op boxing overhead, but the max-heap is the cleanest and most standard interview solution.',
+    complexity: 'O(n log n) time · O(n) space',
+    code: `// Worked trace for stones = [2, 7, 4, 1, 8, 1] (max-heap, largest first):
+//
+//   step  poll y  poll x  y==x?  push y-x   heap after (sorted desc)
+//   ─────────────────────────────────────────────────────────────────
+//   init    -       -       -        -      {8, 7, 4, 2, 1, 1}
+//   1       8       7       no       1      {4, 2, 1, 1, 1}
+//   2       4       2       no       2      {2, 1, 1, 1}
+//   3       2       1       no       1      {1, 1, 1}
+//   4       1       1       yes      -      {1}
+//
+// size == 1 → Returns heap.peek() = 1
+
+public int lastStoneWeight(int[] stones) {
+  // Max-heap: PriorityQueue defaults to min-heap, so flip the comparator to
+  // always surface the two heaviest stones at the front.
+  PriorityQueue<Integer> heap = new PriorityQueue<>(Comparator.reverseOrder());
+  for (int s : stones) heap.offer(s);
+
+  // Keep smashing while at least two stones remain to collide;
+  // one leftover stone has nothing to smash into, so it stops the loop.
+  while (heap.size() > 1) {
+    // y is the heaviest, x the second-heaviest (heap guarantees y >= x)
+    int y = heap.poll();
+    int x = heap.poll();
+    // Equal weights annihilate completely — nothing survives to re-enter the heap.
+    // Unequal weights leave a new stone of weight y - x that must compete again,
+    // so it goes back into the same heap rather than a separate list.
+    if (y != x) heap.offer(y - x);
+  }
+  // Either one stone is left (its weight is the answer) or none (nothing survived → 0)
+  return heap.isEmpty() ? 0 : heap.peek();
+}`
+  },
+  {
+    num: 165, lc: 703, title: 'Kth Largest Element in a Stream', d: 'easy',
+    bucket: 'Heap / Priority Queue', category: 'Design · Min-Heap',
+    url: 'https://leetcode.com/problems/kth-largest-element-in-a-stream/',
+    approach: 'Maintain a persistent min-heap that is capped at size k across the whole lifetime of the object, not just within one call. The constructor seeds the heap with the initial nums and immediately trims it down to k by polling the smallest survivors away; every later add() offers the new value in and then polls once more if the heap grew past k. Because the heap only ever holds the k largest values seen SO FAR, its root (the minimum of that set) is always exactly the kth largest overall — that invariant is what makes peek() a correct O(1) answer after every single call. The naive alternative, re-sorting (or rescanning) the full running list on every add(), costs O(n log n) or O(n) per call and throws away the work done on previous calls; the heap instead pays only O(log k) per add to keep the invariant intact. Space is bounded at O(k) regardless of how many elements have streamed through, which also beats keeping the entire history around. Each constructor element costs O(log k) to admit, so building from n0 initial values is O(n0 log k) time, and add() is O(log k) amortized thereafter. An equivalent alternative is a self-balancing BST (e.g. a TreeMap of counts) used as an order-statistics structure, trading heap simplicity for O(log k) rank queries you don\'t actually need here.',
+    complexity: 'O(log k) per add · O(k) space',
+    code: `// Worked trace for k = 3, nums = [4, 5, 8, 2], then add(3):
+//
+//   step        offer  size  >k?  poll   heap after (root = kth largest)
+//   ─────────────────────────────────────────────────────────────────────
+//   constructor   4      1   no          [4]
+//                 5      2   no          [4,5]
+//                 8      3   no          [4,5,8]
+//                 2      4   yes   2     [4,5,8]
+//   add(3)        3      4   yes   3     [4,5,8]
+//
+// After construction peek() would be 4 (the 3rd-largest of {4,5,8,2} = {8,5,4,2} sorted desc).
+// add(3): heap {3,4,5,8} sheds the smallest (3) right back out, so the 3rd largest
+// of {4,5,8,2,3} stays 4 — Returns 4, matching the official LeetCode example.
+
+class KthLargest {
+  // Fixed k for this instance — the "kth largest" we're always tracking
+  private final int k;
+  // Min-heap capped at size k: root is the SMALLEST of the k largest values seen so far,
+  // which is by definition the kth largest overall.
+  private final PriorityQueue<Integer> minHeap = new PriorityQueue<>();
+
+  public KthLargest(int k, int[] nums) {
+    this.k = k;
+    // Seed the heap with whatever initial values are given
+    for (int n : nums) {
+      minHeap.offer(n);
+      // Trim eagerly so the heap never holds more than k elements, even mid-construction
+      if (minHeap.size() > k) minHeap.poll();
+    }
+  }
+
+  public int add(int val) {
+    // Tentatively admit val into the running top-k set
+    minHeap.offer(val);
+    // Once size exceeds k, evict the smallest — heap always holds exactly the k largest
+    if (minHeap.size() > k) minHeap.poll();
+    // Root is the smallest of the k largest, i.e. the kth largest overall.
+    // Guaranteed non-empty because the problem guarantees the stream has at
+    // least k elements by the time add() is first called.
+    return minHeap.peek();
+  }
+}`
+  },
+  {
+    num: 166, lc: 1086, title: 'High Five', d: 'easy', companies: ['Garmin'],
+    bucket: 'Heap / Priority Queue', category: 'Heap · Top-K',
+    url: 'https://leetcode.com/problems/high-five/',
+    approach: 'Group-then-bound-heap, one student at a time. Route each [id, score] pair into a per-id min-heap capped at size 5: push the score, and whenever the heap exceeds 5 entries poll the smallest away. Because the heap only ever discards the smallest score once a 6th arrives, it always retains exactly that student\'s current top-5 highest scores, regardless of the order scores arrive in. Once every pair has been routed, drain each student\'s heap and average its (exactly five, per the problem\'s guarantee) surviving scores, using integer division since the answer is defined as an int. A TreeMap keyed by id keeps the final output naturally sorted by increasing id, avoiding a separate sort pass at the end. This runs in O(n log 5) = O(n) time to build the heaps plus O(m) to drain them (m = distinct ids), with O(n) space for the heaps — far better than sorting each student\'s full score list (O(n log n) overall) when only the top 5 are ever needed. An equivalent alternative sorts each student\'s score list descending and averages the first five entries directly.',
+    complexity: 'O(n) time · O(n) space',
+    code: `// Worked trace for items = [[1,91],[1,92],[1,60],[1,58],[1,100],[1,89],[2,93],[2,97],[2,64],[2,80],[2,50]]:
+//
+//   pair        student-1 minHeap (poll when size>5)      student-2 minHeap
+//   ─────────────────────────────────────────────────────────────────────────
+//   [1,91]      {91}
+//   [1,92]      {91,92}
+//   [1,60]      {60,91,92}
+//   [1,58]      {58,60,91,92}
+//   [1,100]     {58,60,91,92,100}
+//   [1,89]      size 6 -> poll 58 -> {60,89,91,92,100}
+//   [2,93]                                                 {93}
+//   [2,97]                                                 {93,97}
+//   [2,64]                                                 {64,93,97}
+//   [2,80]                                                 {64,80,93,97}
+//   [2,50]                                                 {50,64,80,93,97}
+//
+// Student 1 sum = 60+89+91+92+100 = 432 -> 432/5 = 86
+// Student 2 sum = 50+64+80+93+97 = 384 -> 384/5 = 76
+// TreeMap emits ids in increasing order -> Returns [[1, 86], [2, 76]]
+
+public int[][] highFive(int[][] items) {
+  // One bounded min-heap per student id; the heap root is always that student's
+  // current WORST score among the top-5 kept so far, ready to be evicted.
+  Map<Integer, PriorityQueue<Integer>> topFive = new HashMap<>();
+  for (int[] item : items) {
+    int id = item[0], score = item[1];
+    // Lazily create this student's heap on first sight of their id
+    PriorityQueue<Integer> heap = topFive.computeIfAbsent(id, k -> new PriorityQueue<>());
+    heap.offer(score);
+    // Once a 6th score arrives, drop the smallest — heap always holds the top 5
+    if (heap.size() > 5) heap.poll();
+  }
+  // TreeMap sorts by id automatically, so the result comes out ordered without a manual sort
+  Map<Integer, Integer> averages = new TreeMap<>();
+  for (Map.Entry<Integer, PriorityQueue<Integer>> entry : topFive.entrySet()) {
+    PriorityQueue<Integer> heap = entry.getValue();
+    // Problem guarantees every id has at least 5 scores, so each heap is exactly 5 deep here
+    int sum = 0;
+    for (int score : heap) sum += score;
+    // Integer division matches the problem's definition of the rounded-down average
+    averages.put(entry.getKey(), sum / 5);
+  }
+  // Flatten the sorted map into the required [id, average] row format
+  int[][] result = new int[averages.size()][2];
+  int i = 0;
+  for (Map.Entry<Integer, Integer> entry : averages.entrySet()) {
+    result[i][0] = entry.getKey();
+    result[i][1] = entry.getValue();
+    i++;
+  }
+  return result;
+}`
+  },
+  // ─── Backtracking (9) ───
   {
     num: 78, lc: 78, title: 'Subsets', d: 'medium',
     bucket: 'Backtracking', category: 'Backtracking',
@@ -3431,7 +5990,195 @@ private List<String> build(int[] q, int n) {
 }`
   },
 
-  // ─── Graphs (8) ───
+  {
+    num: 167, lc: 90, title: 'Subsets II', d: 'medium',
+    bucket: 'Backtracking', category: 'Backtracking · Dedup',
+    url: 'https://leetcode.com/problems/subsets-ii/',
+    approach: 'Same incremental-subset backtracking as plain Subsets, plus one extra rule to survive duplicate values: sort nums first so equal values become adjacent, then in the loop at each recursion depth skip an index j > start whenever nums[j] == nums[j-1]. That single guard is the whole trick — it says "don\'t start a new branch with the same value I already tried at this exact depth," which prunes only the sibling branches that would reproduce a subset already emitted, while still allowing a repeated value to be used when it is the FIRST occurrence considered at that depth or when it follows a value that was actually chosen (j == start is never skipped). Without sorting, equal values could sit far apart and the adjacency check would miss them, so a naive dedup would need a HashSet of serialized subsets instead — correct but far more expensive to build and compare. As with Subsets, every recursion-tree node (including the root) is itself a valid subset, so we record a copy of the path on entry to each call. There are still up to 2ⁿ subsets and each copy costs O(n), so time is O(n · 2ⁿ) and recursion depth is O(n); the dedup guard only prunes work, it never adds any. An equivalent alternative is iterative subset-doubling that, for each group of equal values, only extends the subsets generated by the PREVIOUS distinct value rather than all subsets so far.',
+    complexity: 'O(n · 2ⁿ) time · O(n) recursion',
+    code: `// Worked trace for nums = [1, 2, 2] (already sorted; start = loop lower bound):
+//
+//   call (start, path)   record        loop j        skip?           action
+//   ──────────────────────────────────────────────────────────────────────────
+//   (0, [])              add []        j=0 (val 1)   no (j==start)   add 1 → recurse (1,[1])
+//   (1, [1])              add [1]       j=1 (val 2)   no (j==start)   add 2 → recurse (2,[1,2])
+//   (2, [1,2])            add [1,2]     j=2 (val 2)   no (j==start)   add 2 → recurse (3,[1,2,2])
+//   (3, [1,2,2])          add [1,2,2]   (none)                        backtrack...
+//   (1, [1])              ...           j=2 (val 2)   YES (2==nums[1])  skipped — would repeat [1,2]
+//   (0, [])                ...           j=1 (val 2)   no (j==start)   add 2 → recurse (2,[2])
+//   (2, [2])               add [2]       j=2 (val 2)   no (j==start)   add 2 → add [2,2]
+//   (0, [])                ...           j=2 (val 2)   YES (2==nums[1])  skipped — would repeat [2]
+//
+// Returns [[],[1],[1,2],[1,2,2],[2],[2,2]]
+
+public List<List<Integer>> subsetsWithDup(int[] nums) {
+  List<List<Integer>> result = new ArrayList<>();
+  // Sort so equal values become adjacent -- required for the skip check below to work
+  Arrays.sort(nums);
+  dfs(nums, 0, new ArrayList<>(), result);
+  return result;
+}
+private void dfs(int[] nums, int start, List<Integer> path, List<List<Integer>> out) {
+  // Every node of the recursion tree (including the empty root) is a valid subset
+  out.add(new ArrayList<>(path));
+  for (int j = start; j < nums.length; j++) {
+    // Skip a value that repeats the PREVIOUS sibling tried at this same depth --
+    // j == start is never skipped, so the first occurrence at this depth always fires
+    if (j > start && nums[j] == nums[j - 1]) continue;
+    path.add(nums[j]);              // choose nums[j]
+    dfs(nums, j + 1, path, out);    // explore subsets that also include nums[j]
+    path.remove(path.size() - 1);   // undo for the next branch
+  }
+}`
+  },
+  {
+    num: 168, lc: 40, title: 'Combination Sum II', d: 'medium',
+    bucket: 'Backtracking', category: 'Backtracking · Dedup',
+    url: 'https://leetcode.com/problems/combination-sum-ii/',
+    approach: 'Same shrinking-target backtracking as Combination Sum, but each candidate may be used at most once and the input can contain duplicate values, so the search needs two extra guards. First, sort the array up front: this groups equal values next to each other (enabling dedup) and lets a branch bail out the instant nums[i] > remain, since everything after i is only larger. Second, recurse with i+1 instead of i, so a given array index is never reused within one combination. The dedup rule is the subtle part: within a single call\'s for-loop, skip nums[i] when i > start and nums[i] == nums[i-1] — that condition only fires for the SECOND-and-later occurrence of a value at the same recursion depth, so the first occurrence still gets explored (and can still be reused later at a deeper level via a different index), but sibling branches that would produce an identical combination are cut. Without that guard, two equal 1s at different indices would each spawn their own identical-looking combination, producing duplicate lists that then need an expensive post-hoc dedup pass (e.g. stuffing results into a Set of sorted lists). The complexity is worst-case exponential in the number of candidates, same shape as Combination Sum, with O(n log n) added up front for the sort.',
+    complexity: 'O(2^n) worst case time (n = candidates.length) · O(n) recursion depth',
+    code: `// Worked trace for candidates = [10,1,2,7,6,1,5], target = 8
+// (sorted first: [1,1,2,5,6,7,10], indices 0..6):
+//
+//   call (start,remain,path)   i  nums[i]  skip-dup?  action
+//   ────────────────────────────────────────────────────────────────────
+//   (0,8,[])                   0    1        no       pick → (1,7,[1])
+//   (1,7,[1])                  1    1        no       pick → (2,6,[1,1])
+//   (2,6,[1,1])                2    2        no       pick → (3,4,[1,1,2])
+//   (3,4,[1,1,2])              3    5        no       5 > 4 remain, break (dead)
+//   (2,6,[1,1])                3    5        no       pick → (4,1,[1,1,5])
+//   (4,1,[1,1,5])              4    6        no       6 > 1 remain, break (dead)
+//   (2,6,[1,1])                4    6        no       pick → (5,0,[1,1,6])  remain==0 RECORD
+//   (2,6,[1,1])                5    7        no       7 > 6 remain, break
+//   (1,7,[1])                  2    2        no       pick → (3,5,[1,2])
+//   (3,5,[1,2])                3    5        no       pick → (4,0,[1,2,5])  remain==0 RECORD
+//   (3,5,[1,2])                4    6        no       6 > 5 remain, break
+//   (1,7,[1])                  3    5        no       pick → (4,2,[1,5])
+//   (4,2,[1,5])                4    6        no       6 > 2 remain, break (dead)
+//   (1,7,[1])                  4    6        no       pick → (5,1,[1,6])
+//   (5,1,[1,6])                5    7        no       7 > 1 remain, break (dead)
+//   (1,7,[1])                  5    7        no       pick → (6,0,[1,7])    remain==0 RECORD
+//   (1,7,[1])                  6   10        no       10 > 7 remain, break
+//   (0,8,[])                   1    1        YES (i>start, ==nums[0])   skipped
+//   (0,8,[])                   2    2        no       pick → (3,6,[2])
+//   (3,6,[2])                  3    5        no       pick → (4,1,[2,5])
+//   (4,1,[2,5])                4    6        no       6 > 1 remain, break (dead)
+//   (3,6,[2])                  4    6        no       pick → (5,0,[2,6])    remain==0 RECORD
+//   (3,6,[2])                  5    7        no       7 > 6 remain, break
+//   (0,8,[])                   3    5        no       pick → (4,3,[5])
+//   (4,3,[5])                  4    6        no       6 > 3 remain, break (dead)
+//   (0,8,[])                   4    6        no       pick → (5,2,[6])
+//   (5,2,[6])                  5    7        no       7 > 2 remain, break (dead)
+//   (0,8,[])                   5    7        no       pick → (6,1,[7])
+//   (6,1,[7])                  6   10        no       10 > 1 remain, break (dead)
+//   (0,8,[])                   6   10        no       10 > 8 remain, break
+//
+// Returns [[1,1,6],[1,2,5],[1,7],[2,6]]
+
+public List<List<Integer>> combinationSum2(int[] candidates, int target) {
+  List<List<Integer>> out = new ArrayList<>();
+  // Sorting groups duplicate values together (needed for the dedup check below)
+  // and lets the loop break early once a candidate exceeds what's left.
+  Arrays.sort(candidates);
+  dfs(candidates, 0, target, new ArrayList<>(), out);
+  return out;
+}
+private void dfs(int[] nums, int start, int remain, List<Integer> path, List<List<Integer>> out) {
+  // Hit the target exactly — save a copy of the current combination
+  if (remain == 0) {
+    out.add(new ArrayList<>(path));
+    return;
+  }
+  for (int i = start; i < nums.length; i++) {
+    // Sorted array: once one candidate is too big, every later one is too — stop the loop entirely
+    if (nums[i] > remain) break;
+    // Skip the 2nd+ occurrence of a value AT THIS RECURSION DEPTH (i > start), not globally —
+    // the first occurrence (i == start) is still tried, so reuse of the value deeper down is fine.
+    // This is what prevents two equal input values from producing duplicate combinations.
+    if (i > start && nums[i] == nums[i - 1]) continue;
+    path.add(nums[i]);   // choose candidates[i]
+    // Pass i + 1 (not i) — each array index can only be used once per combination
+    dfs(nums, i + 1, remain - nums[i], path, out);
+    path.remove(path.size() - 1);   // undo for the next candidate
+  }
+}`
+  },
+  {
+    num: 169, lc: 131, title: 'Palindrome Partitioning', d: 'medium',
+    bucket: 'Backtracking', category: 'Backtracking · Palindromes',
+    url: 'https://leetcode.com/problems/palindrome-partitioning/',
+    approach: 'Backtracking over the choice of "where does the next cut go". At each recursive call, start marks the beginning of the unpartitioned suffix; try every end from start to s.length()-1, and if s[start..end] is a palindrome, take it as the next piece, recurse on the remainder, then undo the choice before trying a longer piece. The key insight is that any valid partition is fully determined by a sequence of cut positions, and pruning a branch the moment a substring fails the palindrome test avoids ever building a partition that could not possibly work — so the search only descends into states that are still viable. A DP table of isPalindrome[i][j] precomputed bottom-up turns each substring check from O(n) into O(1), which matters because the same substring gets re-tested across many branches; skipping it would blow the naive approach up to roughly O(n^3 · 2^n) instead of O(n · 2^n) for generating and copying the partitions themselves. The alternative approach is to build the palindrome-check memo lazily with recursion (isPal(i,j) = s[i]==s[j] && isPal(i+1,j-1)) instead of a bottom-up table, which is equivalent but requires care to avoid recomputation and stack depth issues.',
+    complexity: 'O(n · 2^n) time · O(n^2) space (palindrome table + recursion)',
+    code: `// Worked trace for s = "aab":
+//
+// isPalindrome table (T = true, F = false), built bottom-up by substring length:
+//   len=1: [0,0]=T "a"    [1,1]=T "a"    [2,2]=T "b"
+//   len=2: [0,1]=T "aa" (s[0]==s[1])     [1,2]=F "ab" (s[1]!=s[2])
+//   len=3: [0,2]=F "aab" (s[0]!=s[2])
+//
+// backtrack(start=0, path=[]):
+//   end=0 "a"[0,0]=T   -> path=["a"],   backtrack(start=1)
+//     end=1 "a"[1,1]=T -> path=["a","a"], backtrack(start=2)
+//       end=2 "b"[2,2]=T -> path=["a","a","b"], start=3==len -> record ["a","a","b"]
+//     end=2 "ab"[1,2]=F -> skip
+//   end=1 "aa"[0,1]=T  -> path=["aa"],  backtrack(start=2)
+//     end=2 "b"[2,2]=T -> path=["aa","b"], start=3==len -> record ["aa","b"]
+//   end=2 "aab"[0,2]=F -> skip
+//
+// Returns [["a","a","b"], ["aa","b"]]
+
+public List<List<String>> partition(String s) {
+  int n = s.length();
+  // isPal[i][j] == true means s[i..j] (inclusive) reads the same forwards and backwards.
+  // Precomputing this bottom-up turns every substring check in the search into O(1),
+  // which matters because the same substring is re-tested across many recursive branches.
+  boolean[][] isPal = new boolean[n][n];
+  for (int len = 1; len <= n; len++) {
+    for (int i = 0; i + len - 1 < n; i++) {
+      int j = i + len - 1;
+      if (len == 1) {
+        // Single character is trivially a palindrome
+        isPal[i][j] = true;
+      } else if (len == 2) {
+        // Two characters: palindrome iff they match
+        isPal[i][j] = s.charAt(i) == s.charAt(j);
+      } else {
+        // General case: ends must match AND the strictly-inner substring must itself
+        // already be known palindromic (isPal[i+1][j-1] was filled in a shorter, earlier pass).
+        isPal[i][j] = s.charAt(i) == s.charAt(j) && isPal[i + 1][j - 1];
+      }
+    }
+  }
+
+  List<List<String>> result = new ArrayList<>();
+  // path holds the pieces chosen so far for the current partition attempt
+  backtrack(s, 0, isPal, new ArrayList<>(), result);
+  return result;
+}
+
+private void backtrack(String s, int start, boolean[][] isPal,
+                        List<String> path, List<List<String>> result) {
+  // Consumed the whole string with valid palindrome pieces — this path is a complete partition
+  if (start == s.length()) {
+    // Copy path, since the same List<String> object keeps getting mutated as we backtrack
+    result.add(new ArrayList<>(path));
+    return;
+  }
+  // Try every possible end for the NEXT piece starting at start; the O(1) lookup below is
+  // exactly why the precomputed table exists — without it this line would re-scan characters.
+  for (int end = start; end < s.length(); end++) {
+    if (isPal[start][end]) {
+      // Take s[start..end] as the next piece and recurse on the remainder
+      path.add(s.substring(start, end + 1));
+      backtrack(s, end + 1, isPal, path, result);
+      // Undo the choice so the next iteration of this loop starts from a clean path —
+      // without this, later branches would carry pieces from a discarded attempt.
+      path.remove(path.size() - 1);
+    }
+  }
+}`
+  },
+  // ─── Graphs (12) ───
   {
     num: 84, lc: 200, title: 'Number of Islands', d: 'medium',
     bucket: 'Graphs', category: 'DFS / BFS',
@@ -3517,7 +6264,7 @@ public Node cloneGraph(Node node) {
 }`
   },
   {
-    num: 86, lc: 207, title: 'Course Schedule', d: 'medium',
+    num: 86, lc: 207, title: 'Course Schedule', d: 'medium', companies: ['Garmin'],
     bucket: 'Graphs', category: 'Topological Sort',
     url: 'https://leetcode.com/problems/course-schedule/',
     approach: 'Cycle detection by topological sort using Kahn\'s algorithm (BFS on in-degrees). Build an adjacency list and an in-degree count per course, then repeatedly take any course with zero remaining prerequisites and decrement its dependents. The key invariant: a course can be scheduled only after all its prerequisites have been scheduled, so if the graph is acyclic every course eventually reaches in-degree 0 and gets processed. If a cycle exists, the nodes on it never drop to 0 and stay stuck in the graph. Hence the count of processed courses equals n exactly when there is no cycle. Building the graph and visiting each edge once gives O(V+E) time and O(V+E) space.',
@@ -3792,7 +6539,213 @@ private void dfs(char[][] b, int r, int c) {
 }`
   },
 
-  // ─── Advanced Graphs (4) ───
+  {
+    num: 170, lc: 733, title: 'Flood Fill', d: 'easy', companies: ['Garmin'],
+    bucket: 'Graphs', category: 'Grid · DFS',
+    url: 'https://leetcode.com/problems/flood-fill/',
+    approach: 'Treat the grid as an implicit graph where each cell is connected to its 4 orthogonal neighbors, then flood outward from the starting pixel with DFS, repainting every reachable cell that shares the starting color. The key insight that makes this correct (and terminating) is checking image[r][c] == startColor before recursing and BEFORE overwriting it: that comparison is what stops the fill at color boundaries, and painting the cell first is what prevents infinite re-visits once a neighbor is revisited. A classic trap is when startColor equals the fill color — recoloring a cell to the same value it already holds would make the "still matches startColor" check true forever, so the function must short-circuit and return immediately when color == startColor, before touching a single pixel. BFS with an explicit queue is an equivalent alternative and avoids the (usually negligible) call-stack depth of recursive DFS on very large images; either way each of the up to 50 x 50 cells is visited once, giving O(n) time where n is the pixel count, and O(n) space for the recursion stack or queue in the worst fully-connected case.',
+    complexity: 'O(n) time (n = pixels) · O(n) space (recursion stack)',
+    code: `// Worked trace for image = [[1,1,1],[1,1,0],[1,0,1]], sr = 1, sc = 1, color = 2:
+// (dfs visits neighbors in the order: down, up, right, left)
+//
+//   dfs(r,c)  image[r][c] before  startColor  action
+//   ───────────────────────────────────────────────────────
+//   (1,1)          1                 1        paint 2, recurse
+//   (2,1)          0                 1        0 != 1, return
+//   (0,1)          1                 1        paint 2, recurse
+//   (0,2)          1                 1        paint 2, recurse
+//   (1,2)          0                 1        0 != 1, return
+//   (0,0)          1                 1        paint 2, recurse
+//   (1,0)          1                 1        paint 2, recurse
+//   (2,0)          1                 1        paint 2, recurse
+//   (1,1) revisit  2 (already 2)     1        2 != 1, return
+//
+// Every remaining neighbor is either out of bounds or already painted/blocked.
+// Returns [[2,2,2],[2,2,0],[2,0,1]]
+
+public int[][] floodFill(int[][] image, int sr, int sc, int color) {
+  // Remember the color we're flooding FROM, not the target color — needed to
+  // detect boundaries and to guard the no-op case below.
+  int startColor = image[sr][sc];
+  // If the new color is identical to the old one, every recursive call would see
+  // "still equals startColor" and never terminate — bail out before painting anything.
+  if (startColor == color) return image;
+  dfs(image, sr, sc, startColor, color);
+  return image;
+}
+
+private void dfs(int[][] image, int r, int c, int startColor, int color) {
+  // Out-of-bounds neighbors simply aren't part of the region — stop recursing.
+  if (r < 0 || r >= image.length || c < 0 || c >= image[0].length) return;
+  // Either a different region entirely, or a cell we already repainted this call
+  // (it now holds color, not startColor) — both cases mean stop here.
+  if (image[r][c] != startColor) return;
+  // Paint BEFORE recursing into neighbors: this is what turns the implicit graph
+  // walk into a terminating one, since a repainted cell no longer matches startColor.
+  image[r][c] = color;
+  // Flood outward to all 4 orthogonal neighbors; diagonals are not connected.
+  dfs(image, r + 1, c, startColor, color);
+  dfs(image, r - 1, c, startColor, color);
+  dfs(image, r, c + 1, startColor, color);
+  dfs(image, r, c - 1, startColor, color);
+}`
+  },
+  {
+    num: 171, lc: 695, title: 'Max Area of Island', d: 'medium',
+    bucket: 'Graphs', category: 'Grid · DFS',
+    url: 'https://leetcode.com/problems/max-area-of-island/',
+    approach: 'Same flood-fill skeleton as Number of Islands, but each DFS call now returns a count instead of just erasing land. Scan every cell; the first time an unvisited 1 is found, DFS out to the whole connected component, summing 1 for the starting cell plus whatever each of the four neighbor calls reports, and track the running maximum across all components. Sinking each visited cell to 0 as it is counted is what makes a separate visited set unnecessary and guarantees every land cell contributes to exactly one island\'s area. The key insight is that the recursion\'s return value composes additively — area(cell) = 1 + area(up) + area(down) + area(left) + area(right) — so the total area of a component falls out of the same traversal that discovers it, with no second pass needed. A naive approach that DFS-marks components without accumulating a size (e.g., only counting islands) would need a wholly separate area-counting step, doubling the grid scans. Every cell is visited and sunk at most once, giving O(R·C) time; the only extra space is the recursion stack, O(R·C) in the worst case of one giant snake-shaped island. An equivalent alternative swaps the recursive DFS for an explicit stack or a BFS queue, which avoids stack-overflow risk on very large grids.',
+    complexity: 'O(R · C) time · O(R · C) recursion worst case',
+    code: `// Worked trace for grid = [[1,1,0],
+//                          [0,1,0],
+//                          [0,0,1]]:
+//
+//   visit (r,c)  grid[r][c]  action                              area  best
+//   ──────────────────────────────────────────────────────────────────────────
+//    (0,0)        1          dfs(0,0): sink (0,0)=1,               3     3
+//                             + dfs(0,1) sinks (0,1)=1 → +1,
+//                             + dfs(1,1) sinks (1,1)=1 → +1
+//    (0,1),(1,1)  0          already sunk by the dfs above → skip  -     3
+//    (1,0)        0          water → skip                          -     3
+//    (2,0),(2,1)  0          water → skip                          -     3
+//    (2,2)        1          dfs(2,2): sink (2,2)=1, no land        1     3
+//                             neighbors → area 1
+//
+// Returns 3
+
+public int maxAreaOfIsland(int[][] grid) {
+  int best = 0;
+  // Sweep every cell; order doesn't matter because dfs consumes (sinks)
+  // an entire component the first time any of its cells is reached.
+  for (int r = 0; r < grid.length; r++) {
+    for (int c = 0; c < grid[0].length; c++) {
+      // Only unvisited land can start a new component measurement
+      if (grid[r][c] == 1) {
+        // dfs both measures AND erases this island in one traversal
+        best = Math.max(best, dfs(grid, r, c));
+      }
+    }
+  }
+  return best;
+}
+// Returns the area of the connected land component reachable from (r, c),
+// sinking every cell it counts so no cell is ever double-counted.
+private int dfs(int[][] g, int r, int c) {
+  // Bounds check + "is this still unvisited land?" guard in one line.
+  // Returning 0 here also correctly excludes water from the running sum.
+  if (r < 0 || r >= g.length || c < 0 || c >= g[0].length || g[r][c] != 1) return 0;
+  // Sink this cell immediately so re-entering it (e.g. from a neighbor) returns 0
+  g[r][c] = 0;
+  // This cell contributes 1, plus whatever area each neighbor's dfs finds.
+  // Diagonals are NOT connected, so only the four orthogonal directions count.
+  return 1 + dfs(g, r + 1, c) + dfs(g, r - 1, c)
+           + dfs(g, r, c + 1) + dfs(g, r, c - 1);
+}`
+  },
+  {
+    num: 172, lc: 210, title: 'Course Schedule II', d: 'medium',
+    bucket: 'Graphs', category: 'Topological Sort',
+    url: 'https://leetcode.com/problems/course-schedule-ii/',
+    approach: 'Same Kahn\'s-algorithm BFS as Course Schedule, but this time the order in which nodes are polled from the queue IS the answer, not just a count. Build an adjacency list and an in-degree array from the prerequisite pairs, seed the queue with every course whose in-degree is already 0 (no prerequisites), then repeatedly poll a course, append it to the result, and decrement the in-degree of everything it unlocks — pushing any neighbor that drops to 0. The invariant that makes the emitted order valid: a course is only appended once every one of its prerequisites has already been appended and removed, so no course can ever precede a course it depends on. If a cycle exists, the courses on it never reach in-degree 0, so they never enter the queue, and the result list ends up shorter than n — the exact signal to return an empty array instead of a partial ordering. This runs in O(V + E) time and O(V + E) space since each edge and vertex is processed once. DFS with post-order-reversed finish times (detecting back edges via a three-color visited array) is an equivalent alternative that produces a different but equally valid ordering.',
+    complexity: 'O(V + E) time · O(V + E) space',
+    code: `// Worked trace for n = 4, prereqs = [[1,0],[2,0],[3,1],[3,2]]:
+//
+//   step   queue after   indeg[0,1,2,3]  order so far   action
+//   ────────────────────────────────────────────────────────────────────
+//   init   [0]            [0,1,1,2]       []             only course 0 has indeg 0
+//   poll0  [1,2]           [0,0,0,2]       [0]            take 0; edges 0->1, 0->2 fire,
+//                                                            indeg[1]->0, indeg[2]->0, push both
+//   poll1  [2]             [0,0,0,1]       [0,1]          take 1; edge 1->3 drops indeg[3]->1
+//   poll2  [3]             [0,0,0,0]       [0,1,2]        take 2; edge 2->3 drops indeg[3]->0, push 3
+//   poll3  []              [0,0,0,0]       [0,1,2,3]      take 3; no outgoing edges
+//
+// order.size() (4) == n (4) -> Returns [0, 1, 2, 3]
+
+public int[] findOrder(int n, int[][] prereqs) {
+  // Build adjacency list + in-degree array, same shape as Course Schedule I
+  List<List<Integer>> graph = new ArrayList<>();
+  for (int i = 0; i < n; i++) graph.add(new ArrayList<>());
+  int[] indeg = new int[n];   // indeg[x] = how many prereqs course x still needs
+  // prereqs[i] = [course, prerequisite] -> edge prerequisite -> course
+  for (int[] p : prereqs) {
+    graph.get(p[1]).add(p[0]);   // finishing p[1] unlocks p[0]
+    indeg[p[0]]++;               // ...so p[0] gains one incoming dependency
+  }
+
+  // Kahn's: start with all nodes that have no incoming edges — safe to take first
+  Queue<Integer> q = new ArrayDeque<>();
+  for (int i = 0; i < n; i++) if (indeg[i] == 0) q.offer(i);
+
+  // Unlike Course Schedule I we need the actual sequence, not just a count
+  int[] order = new int[n];
+  int idx = 0;   // how many courses we've appended so far
+  while (!q.isEmpty()) {
+    int c = q.poll();
+    // Record c in the order — every prereq of c is already recorded, by construction
+    order[idx++] = c;
+    // "Take" this course — its prereqs are met for downstream courses
+    for (int next : graph.get(c)) if (--indeg[next] == 0) q.offer(next);
+  }
+  // If we couldn't order every course, a cycle blocked some — no valid schedule exists
+  return idx == n ? order : new int[0];
+}`
+  },
+  {
+    num: 173, lc: 684, title: 'Redundant Connection', d: 'medium',
+    bucket: 'Graphs', category: 'Union-Find',
+    url: 'https://leetcode.com/problems/redundant-connection/',
+    approach: 'The input describes a tree of n nodes plus exactly one extra edge, so treat it as union-find cycle detection processed in the given edge order. Walk the edges left to right, and for each edge (u, v) ask whether u and v are already connected through previously-accepted edges; if they are, this edge closes a cycle and — because it is guaranteed to be the last such edge to appear when read in order — it must be the one removed, so return it immediately. Otherwise union the two components and keep going. The key insight is that a tree has exactly n-1 edges and adding any one extra edge creates exactly one cycle, so the very first edge whose endpoints are already unioned is provably the redundant one; there is no need to compare candidates or backtrack. Naively re-running DFS/BFS after removing each edge to check for remaining cycles would cost O(n^2) or worse, whereas union-find with path compression and union by rank answers each connectivity query in near-constant amortized time. This also beats a plain adjacency-list cycle scan because it never has to rebuild or re-traverse the graph. With path compression and union by rank, total time is O(n · alpha(n)) — effectively linear — with O(n) space for the parent/rank arrays. An equivalent alternative is building the graph incrementally and running DFS from each new edge\'s endpoints to check for an existing path between them before adding it.',
+    complexity: 'O(n · alpha(n)) time · O(n) space',
+    code: `// Worked trace for edges = [[1,2],[1,3],[2,3]]  (n = 3 nodes):
+//
+//   edge     find(u)  find(v)  same root?  action                  parent[] after
+//   ────────────────────────────────────────────────────────────────────────────
+//   [1,2]      1        2         no        union → parent[2]=1    [0,1,1,3]
+//   [1,3]      1        3         no        union → parent[3]=1    [0,1,1,1]
+//   [2,3]      1        1         yes       cycle! return [2,3]    [0,1,1,1]
+//
+// Returns [2, 3]
+
+public int[] findRedundantConnection(int[][] edges) {
+  int n = edges.length;
+  // n nodes are labeled 1..n; index 0 is unused but kept for direct 1-based indexing
+  int[] parent = new int[n + 1];
+  int[] rank = new int[n + 1];
+  // Every node starts as its own root — no edges accepted yet
+  for (int i = 1; i <= n; i++) parent[i] = i;
+
+  // Process edges in the given order: the guarantee that exactly one extra
+  // edge exists means the first cycle-closing edge we hit IS the answer.
+  for (int[] edge : edges) {
+    int u = edge[0], v = edge[1];
+    int rootU = find(parent, u);
+    int rootV = find(parent, v);
+    // Same root means u and v were already connected by earlier edges —
+    // adding this one would close a cycle, so it is the redundant edge.
+    if (rootU == rootV) return edge;
+    // Union by rank keeps the trees shallow, which keeps find() near O(1)
+    if (rank[rootU] < rank[rootV]) {
+      parent[rootU] = rootV;
+    } else if (rank[rootU] > rank[rootV]) {
+      parent[rootV] = rootU;
+    } else {
+      // Equal rank: pick either as new root, then bump its rank
+      parent[rootV] = rootU;
+      rank[rootU]++;
+    }
+  }
+  // Problem guarantees an answer exists, so this line is unreachable in practice
+  return new int[0];
+}
+
+// Path-compressed find: flattens the tree toward the root as a side effect,
+// so repeated calls on the same node get progressively cheaper.
+private int find(int[] parent, int x) {
+  if (parent[x] != x) parent[x] = find(parent, parent[x]);
+  return parent[x];
+}`
+  },
+  // ─── Advanced Graphs (8) ───
   {
     num: 113, lc: 1632, title: 'Rank Transform of a Matrix', d: 'hard', companies: ['Garmin'],
     bucket: 'Advanced Graphs', category: 'Union-Find · Sort',
@@ -4009,7 +6962,280 @@ public int ladderLength(String beginWord, String endWord, List<String> wordList)
 }`
   },
 
-  // ─── Dynamic Programming - 1D (10) ───
+  {
+    num: 174, lc: 1584, title: 'Min Cost to Connect All Points', d: 'medium',
+    bucket: 'Advanced Graphs', category: 'MST · Prim',
+    url: 'https://leetcode.com/problems/min-cost-to-connect-all-points/',
+    approach: 'This is a minimum spanning tree problem in disguise: treat every point as a graph node with an edge to every other point weighted by Manhattan distance, then find the cheapest set of edges connecting all nodes. Building all O(n^2) edges explicitly and sorting them (Kruskal) works, but Prim\'s algorithm is a cleaner fit here because the graph is dense and complete — no adjacency list is ever needed. Start from an arbitrary point and maintain a minDist array holding, for every not-yet-included point, the cheapest known distance to the growing tree. Repeatedly pick the unvisited point with the smallest minDist, add its cost to the answer, mark it visited, then relax every other unvisited point\'s minDist against the newly added point. Because each relax step is an O(n) scan rather than a heap push, dense-graph Prim\'s runs in O(n^2) time with O(n) space, beating Kruskal\'s O(n^2 log n) sort on this input size. The key correctness insight is the same cut property Prim\'s always relies on: the cheapest edge leaving the current tree is always safe to add. An equivalent alternative is Kruskal\'s algorithm with union-find over the sorted edge list.',
+    complexity: 'O(n^2) time · O(n) space',
+    code: `// Worked trace for points = [[0,0],[2,2],[3,10],[5,2],[7,0]]  (idx 0..4):
+//
+//   step  added point  cost added   minDist after relax (idx: 1  2  3  4)
+//   ───────────────────────────────────────────────────────────────────────
+//   0     (0,0) [0]    0            [4, 13, 7, 7]         (seed from pt0)
+//   1     (2,2) [1]    4            [-, 9,  3, 7]         (relax vs pt1)
+//   2     (5,2) [3]    3            [-, 9,  -, 4]         (relax vs pt3)
+//   3     (7,0) [4]    4            [-, 9,  -, -]         (relax vs pt4)
+//   4     (3,10)[2]    9            (all visited)
+//
+// sum of "cost added" = 0 + 4 + 3 + 4 + 9 = 20
+// Returns 20
+
+public int minCostConnectPoints(int[][] points) {
+  int n = points.length;
+  // Single point needs zero edges to be "fully connected"
+  if (n <= 1) return 0;
+
+  // minDist[j] = cheapest known Manhattan distance from j to the tree built so far.
+  // Seed everything at "infinity" except the arbitrary start node 0.
+  int[] minDist = new int[n];
+  Arrays.fill(minDist, Integer.MAX_VALUE);
+  boolean[] inTree = new boolean[n];
+  minDist[0] = 0;
+
+  int totalCost = 0;
+  // Grow the tree by exactly one node per iteration until all n are included
+  for (int i = 0; i < n; i++) {
+    // Pick the cheapest unvisited node to attach next — the MST cut-property
+    // guarantees the globally cheapest crossing edge is always safe to take.
+    int u = -1;
+    for (int j = 0; j < n; j++) {
+      if (!inTree[j] && (u == -1 || minDist[j] < minDist[u])) u = j;
+    }
+    // Lock this node into the tree and pay for the edge that reached it
+    inTree[u] = true;
+    totalCost += minDist[u];
+
+    // Relax every remaining node against the point just added — if u is now
+    // closer than whatever this node's best-known link was, tighten it.
+    for (int v = 0; v < n; v++) {
+      if (inTree[v]) continue;
+      int dist = Math.abs(points[u][0] - points[v][0]) + Math.abs(points[u][1] - points[v][1]);
+      if (dist < minDist[v]) minDist[v] = dist;
+    }
+  }
+  return totalCost;
+}`
+  },
+  {
+    num: 175, lc: 787, title: 'Cheapest Flights Within K Stops', d: 'medium',
+    bucket: 'Advanced Graphs', category: 'Bellman-Ford',
+    url: 'https://leetcode.com/problems/cheapest-flights-within-k-stops/',
+    approach: 'A capped-hop shortest path, which is exactly what a bounded Bellman-Ford relaxation computes. Run at most k+1 rounds of edge relaxation (k stops means k+1 edges), and in each round relax every edge using distances FROZEN from the previous round rather than updating in place. That freeze is the whole trick: relaxing from a live, already-updated array would let a single round silently chain two or more edges together, smuggling in extra hops and violating the k-stop cap. A plain Dijkstra fails here because its greedy "shortest first" order has no notion of a hop budget — a cheaper path that uses more stops than allowed would still win. After k+1 rounds, dist[dst] holds the cheapest cost reachable in at most k+1 edges, or infinity if unreachable. With V nodes and E edges this runs in O(k * E) time and O(V) space. An equivalent alternative is a level-order BFS/Dijkstra variant that tracks (node, stopsUsed) pairs and only relaxes when stopsUsed <= k.',
+    complexity: 'O(k * E) time · O(V) space',
+    code: `// Worked trace for n=4, flights=[[0,1,100],[1,2,100],[2,0,100],[1,3,600],[2,3,200]],
+// src=0, dst=3, k=1 (so at most k+1 = 2 edges may be used):
+//
+//   round  dist[0] dist[1] dist[2] dist[3]   notes
+//   ─────────────────────────────────────────────────────────────────
+//   start    0       INF     INF     INF
+//   1        0       100     INF     INF     relax 0→1: dist[1]=0+100=100
+//   2        0       100     200     700     relax 1→2: 100+100=200; relax 1→3: 100+600=700
+//
+// dist[3] = 700 (path 0→1→3, 1 stop) — cheaper 0→1→2→3 needs 2 stops, over budget
+// Returns 700
+
+public int findCheapestPrice(int n, int[][] flights, int src, int dst, int k) {
+  // dist[i] = cheapest cost to reach i using edges relaxed so far
+  int[] dist = new int[n];
+  Arrays.fill(dist, Integer.MAX_VALUE);
+  dist[src] = 0;
+
+  // k stops allowed means at most k+1 edges in the path — that bounds the rounds
+  for (int round = 0; round <= k; round++) {
+    // Relax against a SNAPSHOT of the previous round, not the live array.
+    // Updating in place would let one round chain multiple edges together,
+    // effectively using more hops than this round is allowed to spend.
+    int[] next = dist.clone();
+    for (int[] f : flights) {
+      int u = f[0], v = f[1], price = f[2];
+      // Skip edges from a node not yet reachable within the current hop budget
+      if (dist[u] == Integer.MAX_VALUE) continue;
+      // Standard relaxation, written into the snapshot for THIS round only
+      if (dist[u] + price < next[v]) {
+        next[v] = dist[u] + price;
+      }
+    }
+    dist = next;
+  }
+
+  // Unreachable within k stops — signal with -1 per the problem contract
+  return dist[dst] == Integer.MAX_VALUE ? -1 : dist[dst];
+}`
+  },
+  {
+    num: 176, lc: 269, title: 'Alien Dictionary', d: 'hard', companies: ['Garmin'],
+    bucket: 'Advanced Graphs', category: 'Topological Sort',
+    url: 'https://leetcode.com/problems/alien-dictionary/',
+    approach: 'Build a letter-ordering graph from adjacent words, then run Kahn\'s BFS topological sort over the alphabet\'s 26 letters. Compare each consecutive pair of words and find their first differing character: that pair reveals exactly one edge, earlierChar -> laterChar, because a dictionary-sorted list only commits to an ordering at the first point two words diverge. A pair that never diverges is only valid if the shorter word comes first (it\'s a prefix of the longer one); if the longer word comes first that is a direct contradiction of dictionary order, so return "" immediately. Once the graph is built, Kahn\'s algorithm greedily emits letters with in-degree 0, and if every discovered letter gets emitted the order is acyclic and unique enough to report; if some letters are never emitted, a cycle exists (mutually contradictory constraints) and no valid alien alphabet exists, so return "". The naive alternative of trying to sort letters by first appearance ignores contradicting pairs entirely and produces wrong or nonsensical orders, whereas comparing only ADJACENT words is what keeps this at O(C) instead of comparing all O(n^2) pairs (C = total characters across all words). An equivalent alternative is DFS-based topological sort with a three-color (white/gray/black) cycle check instead of in-degree counting.',
+    complexity: 'O(C) time (C = total characters across all words) · O(1) space (at most 26 letters/edges)',
+    code: `// Worked trace for words = ["wrt","wrf","er","ett","rftt"]:
+//
+//   pair            first diff   edge added   in-degree effect
+//   ─────────────────────────────────────────────────────────────
+//   wrt , wrf       idx 2: t/f   t -> f       f: 0 -> 1
+//   wrf , er        idx 0: w/e   w -> e       e: 0 -> 1
+//   er  , ett       idx 1: r/t   r -> t       t: 0 -> 1
+//   ett , rftt      idx 0: e/r   e -> r       r: 0 -> 1
+//
+//   letters seen: w, r, t, f, e   in-degrees: w=0, e=1, r=1, t=1, f=1
+//
+//   pop   result    neighbor updated      newly-zero enqueued
+//   ─────────────────────────────────────────────────────────────
+//   w     "w"       e: 1 -> 0             e
+//   e     "we"      r: 1 -> 0             r
+//   r     "wer"     t: 1 -> 0             t
+//   t     "wert"    f: 1 -> 0             f
+//   f     "wertf"   (none)                -
+//
+// result.length == 5 == letters seen -> returns "wertf"
+
+public String alienOrder(String[] words) {
+  // Every letter that actually appears must show up in the output (even ones
+  // with no edges), so seed the graph and in-degree map for each of them.
+  Map<Character, Set<Character>> graph = new HashMap<>();
+  Map<Character, Integer> inDegree = new HashMap<>();
+  for (String w : words) {
+    for (char c : w.toCharArray()) {
+      graph.putIfAbsent(c, new HashSet<>());
+      inDegree.putIfAbsent(c, 0);
+    }
+  }
+
+  // Only ADJACENT words in the sorted list constrain letter order — comparing
+  // every pair would be redundant, since transitivity is handled by the graph.
+  for (int i = 0; i < words.length - 1; i++) {
+    String a = words[i], b = words[i + 1];
+    int minLen = Math.min(a.length(), b.length());
+    boolean foundDiff = false;
+    for (int j = 0; j < minLen; j++) {
+      char ca = a.charAt(j), cb = b.charAt(j);
+      if (ca != cb) {
+        // First divergence is the ONLY letter pair this word pair constrains;
+        // add the edge only if it's new, or in-degree would be double-counted.
+        if (graph.get(ca).add(cb)) {
+          inDegree.put(cb, inDegree.get(cb) + 1);
+        }
+        foundDiff = true;
+        break;
+      }
+    }
+    // Words never diverged within minLen: valid only if the shorter word came
+    // first (it's a legitimate prefix). "abc" before "ab" breaks dictionary
+    // order with no way to fix it via letter ordering, so bail out now.
+    if (!foundDiff && a.length() > b.length()) return "";
+  }
+
+  // Kahn's BFS: every letter that starts with no unresolved prerequisites
+  // can be placed first; order among them doesn't matter for correctness.
+  Deque<Character> queue = new ArrayDeque<>();
+  for (char c : inDegree.keySet()) {
+    if (inDegree.get(c) == 0) queue.offer(c);
+  }
+
+  StringBuilder result = new StringBuilder();
+  while (!queue.isEmpty()) {
+    char c = queue.poll();
+    result.append(c);
+    // Placing c satisfies one prerequisite for each of its neighbors; a
+    // neighbor becomes placeable the instant its last prerequisite clears.
+    for (char next : graph.get(c)) {
+      inDegree.put(next, inDegree.get(next) - 1);
+      if (inDegree.get(next) == 0) queue.offer(next);
+    }
+  }
+
+  // If not every discovered letter got placed, some remain stuck in a cycle
+  // of mutual prerequisites — no valid alien alphabet can satisfy that.
+  return result.length() == inDegree.size() ? result.toString() : "";
+}`
+  },
+  {
+    num: 177, lc: 3377, title: 'Digit Operations to Make Two Integers Equal', d: 'medium', companies: ['Garmin'],
+    bucket: 'Advanced Graphs', category: 'Dijkstra · Primes',
+    url: 'https://leetcode.com/problems/digit-operations-to-make-two-integers-equal/',
+    approach: 'Model every non-prime integer as a graph node and run Dijkstra with the destination value as the edge weight, because the cost of a transformation is the sum of the numbers n passes through, not the number of steps. From the current number, generate every neighbor reachable by nudging exactly one digit up or down by 1 (skipping a leading digit going to 0, since that would drop the digit count), and only admit a neighbor if it is not prime — a prime number is never allowed to appear mid-transformation, so it is simply never added to the graph at all. A sieve of Eratosthenes up to 10^4 answers "is this candidate prime?" in O(1) so the graph can be built lazily as Dijkstra explores. The greedy invariant still holds: because every edge weight (the neighbor\'s own value) is positive, the first time a node is popped from the min-heap its accumulated cost is final, so popping m ends the search immediately with the answer. Reject up front whenever n or m is prime, or the two have different digit counts, since no valid path can exist either way. A plain BFS would minimize the number of operations, which is the wrong objective here — it ignores that big detours through large numbers are expensive even in few steps. With D digits and 10 digits per position there are at most 20 candidate moves per node, so this runs in O(V log V) time over the ~10^4 reachable values and O(V) space for the sieve and distance map; a bidirectional Dijkstra from both n and m is an equivalent alternative that halves the practical search radius.',
+    complexity: 'O(V log V) time (V ≈ 10^4 reachable values) · O(V) space',
+    code: `// Worked trace for n = 10, m = 12 (matches the problem's own example):
+//
+//   pop (value, cost)   relax → neighbor (new cost)      note
+//   ──────────────────────────────────────────────────────────────────
+//   (10, 10)             → 20 (30)                        digit0 1→2; 11 is prime, digit0↓ leading
+//   (20, 30)              → 30 (60), → 21 (51)            digit0 2→3, digit1 0→1
+//   (21, 51)              → 22 (73)                       digit1 1→2 (20 is worse, skip)
+//   (30, 60)              → 40 (100)                      dead end toward m, stays in heap
+//   (22, 73)              → 32 (105), → 12 (85)           digit0 2→3, digit0 2→1
+//   (12, 85)              u == m → return 85
+//
+// Path taken: 10 -> 20 -> 21 -> 22 -> 12, sum = 10+20+21+22+12 = 85. Returns 85.
+
+private static final int LIMIT = 10_000;
+private static final boolean[] IS_COMPOSITE = buildSieve();
+
+// Sieve of Eratosthenes once per JVM load — every query below is then an O(1) array read
+private static boolean[] buildSieve() {
+  boolean[] composite = new boolean[LIMIT];
+  composite[0] = composite[1] = true;      // 0 and 1 are not prime, but also not usable digits-wise; mark non-prime path clear
+  for (int i = 2; (long) i * i < LIMIT; i++) {
+    if (!composite[i]) {
+      for (int j = i * i; j < LIMIT; j += i) composite[j] = true;
+    }
+  }
+  return composite;
+}
+// A number counts as prime only if the sieve says so AND it's >= 2 (0/1 are never prime)
+private boolean isPrime(int x) { return x >= 2 && !IS_COMPOSITE[x]; }
+
+public int minOperations(int n, int m) {
+  // Either endpoint being prime, or a mismatched digit count, makes every path invalid up front
+  if (isPrime(n) || isPrime(m)) return -1;
+  if (Integer.toString(n).length() != Integer.toString(m).length()) return -1;
+  // n == m needs zero operations, but n itself still counts once toward the cost
+  if (n == m) return n;
+
+  // dist[v] = cheapest sum-of-values seen so far to reach v; absent = not yet reached
+  Map<Integer, Integer> dist = new HashMap<>();
+  dist.put(n, n);
+  // Min-heap keyed by accumulated cost so far — Dijkstra's greedy pick of "closest" node
+  PriorityQueue<int[]> pq = new PriorityQueue<>((a, b) -> a[0] - b[0]);
+  pq.offer(new int[]{ n, n });
+
+  while (!pq.isEmpty()) {
+    int[] top = pq.poll();
+    int cost = top[0], u = top[1];
+    // Reached the target — first pop is guaranteed optimal since all weights are positive
+    if (u == m) return cost;
+    // Stale heap entry: a cheaper path to u was already finalized, so skip re-expanding it
+    if (cost > dist.getOrDefault(u, Integer.MAX_VALUE)) continue;
+
+    char[] digits = Integer.toString(u).toCharArray();
+    for (int i = 0; i < digits.length; i++) {
+      for (int delta : new int[]{ 1, -1 }) {
+        int d = (digits[i] - '0') + delta;
+        // A single digit can't overflow past 9 or underflow below 0
+        if (d < 0 || d > 9) continue;
+        // Bumping the leading digit down to 0 would silently shrink the digit count — disallowed
+        if (i == 0 && d == 0) continue;
+
+        char[] next = digits.clone();
+        next[i] = (char) ('0' + d);
+        int v = Integer.parseInt(new String(next));
+        // A prime value may never be visited, not even as a transient state — it never enters the graph
+        if (isPrime(v)) continue;
+
+        int newCost = cost + v;
+        if (newCost < dist.getOrDefault(v, Integer.MAX_VALUE)) {
+          dist.put(v, newCost);
+          pq.offer(new int[]{ newCost, v });
+        }
+      }
+    }
+  }
+  // Heap exhausted without ever popping m — no valid digit-mutation path exists
+  return -1;
+}`
+  },
+  // ─── Dynamic Programming - 1D (14) ───
   {
     num: 95, lc: 70, title: 'Climbing Stairs', d: 'easy',
     bucket: 'Dynamic Programming - 1D', category: 'Fibonacci',
@@ -4038,7 +7264,7 @@ public int climbStairs(int n) {
 }`
   },
   {
-    num: 96, lc: 198, title: 'House Robber', d: 'medium', companies: ['Temu'],
+    num: 96, lc: 198, title: 'House Robber', d: 'medium',
     bucket: 'Dynamic Programming - 1D', category: 'DP',
     url: 'https://leetcode.com/problems/house-robber/',
     approach: 'One-dimensional dynamic programming. For each house you make a binary choice: skip it and keep the best total through the previous house, or rob it and add its loot to the best total through the house two positions back (skipping the immediate neighbor to respect the no-adjacent rule). That gives dp[i] = max(dp[i−1], dp[i−2] + nums[i]); the max guarantees optimality because both feasible options are considered at every step. Each state only needs the two prior results, so two rolling variables replace the array — O(n) time, O(1) space. A greedy \x27take every other house\x27 heuristic fails (e.g. [2,1,1,2]), which is why DP is required.',
@@ -4311,7 +7537,7 @@ public int jump(int[] nums) {
 }`
   },
   {
-    num: 104, lc: 5, title: 'Longest Palindromic Substring', d: 'medium',
+    num: 104, lc: 5, title: 'Longest Palindromic Substring', d: 'medium', companies: ['Garmin'],
     bucket: 'Dynamic Programming - 1D', category: 'Expand Around Center',
     url: 'https://leetcode.com/problems/longest-palindromic-substring/',
     approach: 'Expand-around-center. Every palindrome has a center: either a single character (odd length) or the gap between two characters (even length), giving 2n−1 possible centers. From each center, push two pointers outward while the mirrored characters match; when they stop, the span between them is the longest palindrome centered there. Track the best (start,end) seen. This is correct because it tests every center exactly once and grows each greedily to its maximum. O(n²) time (n centers × up to n expansion) and O(1) extra space — same time as the classic DP table but without its O(n²) memory; Manacher\'s algorithm would reach O(n) if needed.',
@@ -4352,7 +7578,158 @@ private int expand(String s, int l, int r) {
 }`
   },
 
-  // ─── Dynamic Programming - 2D (5) ───
+  {
+    num: 178, lc: 746, title: 'Min Cost Climbing Stairs', d: 'easy',
+    bucket: 'Dynamic Programming - 1D', category: 'DP · 1D',
+    url: 'https://leetcode.com/problems/min-cost-climbing-stairs/',
+    approach: 'One-dimensional dynamic programming over "cost to reach step i". You can start standing on step 0 or step 1 for free, and from any step you may climb 1 or 2 steps at a time, paying that step\'s cost when you leave it, so the cheapest way to arrive at step i is dp[i] = min(dp[i-1] + cost[i-1], dp[i-2] + cost[i-2]) — whichever of the two immediate predecessors is cheaper to leave from. The top of the staircase is one step past the last index, so the answer is dp[n] using a virtual cost array of length n+1. Because dp[i] only ever looks back two steps, there is no need to materialize the whole array: two rolling variables suffice, giving O(n) time and O(1) space instead of the O(n) space a naive bottom-up table would use. Top-down memoized recursion computes the same recurrence and is an equivalent alternative, just with extra call-stack overhead.',
+    complexity: 'O(n) time · O(1) space',
+    code: `// Worked trace for cost = [10, 15, 20]:
+//
+//   i   prev2  prev1  curr = min(prev1+cost[i-1], prev2+cost[i-2])
+//   ──────────────────────────────────────────────────────────────
+//   2     0      0      min(0+15, 0+10) = 10
+//   3     0     10      min(10+20, 0+15) = 15
+//
+// Returns prev1 = 15  (start on step 1, pay 15, jump straight to the top)
+
+public int minCostClimbingStairs(int[] cost) {
+  int n = cost.length;
+  // dp[i] = cheapest cost to REACH step i (the top is the virtual step n).
+  // Both step 0 and step 1 are free starting points, so both base cases are 0.
+  int prev2 = 0, prev1 = 0;
+  for (int i = 2; i <= n; i++) {
+    // To land on step i you last left either step i-1 or step i-2, paying
+    // that step's cost — take whichever predecessor is cheaper overall.
+    int curr = Math.min(prev1 + cost[i - 1], prev2 + cost[i - 2]);
+    prev2 = prev1; prev1 = curr;   // slide the two-value window forward
+  }
+  // prev1 now holds dp[n], the cost to reach the top from either free start
+  return prev1;
+}`
+  },
+  {
+    num: 179, lc: 647, title: 'Palindromic Substrings', d: 'medium', companies: ['Garmin'],
+    bucket: 'Dynamic Programming - 1D', category: 'DP · Expand Center',
+    url: 'https://leetcode.com/problems/palindromic-substrings/',
+    approach: 'Expand-around-center, but counting instead of tracking a single best. Every palindromic substring has a unique center: either a single character (odd length) or the gap between two adjacent characters (even length), so there are exactly 2n−1 candidate centers to check. For each center, push two pointers outward one step at a time; every step where the mirrored characters still match is itself a distinct valid palindrome, so tally a hit on every successful expansion rather than only at the final (longest) span. This is correct because it enumerates every palindromic substring exactly once, keyed by its unique center, with no double counting. Naively checking all O(n²) substrings for palindrome-ness would cost O(n³); a bottom-up DP table over all (i,j) pairs also gets the O(n²) time but spends O(n²) extra space, whereas expand-around-center needs only O(1) extra space. Manacher\'s algorithm reaches O(n) time if that becomes a bottleneck.',
+    complexity: 'O(n²) time · O(1) space',
+    code: `// Worked trace for s = "aaa"  (centers: 0,1,2 odd; (0,1),(1,2) even):
+//
+//   center        expand steps (l,r matches)        hits added   running total
+//   ──────────────────────────────────────────────────────────────────────────
+//   i=0 odd       (0,0) ok                            1             1
+//   (0,1) even    (0,1) 'a'=='a' ok                   1             2
+//   i=1 odd       (1,1) ok; (0,2) 'a'=='a' ok          2             4
+//   (1,2) even    (1,2) 'a'=='a' ok                   1             5
+//   i=2 odd       (2,2) ok                            1             6
+//   (2,3) even    r=3 out of bounds, no expansion      0             6
+//
+// Returns 6  ("a","a","a","aa","aa","aaa")
+
+public int countSubstrings(String s) {
+  int count = 0;
+  // Each of the 2n-1 centers (n single-char, n-1 between-char gaps) is checked once
+  for (int i = 0; i < s.length(); i++) {
+    // Odd-length palindromes centered ON index i
+    count += expand(s, i, i);
+    // Even-length palindromes centered BETWEEN i and i+1
+    count += expand(s, i, i + 1);
+  }
+  return count;
+}
+// Push (l, r) outward while in bounds and mirrored chars match.
+// Every successful step is itself a palindrome, so count each one, not just the last.
+private int expand(String s, int l, int r) {
+  int count = 0;
+  while (l >= 0 && r < s.length() && s.charAt(l) == s.charAt(r)) {
+    // (l, r) span is a palindrome — record it before growing further
+    count++;
+    l--;   // walk left edge out
+    r++;   // walk right edge out
+  }
+  return count;
+}`
+  },
+  {
+    num: 180, lc: 279, title: 'Perfect Squares', d: 'medium',
+    bucket: 'Dynamic Programming - 1D', category: 'DP · 1D',
+    url: 'https://leetcode.com/problems/perfect-squares/',
+    approach: 'Bottom-up dynamic programming — the unbounded knapsack pattern applied to squares instead of coins. Let dp[i] be the fewest perfect squares that sum to i. Build it from 0 upward: for each amount i, try every square j*j (j = 1, 2, ... while j*j <= i) and consider dp[i - j*j] + 1, because a decomposition of i can always end with one square j*j laid on top of an optimal decomposition of the remainder i - j*j. Taking the minimum over all valid j gives the optimum for i (optimal substructure, same as coin change). The squares can repeat, so every j from 1 up to sqrt(i) is tried again at every amount rather than being consumed once. Initialize dp[i] to i itself as a safe upper bound, since i can always be written as i ones (1*1 repeated i times), and dp[0] = 0 is the base case. The result is dp[n]. Runtime is O(n * sqrt(n)) time, O(n) space. A BFS over remainders (each level subtracts one square, shortest path to 0 wins) is an equivalent alternative, and Lagrange\'s four-square theorem gives an O(sqrt(n)) closed-form check but is overkill for an interview.',
+    complexity: 'O(n · √n) time · O(n) space',
+    code: `// Worked trace for n = 12   (squares tried: 1, 4, 9):
+//
+//   i    dp[i-1*1]  dp[i-4]  dp[i-9]  best j   dp[i]
+//   ────────────────────────────────────────────────
+//   1    dp[0]=0       -        -        1       1
+//   2    dp[1]=1       -        -        1       2
+//   3    dp[2]=2       -        -        1       3
+//   4    dp[3]=3    dp[0]=0     -        2       1
+//   5    dp[4]=1    dp[1]=1     -        1       2
+//   6    dp[5]=2    dp[2]=2     -        1       3
+//   7    dp[6]=3    dp[3]=3     -        1       4
+//   8    dp[7]=4    dp[4]=1     -        2       2
+//   9    dp[8]=2    dp[5]=2  dp[0]=0     3       1
+//  10    dp[9]=1    dp[6]=3  dp[1]=1     1       2
+//  11    dp[10]=2   dp[7]=4  dp[2]=2     1       3
+//  12    dp[11]=3   dp[8]=2  dp[3]=3     2       3
+//
+// Returns 3 (12 = 4 + 4 + 4)
+
+public int numSquares(int n) {
+  // dp[i] = fewest perfect squares summing to i. Seed with the worst case
+  // (i ones) so every real combination found later can only improve it.
+  int[] dp = new int[n + 1];
+  for (int i = 1; i <= n; i++) {
+    dp[i] = i;
+    // Try every square j*j that fits inside i as the "last" square used.
+    // Squares are unbounded (may reuse the same j at different amounts),
+    // unlike a 0/1 knapsack where each item is spent once.
+    for (int j = 1; j * j <= i; j++) {
+      // One square j*j plus an optimal decomposition of the remainder.
+      dp[i] = Math.min(dp[i], dp[i - j * j] + 1);
+    }
+  }
+  // dp[0] = 0 by construction (loop starts at i = 1), the base case
+  // that every dp[i - j*j] eventually bottoms out on.
+  return dp[n];
+}`
+  },
+  {
+    num: 181, lc: 509, title: 'Fibonacci Number', d: 'easy', companies: ['Garmin'],
+    bucket: 'Dynamic Programming - 1D', category: 'DP · 1D',
+    url: 'https://leetcode.com/problems/fibonacci-number/',
+    approach: 'One-dimensional dynamic programming with the textbook recurrence F(n) = F(n-1) + F(n-2). Naive recursion re-derives the same F(k) exponentially many times — the call tree branches in two at every level — so it blows up to O(2^n) time even though there are only n distinct subproblems. The fix is to notice each state depends solely on its immediately preceding two values, so there is no need to memoize a whole array: roll two variables forward through a single loop from 2 up to n. The base cases F(0)=0 and F(1)=1 seed the roll, and returning n directly for n&lt;2 avoids ever entering the loop for those trivial inputs. This turns the problem into O(n) time and O(1) space. A memoized top-down recursion or a full-array bottom-up table are equivalent alternatives, but they cost O(n) space for no extra benefit once you notice only the last two values ever matter.',
+    complexity: 'O(n) time · O(1) space',
+    code: `// Worked trace for n = 4:
+//
+//   i   prev2  prev1  curr = prev1+prev2
+//   ────────────────────────────────────
+//   2     0      1      1        (prev2←1, prev1←1)
+//   3     1      1      2        (prev2←1, prev1←2)
+//   4     1      2      3        (prev2←2, prev1←3)
+//
+// Returns prev1 = 3
+
+public int fib(int n) {
+  // Base cases F(0)=0, F(1)=1 — also short-circuits so the loop below never
+  // needs to handle n < 2, where prev2/prev1 wouldn't both be defined yet.
+  if (n < 2) return n;
+  // Rolling window over the last two Fibonacci values — only they matter,
+  // so an O(n)-space array is never needed.
+  int prev2 = 0, prev1 = 1;      // prev2 = F(i-2), prev1 = F(i-1)
+  for (int i = 2; i <= n; i++) {
+    // F(i) = F(i-1) + F(i-2); this recurrence is exact, not an approximation
+    int curr = prev1 + prev2;
+    // Slide the two-value window forward one step
+    prev2 = prev1;
+    prev1 = curr;
+  }
+  // prev1 now holds F(n) after the loop's last iteration
+  return prev1;
+}`
+  },
+  // ─── Dynamic Programming - 2D (8) ───
   {
     num: 105, lc: 62, title: 'Unique Paths', d: 'medium',
     bucket: 'Dynamic Programming - 2D', category: 'Grid',
@@ -4542,7 +7919,122 @@ public int maximalSquare(char[][] matrix) {
 }`
   },
 
-  // ─── Greedy (1) ───
+  {
+    num: 182, lc: 64, title: 'Minimum Path Sum', d: 'medium',
+    bucket: 'Dynamic Programming - 2D', category: 'DP · Grid',
+    url: 'https://leetcode.com/problems/minimum-path-sum/',
+    approach: '2D grid DP compressed to a single rolling row. Define dp[r][c] = minimum sum to reach cell (r,c) from the top-left; since movement is restricted to right or down, the only ways into (r,c) are from above and from the left, so dp[r][c] = grid[r][c] + min(dp[r−1][c], dp[r][c−1]). The first row and first column have only one possible incoming direction each (straight across or straight down), so they are seeded as running prefix sums before the general recurrence kicks in. Because each cell needs only the value directly above it and the value immediately to its left, the full m×n table collapses to a single reused row: row[c] = grid[r][c] + min(row[c], row[c−1]) simultaneously reads the old row[c] (value from above, not yet overwritten this pass) and the freshly updated row[c−1] (value from the left). Recomputing every path with plain recursion is exponential since paths share overlapping subproblems; DP memoizes each cell exactly once. This runs in O(m·n) time and O(n) space. An equivalent alternative mutates the input grid in place as the DP table, trading the extra array for O(1) space at the cost of destroying the input.',
+    complexity: 'O(m · n) time · O(n) space',
+    code: `// Worked trace for grid = [[1,3,1],[1,5,1],[4,2,1]] (row reused each pass):
+//
+//   r   action                                    row after the pass
+//   ──────────────────────────────────────────────────────────────────
+//   0   seed: running sum across the top row      [1, 4, 5]
+//   1   c=0: 1+1=2                                 [2, _, _]
+//       c=1: 5+min(4,2)=5+2=7                      [2, 7, _]
+//       c=2: 1+min(5,7)=1+5=6                      [2, 7, 6]
+//   2   c=0: 4+2=6                                 [6, _, _]
+//       c=1: 2+min(7,6)=2+6=8                      [6, 8, _]
+//       c=2: 1+min(6,8)=1+6=7                      [6, 8, 7]
+//
+// Returns row[n-1] = row[2] = 7  (path 1 -> 3 -> 1 -> 1 -> 1)
+
+public int minPathSum(int[][] grid) {
+  int m = grid.length, n = grid[0].length;
+  // Rolling 1D row instead of a full m×n table. row[c] always represents dp[currentRow][c].
+  int[] row = new int[n];
+  // Seed the top row as a running prefix sum — moving right is the only way in.
+  row[0] = grid[0][0];
+  for (int c = 1; c < n; c++) {
+    row[c] = row[c - 1] + grid[0][c];
+  }
+  for (int r = 1; r < m; r++) {
+    // First column: only reachable from above, so it's a running sum down the left edge.
+    row[0] += grid[r][0];
+    for (int c = 1; c < n; c++) {
+      // row[c] still holds dp[r-1][c] (from above); row[c-1] was just updated to dp[r][c-1] (from the left).
+      // Take the cheaper of the two incoming directions, then pay the cost of the current cell.
+      row[c] = grid[r][c] + Math.min(row[c], row[c - 1]);
+    }
+  }
+  return row[n - 1];   // minimum cost path to the bottom-right cell
+}`
+  },
+  {
+    num: 183, lc: 518, title: 'Coin Change II', d: 'medium',
+    bucket: 'Dynamic Programming - 2D', category: 'DP · Unbounded Knapsack',
+    url: 'https://leetcode.com/problems/coin-change-ii/',
+    approach: 'Unbounded-knapsack DP counting combinations, not permutations. Define dp[t] = number of distinct ways to make amount t using the coins processed so far, seeded with dp[0] = 1 (the empty combination). Process coins in an OUTER loop and amounts in an INNER forward loop, dp[t] += dp[t - coin] — looping coins on the outside is what makes {1,2} and {2,1} collapse into a single counted combination, since by the time coin=2 runs, dp already reflects every way built purely from smaller-or-equal coins seen earlier, and forward iteration over amounts (unlike the 0/1 knapsack\'s reverse sweep) intentionally lets the same coin be reused any number of times within that pass. Swapping the loop order to amount-outer/coin-inner would instead count ordered sequences, overcounting distinct arrangements of the same multiset as separate answers. Runs in O(coins.length · amount) time and O(amount) space with the rolling 1D array; a full 2D dp[i][t] table is the unrolled equivalent that makes the same recurrence more explicit at the cost of O(coins.length · amount) space.',
+    complexity: 'O(coins.length · amount) time · O(amount) space',
+    code: `// Worked trace for coins = [1, 2, 5], amount = 5 (dp[t] = ways to make t; outer loop = coin):
+//
+//   coin   dp[0] dp[1] dp[2] dp[3] dp[4] dp[5]   updates applied (t = coin..amount, forward)
+//   ─────────────────────────────────────────────────────────────────────────────────────
+//   init     1     0     0     0     0     0
+//    1        1     1     1     1     1     1     dp[t] += dp[t-1] for t=1..5
+//    2        1     1     2     2     3     3     dp[t] += dp[t-2] for t=2..5
+//    5        1     1     2     2     3     4     dp[5] += dp[0]
+//
+// Returns dp[5] = 4  (the combinations {5}, {1,2,2}, {1,1,1,2}, {1,1,1,1,1})
+
+public int change(int amount, int[] coins) {
+  // dp[t] = number of distinct combinations of coins that sum to exactly t
+  int[] dp = new int[amount + 1];
+  // Base case: exactly one way to make 0 — pick no coins at all
+  dp[0] = 1;
+  // Coin OUTSIDE, amount INSIDE: this ordering is what makes the count respect
+  // combinations (unordered multisets) instead of permutations (ordered sequences).
+  for (int coin : coins) {
+    // Forward sweep (unlike 0/1 knapsack's reverse sweep) — lets this same coin
+    // be reused arbitrarily many times while filling out this one pass
+    for (int t = coin; t <= amount; t++) {
+      // Every way to make (t - coin) can be extended by one more of this coin
+      dp[t] += dp[t - coin];
+    }
+  }
+  // Total ways to build the full amount using any mix of the given coins
+  return dp[amount];
+}`
+  },
+  {
+    num: 184, lc: 494, title: 'Target Sum', d: 'medium',
+    bucket: 'Dynamic Programming - 2D', category: 'DP · 0/1 Knapsack',
+    url: 'https://leetcode.com/problems/target-sum/',
+    approach: 'Reframe the +/- sign-assignment problem as a subset-sum count. Split nums into a "positive" subset P (numbers assigned +) and the rest, which is implicitly assigned -. Then sum(P) - (total - sum(P)) = target, which rearranges to sum(P) = (total + target) / 2 — a fixed number every valid assignment\'s positive subset must hit. If (total + target) is odd, or target\'s magnitude exceeds total, no subset can ever reach it, so the answer is immediately 0. Otherwise the problem becomes exactly "count subsets of nums that sum to P", a 0/1 knapsack counting DP: dp[s] = number of ways to reach sum s using items processed so far, updated as dp[s] += dp[s - n] for each number n. Iterating s from high to low is essential — it guarantees each number is folded into the count at most once per item, which is what makes this 0/1 (choose or skip) rather than unbounded (reuse freely). This turns an O(2^n) brute-force enumeration of every sign combination into O(n · P) time and O(P) space. A top-down memoized recursion on (index, remaining sum) is an equivalent alternative with the same complexity.',
+    complexity: 'O(n · sum) time · O(sum) space',
+    code: `// Worked trace for nums = [1,1,1,1,1], target = 3:
+// total = 5, (total+target)=8 is even -> P = (5+3)/2 = 4. dp[s] = # subsets summing to s.
+//
+//   process n=1   dp[0] dp[1] dp[2] dp[3] dp[4]   (t walked 4 -> 1, dp[t] += dp[t-1])
+//   ────────────────────────────────────────────────────────────────────────────────
+//   init            1     0     0     0     0
+//   #1              1     1     0     0     0
+//   #2              1     2     1     0     0
+//   #3              1     3     3     1     0
+//   #4              1     4     6     4     1
+//   #5              1     5    10    10     5
+//
+// Returns dp[4] = 5  (matches the 5 sign assignments LeetCode lists for this input)
+
+public int findTargetSumWays(int[] nums, int target) {
+  int total = 0;
+  for (int n : nums) total += n;   // sum of all magnitudes, ignoring sign
+  // Need sum(positiveSubset) = (total + target) / 2. If that value isn't a whole
+  // number, or target is unreachable in magnitude, no assignment can ever work.
+  if (Math.abs(target) > total || ((total + target) % 2 != 0)) return 0;
+  int P = (total + target) / 2;   // required sum of the "+" subset
+  // dp[s] = number of ways to choose a subset (from numbers processed so far) summing to s
+  int[] dp = new int[P + 1];
+  dp[0] = 1;   // exactly one way to reach sum 0: pick nothing
+  for (int n : nums) {
+    // Walk s in REVERSE so each n contributes to dp at most once per item (0/1 knapsack);
+    // a forward sweep would let the same number be reused, over-counting subsets.
+    for (int s = P; s >= n; s--) dp[s] += dp[s - n];
+  }
+  return dp[P];   // number of subsets whose sum hits the required target P
+}`
+  },
+  // ─── Greedy (6) ───
   {
     num: 110, lc: 134, title: 'Gas Station', d: 'medium',
     bucket: 'Greedy', category: 'Array',
@@ -4580,5 +8072,688 @@ public int canCompleteCircuit(int[] gas, int[] cost) {
   // Feasible overall → 'start' is the unique valid origin; otherwise impossible
   return total < 0 ? -1 : start;
 }`
+  },
+  {
+    num: 185, lc: 2144, title: 'Minimum Cost of Buying Candies With Discount', d: 'easy', companies: ['Garmin'],
+    bucket: 'Greedy', category: 'Greedy · Sort',
+    url: 'https://leetcode.com/problems/minimum-cost-of-buying-candies-with-discount/',
+    approach: 'Sort the costs in descending order, then pay for every candy except every third one starting at index 2. The discount rule says buying two candies makes a third one free, and the store always lets you designate the cheapest of the three as the freebie, so to minimize total spend you want the candy given away for free to be as expensive as possible. Sorting descending puts the priciest candies first, so grouping them into consecutive triples (0,1,2), (3,4,5), ... means the third slot in each triple is always the smallest value in that group — exactly the one the greedy strategy wants to hand out for free. Summing every cost except those at indices where i % 3 == 2 gives the minimum total in one linear pass after the sort. A naive approach that tries every possible way to pick which candies are "free" is exponential and unnecessary once you see the exchange-argument: swapping any non-minimal candy into the free slot of a triple can only raise or keep the same total, never lower it. Overall this runs in O(n log n) time for the sort plus O(n) for the scan, O(1) extra space (O(log n)/O(n) if you count sort internals). An equivalent formulation processes the sorted array in triples of three and adds only the first two of each.',
+    complexity: 'O(n log n) time · O(1) space',
+    code: `// Worked trace for cost = [1, 2, 3]:
+//
+//   sorted descending: [3, 2, 1]
+//
+//   i   cost[i]   i % 3   free?   running total
+//   ──────────────────────────────────────────────
+//   0      3        0      no        3
+//   1      2        1      no        5
+//   2      1        2      yes       5   (skipped, it's the free candy)
+//
+// Returns 5
+
+public int minimumCost(int[] cost) {
+  // Sort descending so the most expensive candies are paid for first,
+  // leaving only the cheapest candy in each group of three to be free.
+  Arrays.sort(cost);
+  int n = cost.length;
+  for (int i = 0, j = n - 1; i < j; i++, j--) {
+    int tmp = cost[i];
+    cost[i] = cost[j];
+    cost[j] = tmp;
   }
+  int total = 0;
+  for (int i = 0; i < n; i++) {
+    // Every third candy (index 2, 5, 8, ...) in the descending order is the
+    // smallest of its triple, so it's the one the discount gives away free.
+    // Skipping it — instead of any other member of the triple — is what
+    // maximizes the value given away, minimizing what's actually paid.
+    if (i % 3 == 2) continue;
+    total += cost[i];
+  }
+  // Handles n < 3 automatically: with no full triple, i % 3 == 2 never
+  // triggers, so every candy is paid for — correct, since no discount applies.
+  return total;
+}`
+  },
+  {
+    num: 186, lc: 1353, title: 'Maximum Number of Events That Can Be Attended', d: 'medium', companies: ['Garmin'],
+    bucket: 'Greedy', category: 'Greedy · Heap',
+    url: 'https://leetcode.com/problems/maximum-number-of-events-that-can-be-attended/',
+    approach: 'Greedy with a min-heap, walking one calendar day at a time. Sort events by start day, then sweep day from the earliest start to the latest end; on each day push every event that opens today (its end day) onto a min-heap keyed by end day, first popping off any heap entries whose end day has already passed — those events expired unattended and can never be used. If the heap is non-empty after that cleanup, attend the event with the SMALLEST end day: it is the most constrained option left, so saving it for later only risks losing it, while events with a later end day remain safely attendable tomorrow. This exchange argument is what makes the greedy optimal — always burn the most urgent deadline first. Sorting is O(n log n) and each event is pushed and popped from the heap at most once, so the sweep is O((n + D) log n) where D is the day range, O(n) space for the heap. A segment-tree or union-find "next free day" approach solves it without the explicit day-by-day walk but is considerably more code for the same complexity class.',
+    complexity: 'O((n + D) log n) time · O(n) space',
+    code: `// Worked trace for events = [[1,2],[2,3],[3,4]]:
+//
+//   day  events opened today   heap after push   expired popped   attend (min end)  count
+//   ──────────────────────────────────────────────────────────────────────────────────────
+//   1    [1,2]                 {2}               none             pop 2             1
+//   2    [2,3]                 {3}               none             pop 3             2
+//   3    [3,4]                 {4}               none             pop 4             3
+//   4    (none)                {}                none             heap empty        3
+//
+// Returns 3
+
+public int maxEvents(int[][] events) {
+  // Sort by start day so the day-by-day sweep can push events onto the heap
+  // exactly when they become attendable, never before.
+  Arrays.sort(events, (a, b) -> a[0] - b[0]);
+  int n = events.length;
+  // Min-heap of end days for every event that is open but not yet attended.
+  // Popping the smallest end day first is the greedy choice: it is the
+  // event closest to expiring, so it must be used now or never.
+  PriorityQueue<Integer> heap = new PriorityQueue<>();
+  int day = 1, i = 0, count = 0;
+  // The last day any event could possibly still be attended
+  int maxDay = 0;
+  for (int[] e : events) maxDay = Math.max(maxDay, e[1]);
+  // Sweep every candidate day; events starting after maxDay can't matter
+  while (day <= maxDay) {
+    // Open every event whose start day is today (events are sorted by start)
+    while (i < n && events[i][0] == day) {
+      heap.offer(events[i][1]);
+      i++;
+    }
+    // Discard events whose end day already passed — they expired unattended
+    // because no earlier day picked them, so they can never be used now.
+    while (!heap.isEmpty() && heap.peek() < day) {
+      heap.poll();
+    }
+    // Attend the most urgent open event today, if any is available
+    if (!heap.isEmpty()) {
+      heap.poll();
+      count++;
+    }
+    day++;
+  }
+  return count;
+}`
+  },
+  {
+    num: 187, lc: 763, title: 'Partition Labels', d: 'medium',
+    bucket: 'Greedy', category: 'Greedy · Intervals',
+    url: 'https://leetcode.com/problems/partition-labels/',
+    approach: 'Greedy interval merging driven by last-occurrence indices. First scan the string once to record, for every character, the index of its LAST appearance — that tells you the farthest right a partition must extend once it includes that character. Then sweep left to right maintaining a running end = max of last[c] for every character c seen so far in the current partition; as long as the current index i has not reached end, the partition cannot close yet because some earlier character still has an occurrence waiting further right. The key insight is that end only grows (or stays put) as you scan, so the moment i == end you have proof every character inside [start, end] is fully contained there and never reappears later — cutting there is always safe and always maximal, since closing any earlier would split a character across two partitions. A naive alternative — checking, for every candidate cut, whether any character straddles it by rescanning the suffix — costs O(n²); the running-max trick collapses that to a single O(n) pass. Two linear passes over the string (26-letter alphabet) give O(n) time and O(1) extra space (the last-index table is fixed size 26), and an equivalent formulation greedily grows each partition\'s end via Math.max as new characters are visited instead of precomputing a table upfront.',
+    complexity: 'O(n) time · O(1) space',
+    code: `// Worked trace for S = "ababcbacadefegdehijhklij":
+//
+//   idx  char  last[char]  end (running max)  i==end?  action
+//   ────────────────────────────────────────────────────────────────
+//    0    a         8              8            no
+//    1    b         5              8            no
+//    2    a         8              8            no
+//    3    b         5              8            no
+//    4    c         7              8            no
+//    5    b         5              8            no
+//    6    a         8              8            no
+//    7    c         7              8            no
+//    8    a         8              8            yes   cut: [0,8]  len 9
+//    9    d        14             14            no
+//   10    e        15             15            no
+//   11    f        11             15            no
+//   12    e        15             15            no
+//   13    g        13             15            no
+//   14    d        14             15            no
+//   15    e        15             15            yes   cut: [9,15] len 7
+//   16    h        19             19            no
+//   17    i        22             22            no
+//   18    j        23             23            no
+//   19    h        19             23            no
+//   20    k        20             23            no
+//   21    l        21             23            no
+//   22    i        22             23            no
+//   23    j        23             23            yes   cut: [16,23] len 8
+//
+// Returns [9, 7, 8]
+
+public List<Integer> partitionLabels(String s) {
+  int n = s.length();
+  // Fixed-size table (26 lowercase letters) — one pass to learn how far right
+  // each character's influence reaches before the partition sweep begins.
+  int[] last = new int[26];
+  for (int i = 0; i < n; i++) {
+    // Overwriting on every sighting means this ends up holding the LAST index,
+    // which is exactly the boundary a partition containing this char must reach.
+    last[s.charAt(i) - 'a'] = i;
+  }
+
+  List<Integer> result = new ArrayList<>();
+  // start of the current partition; end is the farthest index it must extend to
+  int start = 0, end = 0;
+  for (int i = 0; i < n; i++) {
+    // Pull the current partition's boundary outward if this char reappears later.
+    // end never shrinks, so once i catches up to it nothing earlier can reopen it.
+    end = Math.max(end, last[s.charAt(i) - 'a']);
+    // i == end proves every character in [start, i] has its last occurrence
+    // at or before i — safe to cut here, and cutting sooner would split a char.
+    if (i == end) {
+      result.add(end - start + 1);
+      // Next partition begins right after this one closes
+      start = i + 1;
+    }
+  }
+  return result;
+}`
+  },
+  {
+    num: 188, lc: 435, title: 'Non-overlapping Intervals', d: 'medium',
+    bucket: 'Greedy', category: 'Greedy · Intervals',
+    url: 'https://leetcode.com/problems/non-overlapping-intervals/',
+    approach: 'Sort intervals by END time, then greedily keep the earliest-ending interval whenever a conflict appears. Walking left to right, track the end of the last KEPT interval; if the next interval\'s start is >= that end there is no overlap, so keep it and advance the boundary. If it starts before that end, the two intervals overlap and one must be removed — always discard the one with the LATER end, since keeping the earlier-ending interval leaves the most room for everything that follows, which can only help (never hurt) future non-overlap decisions. This exchange argument is exactly what makes the greedy choice safe: for any optimal solution that instead kept the later-ending interval, swapping in the earlier-ending one is still valid and no worse. Sorting by start time instead is a common but wrong instinct — it lets a long interval that starts first block out several shorter, non-overlapping ones later, forcing more removals than necessary. The whole pass after sorting is a single linear scan, so the cost is dominated by the sort. Runs in O(n log n) time for the sort plus O(n) for the scan, and O(1) extra space (O(n) or O(log n) if you count sort overhead). An equivalent reframing is to compute the maximum number of NON-overlapping intervals you can keep (classic activity selection, same end-time-greedy logic) and subtract that count from n.',
+    complexity: 'O(n log n) time · O(1) space',
+    code: `// Worked trace for intervals = [[1,2],[2,3],[3,4],[1,3]]:
+//
+// Sorted by end time: [1,2], [2,3], [1,3], [3,4]
+//
+//   interval   prevEnd (before)  start>=prevEnd?  action        prevEnd (after)  removed
+//   ─────────────────────────────────────────────────────────────────────────────────────
+//   [1,2]      -Infinity         (first, kept)                  2                0
+//   [2,3]      2                 yes (2>=2)       keep          3                0
+//   [1,3]      3                 no  (1<3)        remove        3 (unchanged)    1
+//   [3,4]      3                 yes (3>=3)       keep          4                1
+//
+// Returns 1
+
+public int eraseOverlapIntervals(int[][] intervals) {
+  // No pairs possible with 0 or 1 interval, so nothing to remove
+  if (intervals == null || intervals.length == 0) return 0;
+  // Sort by END time: keeping the earliest-ending interval on a conflict
+  // always leaves the most room for whatever comes next (exchange argument).
+  Arrays.sort(intervals, (a, b) -> Integer.compare(a[1], b[1]));
+  // End time of the last interval we decided to KEEP
+  int prevEnd = intervals[0][1];
+  int removed = 0;
+  for (int i = 1; i < intervals.length; i++) {
+    // No overlap: this interval starts at or after the last kept one ends
+    if (intervals[i][0] >= prevEnd) {
+      // Keep it, and this interval's end becomes the new boundary to beat
+      prevEnd = intervals[i][1];
+    } else {
+      // Overlaps the last kept interval — one must go, so drop this one.
+      // Its end is >= prevEnd (sort order), so it can never be a better
+      // boundary than the interval we already kept; prevEnd stays put.
+      removed++;
+    }
+  }
+  return removed;
+}`
+  },
+  {
+    num: 189, lc: 605, title: 'Can Place Flowers', d: 'easy',
+    bucket: 'Greedy', category: 'Greedy · Scan',
+    url: 'https://leetcode.com/problems/can-place-flowers/',
+    approach: 'Single left-to-right greedy scan: at each empty plot, plant a flower there if and only if both neighbors are also empty (or off the end of the array), then immediately decrement the remaining count n. The key insight is that planting as early as possible is never wrong — if plot i qualifies, skipping it can only remove a future option (its right neighbor becomes the next plot\'s left neighbor to worry about) and never creates one, so a locally greedy choice is globally optimal and no backtracking is ever needed. Treating out-of-bounds neighbors as empty cleanly handles the two array-edge cases without special-casing index 0 or the last index separately. Because a planted plot immediately blocks its own right neighbor from being planted on the same pass, no two adjacent plots ever end up both set to 1. The whole array is visited once with O(1) extra state (just the counter), so this beats any approach that rebuilds or re-scans the array per placement. Once n reaches zero further checks are pointless, so the loop can also short-circuit early as a minor constant-factor optimization. An equivalent formulation counts the maximum plantable flowers via runs of consecutive zeros (each run of length L, bounded by 1s or the array ends, holds floor((L+1)/2) flowers with edge runs adjusted) and compares that total against n up front.',
+    complexity: 'O(n) time · O(1) space',
+    code: `// Worked trace for flowerbed = [1,0,0,0,1], n = 1:
+//
+//   i  bed[i]  leftEmpty  rightEmpty  plant?  bed after        n after
+//   ────────────────────────────────────────────────────────────────────
+//   0    1        -           -       skip    [1,0,0,0,1]        1
+//   1    0      false          -      skip    [1,0,0,0,1]        1
+//   2    0      true        true      yes     [1,0,1,0,1]        0
+//
+// n drops to 0 after i=2, so the loop guard (n > 0) stops the scan right
+// there — indices 3 and 4 are never even visited. Returns true (n <= 0).
+
+public boolean canPlaceFlowers(int[] flowerbed, int n) {
+  int len = flowerbed.length;
+  // Walk every plot once; bail out the moment we've placed enough flowers
+  for (int i = 0; i < len && n > 0; i++) {
+    // Already occupied — nothing to consider at this index
+    if (flowerbed[i] == 1) continue;
+    // Treat a missing neighbor (before index 0 or after the last index) as empty,
+    // so the boundary plots don't need separate handling from the interior ones
+    boolean leftEmpty = (i == 0) || (flowerbed[i - 1] == 0);
+    boolean rightEmpty = (i == len - 1) || (flowerbed[i + 1] == 0);
+    if (leftEmpty && rightEmpty) {
+      // Greedy: plant now. Doing it as early as possible can only help later
+      // plots, never hurt, since a later plant here would still block the same neighbor.
+      flowerbed[i] = 1;
+      n--;
+    }
+  }
+  // All requested flowers were placed somewhere valid
+  return n <= 0;
+}`
+  },
+
+  // ─── Math & Bit Manipulation (11) ───
+  {
+    num: 190, lc: 7, title: 'Reverse Integer', d: 'medium',
+    bucket: 'Math & Bit Manipulation', category: 'Math · Digits',
+    url: 'https://leetcode.com/problems/reverse-integer/',
+    approach: 'Peel digits off the back of x with % 10 and / 10, and rebuild the reversed number one digit at a time as rev = rev * 10 + digit. This avoids ever materializing the number as a string, so there is no need to worry about string-to-int parsing edge cases or extra space for the character buffer. The real difficulty is that the reversed value can overflow a 32-bit int even though the original x fit in one — e.g. reversing 1534236469 would produce 9646324351, which is far past Integer.MAX_VALUE. The fix is to check for overflow BEFORE each multiply-and-add rather than after: compare the not-yet-updated rev against Integer.MAX_VALUE / 10 (and the mirror bound for negatives), since rev * 10 would already have overflowed by the time you could detect it afterward. Using % and / naturally handles negative x too, because in Java both operators keep the sign of the dividend, so no special-casing of the sign is required. Casting to a wider type such as long and checking against Integer.MAX_VALUE/MIN_VALUE after the fact is an equivalent alternative, trading the pre-check arithmetic for a wider accumulator. The loop runs once per digit, so this is O(log10 x) time and O(1) space.',
+    complexity: 'O(log10 x) time · O(1) space',
+    code: `// Worked trace for x = 123:
+//
+//   x (before)   digit   rev (before)   overflow?   rev (after)   x (after)
+//   ─────────────────────────────────────────────────────────────────────────
+//   123          3       0              no          3             12
+//   12           2       3              no          32             1
+//   1            1       32             no          321            0
+//
+// Loop ends (x == 0). Returns 321
+
+public int reverse(int x) {
+  int rev = 0;
+  // Peel one digit at a time from the back of x until nothing is left
+  while (x != 0) {
+    // Last digit of x; in Java, % keeps the sign of x, so negatives pop negative digits
+    int digit = x % 10;
+    // Drop the digit we just read; integer division truncates toward zero, matching %
+    x /= 10;
+    // Check BEFORE the multiply — by the time rev * 10 + digit overflows, it's too late
+    // to detect. Comparing the un-updated rev against MAX/10 catches it one step early.
+    if (rev > Integer.MAX_VALUE / 10 || (rev == Integer.MAX_VALUE / 10 && digit > 7)) {
+      return 0;
+    }
+    // Mirror check for the negative side; Integer.MIN_VALUE's last digit is -8
+    if (rev < Integer.MIN_VALUE / 10 || (rev == Integer.MIN_VALUE / 10 && digit < -8)) {
+      return 0;
+    }
+    // Safe to shift rev left one decimal place and drop the new digit into the ones place
+    rev = rev * 10 + digit;
+  }
+  return rev;
+}`
+  },
+  {
+    num: 191, lc: 9, title: 'Palindrome Number', d: 'easy', companies: ['Garmin'],
+    bucket: 'Math & Bit Manipulation', category: 'Math · Digits',
+    url: 'https://leetcode.com/problems/palindrome-number/',
+    approach: 'Reverse only half the digits and compare against the half still unread, all through integer math with no string conversion. Peel the last digit off x with x % 10, feed it into a running reversed accumulator (reversed = reversed * 10 + digit), then chop x with x /= 10. Stop once x <= reversed, because at that crossover point reversed holds exactly the digits that used to be the back half of the number, so the two now line up for a direct comparison. Handling the odd-length case just means discarding the single middle digit via reversed / 10 before comparing. Negative numbers can never be palindromes because of the leading minus sign, and any positive multiple of 10 other than 0 has a trailing zero with no matching leading zero, so both are rejected up front. This beats the naive approach of building the full reversed number, which risks overflowing a 32-bit int for inputs near Integer.MAX_VALUE; reversing only half sidesteps that entirely. The equally valid alternative is converting x to a string and checking it with two pointers from both ends, trading the overflow-safety and O(1) space of the math approach for O(log x) extra space.',
+    complexity: 'O(log x) time · O(1) space',
+    code: `// Worked trace for x = 1221:
+//
+//   step   x (before)  digit   reversed (after)   x (after /= 10)   x <= reversed?
+//   ────────────────────────────────────────────────────────────────────────────
+//   1      1221        1       1                  122               no
+//   2      122         2       12                 12                yes -> stop
+//
+// Loop exits with x = 12, reversed = 12 -> equal -> palindrome -> returns true
+
+public boolean isPalindrome(int x) {
+  // Negative numbers can never be palindromes: the leading '-' has no mirror digit.
+  // A positive multiple of 10 (except 0 itself) has a trailing zero with no
+  // matching leading zero, so it can't be a palindrome either — reject both early.
+  if (x < 0 || (x % 10 == 0 && x != 0)) return false;
+
+  int reversed = 0;
+  // Peel digits off the back of x and build them into reversed from the front.
+  // Stop as soon as x has shrunk to (or below) reversed: at that crossover,
+  // reversed already holds exactly the digits that made up the back half of x,
+  // so there's no need to reverse the whole number and risk overflow.
+  while (x > reversed) {
+    // Next digit off the end of the remaining number
+    int digit = x % 10;
+    // Shift reversed left one decimal place and append the new digit
+    reversed = reversed * 10 + digit;
+    // Drop the digit we just consumed
+    x /= 10;
+  }
+
+  // Even-length numbers: the two halves must match exactly (x == reversed).
+  // Odd-length numbers: reversed has one extra middle digit, so drop it (reversed / 10)
+  // before comparing — that middle digit never needs a partner.
+  return x == reversed || x == reversed / 10;
+}`
+  },
+  {
+    num: 192, lc: 66, title: 'Plus One', d: 'easy',
+    bucket: 'Math & Bit Manipulation', category: 'Math · Digits',
+    url: 'https://leetcode.com/problems/plus-one/',
+    approach: 'Treat the array as a big-endian decimal number and add 1 using grade-school carry propagation, walking from the last digit to the first. At each position, if the digit is less than 9, incrementing it absorbs the carry completely and you can return immediately — no digit to its left is affected. Only a digit that is exactly 9 rolls over to 0 and forces the carry to keep propagating leftward, which is why the loop keeps going only in that case. The key insight is that a carry can ripple through at most a suffix of all-9s, so the loop still runs in O(n) time even though it looks like it could cascade. If the carry survives past the very first digit (the whole number was all 9s, e.g. 999 -> 1000), the digit count grows by one, which is handled as a special case by allocating a new array of length n+1 with a leading 1 and zeros elsewhere — you cannot grow the original array in place. Doing this via BigInteger or string conversion works too but wastes the O(n) space/time of parsing and re-splitting the number when direct array manipulation is already optimal.',
+    complexity: 'O(n) time · O(1) extra space (O(n) only in the all-9s overflow case)',
+    code: `// Worked trace for digits = [1, 2, 9]:
+//
+//   i   digits[i]  <9?   action                new digits
+//   ────────────────────────────────────────────────────────
+//   2      9        no   set 0, carry left      [1, 2, 0]
+//   1      2        yes  set 3, return now      [1, 3, 0]
+//
+// Returns [1, 3, 0]
+//
+// Edge case digits = [9, 9, 9]:
+//   i=2: 9 -> 0 (carry), i=1: 9 -> 0 (carry), i=0: 9 -> 0 (carry)
+//   Loop exhausted with carry still pending -> overflow path
+//   Allocate new int[4] = [1, 0, 0, 0]
+
+public int[] plusOne(int[] digits) {
+  int n = digits.length;
+  // Walk from the least-significant digit (rightmost) toward the most-significant.
+  for (int i = n - 1; i >= 0; i--) {
+    // A digit under 9 simply absorbs the +1 with no further carry — done.
+    if (digits[i] < 9) {
+      digits[i]++;
+      // Nothing left of here changes, so we can stop as soon as the carry is absorbed.
+      return digits;
+    }
+    // digits[i] == 9: it rolls over to 0 and the carry keeps moving left.
+    digits[i] = 0;
+  }
+  // Every digit was 9 (e.g. 999), so the carry ran off the front — the number
+  // gained a new leading digit. The original array can't be resized in place,
+  // so allocate one that's one slot longer; Java zero-initializes int arrays,
+  // so only the leading 1 needs to be set explicitly.
+  int[] result = new int[n + 1];
+  result[0] = 1;
+  return result;
+}`
+  },
+  {
+    num: 193, lc: 69, title: 'Sqrt(x)', d: 'easy',
+    bucket: 'Math & Bit Manipulation', category: 'Math · Binary Search',
+    url: 'https://leetcode.com/problems/sqrtx/',
+    approach: 'Binary search over the answer space instead of computing the root directly. The candidate answers 0..x are monotonic with respect to the predicate "mid*mid <= x" — once mid grows past sqrt(x) the predicate flips from true to false and never flips back, which is exactly the shape binary search needs. Narrow the range [0, x] by testing the midpoint: if mid*mid <= x, mid is a valid (possibly non-tight) answer, so record it and move the lower bound up past mid to look for something bigger; otherwise mid overshoots and the search must move left. Tracking the best valid mid as ans and returning it after the loop converges gives the floor of the true square root without ever calling Math.sqrt. Using mid*mid risks overflowing a 32-bit int for large x (up to 2^31-1), so the multiplication is done in long to keep it safe; a linear scan upward from 0 would be correct but O(sqrt(x)) instead of O(log x). Newton\'s method is an equivalent alternative that converges even faster in practice.',
+    complexity: 'O(log x) time · O(1) space',
+    code: `// Worked trace for x = 8 (answer floor(sqrt(8)) = 2):
+//
+//   lo   hi   mid   mid*mid   <= x?   action           ans
+//   ──────────────────────────────────────────────────────
+//   0    8     4       16      no    hi = mid-1 = 3     0
+//   0    3     1        1      yes   ans=1, lo=mid+1=2  1
+//   2    3     2        4      yes   ans=2, lo=mid+1=3  2
+//   3    3     3        9      no    hi = mid-1 = 2      2
+//   (lo > hi, loop ends)
+//
+// Returns 2
+
+public int mySqrt(int x) {
+  // 0 and 1 are their own square roots; handling them here avoids an
+  // awkward lo/hi setup below and keeps the general loop simple.
+  if (x < 2) return x;
+  // The true root of x can never exceed x itself (true only for x >= 2,
+  // which is guaranteed by the guard above), so search inside [0, x].
+  int lo = 0, hi = x;
+  // Best candidate found so far whose square does not exceed x.
+  int ans = 0;
+  while (lo <= hi) {
+    int mid = lo + (hi - lo) / 2;
+    // mid*mid can overflow a 32-bit int when x is near Integer.MAX_VALUE,
+    // so multiply as long to keep the comparison correct.
+    long square = (long) mid * mid;
+    if (square <= x) {
+      // mid is a valid answer (maybe not the tightest) — remember it and
+      // search the upper half for something closer to the true root.
+      ans = mid;
+      lo = mid + 1;
+    } else {
+      // mid overshoots x, so the root must live strictly below mid.
+      hi = mid - 1;
+    }
+  }
+  // The largest mid whose square stayed <= x is the floor of sqrt(x).
+  return ans;
+}`
+  },
+  {
+    num: 194, lc: 258, title: 'Add Digits', d: 'easy', companies: ['Garmin'],
+    bucket: 'Math & Bit Manipulation', category: 'Math · Digital Root',
+    url: 'https://leetcode.com/problems/add-digits/',
+    approach: 'The naive approach repeatedly sums the digits of num in a loop until only one digit remains, which already works in O(log n) time since each pass shrinks the number to roughly its digit count. The real insight the problem is nudging toward, though, is that repeated digit-summing computes the digital root of num, and the digital root has a closed-form O(1) formula rooted in modular arithmetic: any number is congruent to the sum of its digits modulo 9 (because 10 ≡ 1 mod 9, so each place value contributes just its digit to the remainder). That means repeating the digit-sum process converges to num mod 9, except the result must land in the range 1-9 instead of 0-8 for any positive multiple of 9, and 0 must map to 0 as a special case. Shifting to a zero-based residue with (num - 1) % 9 and then adding 1 back cleanly produces exactly that 1-9 range while leaving 0 untouched by the guard. This avoids any loop entirely, trading the already-cheap iterative digit-sum for a single arithmetic expression. The iterative "sum digits in a loop until single digit" approach remains a perfectly valid equivalent if the interviewer wants to see the mechanical process rather than the number-theory shortcut.',
+    complexity: 'O(1) time · O(1) space',
+    code: `// Worked trace for num = 38:
+//
+//   step            expression            value
+//   ──────────────────────────────────────────────
+//   guard           num == 0 ?             no
+//   zero-based      (num - 1) % 9          (38-1)%9 = 37%9 = 1
+//   shift back      1 + 1                  2
+//
+// Returns 2  (sanity check: 3+8=11, 1+1=2 — matches)
+
+public int addDigits(int num) {
+  // 0 is the one input whose digital root is 0, not a value in 1..9 —
+  // the formula below would otherwise wrongly map it into that range.
+  if (num == 0) return 0;
+  // Every integer is congruent to the sum of its digits mod 9, because
+  // 10 ≡ 1 (mod 9) makes each decimal place contribute only its digit
+  // to the remainder. Repeated digit-summing converges to num mod 9,
+  // but that residue is 0..8 while the digital root of a positive
+  // number must read 1..9 (multiples of 9 have digital root 9, not 0).
+  // Subtracting 1 first shifts the "9 wraps to 0" case out of the way,
+  // and adding 1 back restores the correct 1..9 range.
+  return 1 + (num - 1) % 9;
+}`
+  },
+  {
+    num: 195, lc: 204, title: 'Count Primes', d: 'medium', companies: ['Garmin'],
+    bucket: 'Math & Bit Manipulation', category: 'Math · Sieve',
+    url: 'https://leetcode.com/problems/count-primes/',
+    approach: 'Sieve of Eratosthenes: instead of testing each number for primality individually (which costs O(sqrt(k)) per number and O(n·sqrt(n)) overall), flip the problem around and knock out composites in bulk. Allocate a boolean array isComposite[0..n-1], and for every i from 2 up to sqrt(n), if i itself hasn\'t already been marked composite, mark every multiple of i starting at i*i as composite. Starting the inner sweep at i*i rather than 2*i is the key optimization — any smaller multiple of i (like 2*i, 3*i, ..., (i-1)*i) already has a prime factor smaller than i, so it was already marked when that smaller factor was processed as the outer loop variable. Stopping the outer loop at sqrt(n) is valid because any composite number k < n must have at least one factor &le; sqrt(k) &le; sqrt(n); if it had no factor that small it would have to be prime. This turns the work into a harmonic-series sum (n/2 + n/3 + n/5 + ...) that totals O(n log log n), and a final pass just counts the still-unmarked indices from 2..n-1. A bitset in place of a boolean array (or the Sieve of Sundaram) is an equivalent alternative that trades a bit of code clarity for a smaller memory footprint.',
+    complexity: 'O(n log log n) time · O(n) space',
+    code: `// Worked trace for n = 10 (count primes strictly less than 10):
+//
+//   i   i*i   already composite?   multiples marked (step i, start i*i)
+//   ────────────────────────────────────────────────────────────────────
+//   2    4     no                  4, 6, 8            (composite[4,6,8] = true)
+//   3    9     no                  9                   (composite[9] = true)
+//   loop ends: i*i = 16 > n (10), outer loop stops
+//
+//   index:      0  1  2  3  4  5  6  7  8  9
+//   composite:  F  F  F  F  T  F  T  F  T  T
+//
+//   Unmarked (prime) indices in [2, 9]: 2, 3, 5, 7 -> count = 4
+//
+// Returns 4
+
+public int countPrimes(int n) {
+  // No number below 2 is prime, so n = 0, 1, 2 all yield zero primes
+  if (n < 2) return 0;
+  // isComposite[k] tracks whether k has been proven non-prime; starts all false
+  boolean[] isComposite = new boolean[n];
+  // Only need to test potential factors up to sqrt(n) — anything larger
+  // would have already been caught via its smaller co-factor.
+  for (int i = 2; (long) i * i < n; i++) {
+    // If i itself was already marked composite, every multiple of i
+    // was necessarily marked too (by i's smaller prime factor) — skip it.
+    if (isComposite[i]) continue;
+    // Start marking at i*i, not 2*i: any multiple of i smaller than i*i
+    // has a factor less than i, so it was already marked in an earlier iteration.
+    for (int j = i * i; j < n; j += i) {
+      isComposite[j] = true;
+    }
+  }
+  // Count every index in [2, n-1] that survived without being marked composite
+  int count = 0;
+  for (int k = 2; k < n; k++) {
+    if (!isComposite[k]) count++;
+  }
+  return count;
+}`
+  },
+  {
+    num: 196, lc: 231, title: 'Power of Two', d: 'easy', companies: ['Garmin'],
+    bucket: 'Math & Bit Manipulation', category: 'Bit Manipulation',
+    url: 'https://leetcode.com/problems/power-of-two/',
+    approach: 'A power of two has exactly one bit set in its binary form (1, 10, 100, 1000, ...), so the whole problem reduces to a single-bit-set test. The classic trick is n & (n - 1): subtracting 1 from n flips the lowest set bit to 0 and turns every bit below it into 1, so ANDing with the original n clears that lowest set bit and leaves every other bit untouched. If n was a power of two, that lowest set bit was its ONLY set bit, so the AND result is 0; if n had any other bits set, the result is nonzero. The subtlety is n must be checked positive first, since n = 0 has no set bits at all (0 & -1 == 0 would wrongly pass) and negative n\'s two\'s-complement bit pattern isn\'t meaningful here. This runs in O(1) time and O(1) space with no loop at all, which beats the naive approach of repeatedly dividing n by 2 and checking the remainder (O(log n) time). An equivalent one-liner exploits that 2^31 is the largest power of two representable in a signed int and checks 1073741824 % n == 0.',
+    complexity: 'O(1) time · O(1) space',
+    code: `// Worked trace for n = 16:
+//
+//   step            binary               value
+//   ──────────────────────────────────────────────
+//   n               1 0000               16
+//   n - 1           0 1111               15
+//   n & (n - 1)     0 0000               0
+//
+// n > 0 and n & (n - 1) == 0 → returns true
+//
+// Worked trace for n = 12 (not a power of two):
+//
+//   step            binary               value
+//   ──────────────────────────────────────────────
+//   n               1100                 12
+//   n - 1           1011                 11
+//   n & (n - 1)     1000                 8
+//
+// n & (n - 1) != 0 → returns false
+
+public boolean isPowerOfTwo(int n) {
+  // Zero and negative numbers can never be a power of two; guard them before
+  // the bit trick, since n = 0 would otherwise slip through as 0 & -1 == 0.
+  if (n <= 0) return false;
+  // n - 1 flips the lowest set bit to 0 and every bit below it to 1.
+  // ANDing with n clears exactly that lowest set bit, leaving the rest intact.
+  // A power of two has only ONE set bit, so clearing it must yield 0;
+  // any other n has a second set bit that survives the AND as a nonzero result.
+  return (n & (n - 1)) == 0;
+}`
+  },
+  {
+    num: 197, lc: 136, title: 'Single Number', d: 'easy',
+    bucket: 'Math & Bit Manipulation', category: 'Bit Manipulation · XOR',
+    url: 'https://leetcode.com/problems/single-number/',
+    approach: 'XOR every element together in a single pass. XOR is commutative and associative, so the order of operations doesn\'t matter — the whole array reduces to one running value. Two key identities do the work: x ^ x = 0 (a value cancels itself) and x ^ 0 = x (identity element). Since every number except one appears exactly twice, all the duplicate pairs annihilate each other and only the lone value survives in the accumulator. This avoids the O(n) extra space a hash-set frequency count would need, and it beats sorting first (which would cost O(n log n) just to bring duplicates adjacent). Runs in a single O(n) pass with O(1) space and no auxiliary data structure at all. An equivalent alternative is 2 * sum(set(nums)) - sum(nums), which also isolates the singleton but needs a set and risks overflow on large inputs.',
+    complexity: 'O(n) time · O(1) space',
+    code: `// Worked trace for nums = [4, 1, 2, 1, 2]:
+//
+//   i  nums[i]  result before  result after (result ^= nums[i])
+//   ──────────────────────────────────────────────────────────
+//   0     4         0000              0000 ^ 0100 = 0100 (4)
+//   1     1         0100              0100 ^ 0001 = 0101 (5)
+//   2     2         0101              0101 ^ 0010 = 0111 (7)
+//   3     1         0111              0111 ^ 0001 = 0110 (6)
+//   4     2         0110              0110 ^ 0010 = 0100 (4)
+//
+// Returns 4
+
+public int singleNumber(int[] nums) {
+  // Start at 0, the XOR identity element (x ^ 0 == x), so it never
+  // contaminates the accumulator before the first real value arrives.
+  int result = 0;
+  // XOR is commutative/associative, so folding left-to-right in any
+  // order still lets every duplicate pair cancel itself out.
+  for (int num : nums) {
+    // x ^ x == 0, so each value that appears exactly twice vanishes
+    // completely, leaving only the value that appears once.
+    result ^= num;
+  }
+  // Whatever is left over is the element with no matching pair
+  return result;
+}`
+  },
+  {
+    num: 198, lc: 191, title: 'Number of 1 Bits', d: 'easy', companies: ['Garmin'],
+    bucket: 'Math & Bit Manipulation', category: 'Bit Manipulation',
+    url: 'https://leetcode.com/problems/number-of-1-bits/',
+    approach: 'Brian Kernighan\'s trick: repeatedly clear the lowest set bit with n = n & (n - 1) and count how many clears it takes until n becomes 0. Subtracting 1 flips every trailing zero to a one and flips the lowest set bit to a zero, so ANDing with the original n zeroes out exactly that one lowest set bit while leaving every higher bit untouched. That means the loop runs exactly once per set bit rather than once per bit position, so a sparse number like 0x80000000 finishes in a single iteration instead of 32. The naive alternative — shifting n right 32 times and checking bit 0 (or masking with 1 << i for each i) — always pays for every bit position even when most are zero, and in Java the arithmetic edge case to watch is that the input arrives as a signed int, so a plain n > 0 loop guard would infinite-loop on a negative (high-bit-set) value; using unsigned semantics via n != 0 with the bitwise AND sidesteps that. An equally valid alternative is Integer.bitCount(n), which the JDK implements with the same kind of bit trick under the hood, or a SWAR (SIMD-within-a-register) parallel popcount for a branch-free O(1)-ish version.',
+    complexity: 'O(k) time (k = number of set bits, ≤ 32) · O(1) space',
+    code: `// Worked trace for n = 11 (binary 00000000000000000000000000001011):
+//
+//   step   n (binary, low bits)   n-1 (binary)          n & (n-1)   count
+//   ──────────────────────────────────────────────────────────────────────
+//   1      ...00001011            ...00001010           ...00001010   1
+//   2      ...00001010            ...00001001           ...00001000   2
+//   3      ...00001000            ...00000111           ...00000000   3
+//   4      ...00000000            (loop ends, n == 0)                 —
+//
+// Returns 3
+
+public int hammingWeight(int n) {
+  // Counts how many times we can clear a set bit before n is exhausted
+  int count = 0;
+  // n != 0 (not n > 0) is required: n is a signed int, so a value with the
+  // sign bit set (e.g. 0x80000000) is negative, and a > 0 guard would skip
+  // the loop entirely or never terminate depending on the bit pattern.
+  while (n != 0) {
+    // n - 1 flips the lowest set bit to 0 and every trailing zero to 1;
+    // ANDing with the original n therefore clears ONLY the lowest set bit,
+    // leaving all higher bits exactly as they were.
+    n = n & (n - 1);
+    // Each iteration clears exactly one set bit, so the loop runs
+    // once per 1-bit rather than once per bit position — sparse
+    // numbers finish fast instead of always costing 32 iterations.
+    count++;
+  }
+  // Every set bit has now been cleared and counted
+  return count;
+}`
+  },
+  {
+    num: 199, lc: 190, title: 'Reverse Bits', d: 'easy', companies: ['Garmin'],
+    bucket: 'Math & Bit Manipulation', category: 'Bit Manipulation',
+    url: 'https://leetcode.com/problems/reverse-bits/',
+    approach: 'Build the result bit by bit: for each of the 32 positions, shift the accumulator left to make room, then OR in the lowest bit of the input, then shift the input right to expose its next bit. Running this loop exactly 32 times naturally reverses the order — the first bit pulled off the input (its LSB) ends up shifted all the way to the top of the result (its MSB), and the last bit pulled off (the input\'s original MSB) lands untouched at the result\'s bottom. The key insight is that no comparisons or string manipulation are needed at all: pure shifts and masks do the reordering implicitly because each iteration moves one bit exactly one position further toward the opposite end. Treating n as an unsigned 32-bit quantity matters — using >> instead of >>> would sign-extend a negative n and drag in extra 1-bits from the left, corrupting the higher positions once the sign bit is consumed. A naive alternative — converting to a 32-character binary string, reversing the string, and parsing it back — works but is far slower and more memory-heavy for no benefit. Runs in O(1) time (fixed 32 iterations) and O(1) space. An equivalent alternative divides the 32 bits into bytes, reverses each byte via a small lookup table, and reassembles them in swapped byte order — faster in practice for repeated calls but overkill for a single reversal.',
+    complexity: 'O(1) time (32 iterations) · O(1) space',
+    code: `// Worked trace for n = 00000000000000000000000000001011 (11 in binary, only low bits shown):
+//
+//   i   n before (low bits)   bit taken (n&1)  result after (low bits)   n after >>>1
+//   ────────────────────────────────────────────────────────────────────────────────
+//   0   ...01011               1                ...1 (bit 31)             ...0101
+//   1   ...0101                1                ...11 (bits 31,30)        ...010
+//   2   ...010                 0                ...110                    ...01
+//   3   ...01                  1                ...1101                   ...0
+//   4   ...0                   0                ...11010                  ...0
+//   (bits 5..31 of n are all 0, so result just keeps shifting left with 0s appended)
+//
+// After all 32 iterations the four bits placed above end up as the TOP four bits
+// of the result, in the order 1,1,0,1 read top-to-bottom — i.e. result's high bits
+// are 1101... which is 11 reversed into the most-significant end.
+// Returns 3489660928 (binary 11010000000000000000000000000000 as an unsigned int)
+
+public int reverseBits(int n) {
+    // Accumulates the reversed bits; built up one bit per loop iteration
+    int result = 0;
+    // Exactly 32 iterations — one per bit of a fixed-width int, no more, no less
+    for (int i = 0; i < 32; i++) {
+        // Make room at the bottom for the next bit by pushing everything already
+        // placed one position closer to the top
+        result <<= 1;
+        // Pull off n's current lowest bit and drop it into the freed bottom slot.
+        // Because result was just shifted, this bit lands one position higher
+        // than the previous one did — building the reversal automatically.
+        result |= (n & 1);
+        // Unsigned right shift: MUST be >>> not >>, since n may be negative
+        // (its original sign bit is just an ordinary bit here) — a signed
+        // shift would sign-extend and inject spurious 1-bits from the left.
+        n >>>= 1;
+    }
+    // After 32 rounds every original bit has migrated to its mirror position
+    return result;
+}`
+  },
+  {
+    num: 200, lc: 67, title: 'Add Binary', d: 'easy',
+    bucket: 'Math & Bit Manipulation', category: 'String · Binary Math',
+    url: 'https://leetcode.com/problems/add-binary/',
+    approach: 'Grade-school addition, but base 2 and worked right-to-left over the two input strings instead of two integers. Walk both strings from their last character toward the front with two pointers, at each step pulling out the current bit from each string (or 0 once a pointer has run past its string\'s start, since the two operands can have different lengths), summing those two bits plus the carry-in from the previous position, then emitting sum % 2 as the next output bit and carrying sum / 2 into the next position. The key insight is treating a missing digit as 0 rather than stopping the loop when one string is exhausted — that is what lets operands of unequal length line up correctly by their least-significant bit, exactly like aligning numbers on the right before adding by hand. The loop must also keep running for one extra step after both pointers pass position 0 whenever a carry is still sitting there, or a final 1 + 1 would silently drop a leading digit. Building the result with a StringBuilder and reversing once at the end avoids the O(n^2) cost of repeatedly prepending a character to an immutable String. Converting both strings to BigInteger, adding, and converting back would also work but is heavier than necessary and obscures the actual bit-carry mechanics an interviewer is checking for.',
+    complexity: 'O(n) time (n = max length) · O(n) space',
+    code: `// Worked trace for a = "11", b = "1":
+//
+//   i   j   bitA  bitB  carry(in)  sum  digit  carry(out)
+//   ────────────────────────────────────────────────────
+//   1   0    1     1        0       2     0        1
+//   0  -1    1     0        1       2     0        1
+//  -1  -2    0     0        1       1     1        0
+//
+// Digits emitted in order: 0, 0, 1 -> reverse -> "100"
+// Returns "100"
+
+public String addBinary(String a, String b) {
+  // Build the result back-to-front, then reverse once — avoids O(n^2) String prepends
+  StringBuilder result = new StringBuilder();
+  // Start both pointers at the last character of each string
+  int i = a.length() - 1;
+  int j = b.length() - 1;
+  // Carry from the previous (less significant) column
+  int carry = 0;
+  // Keep going while either string still has digits OR a carry is still pending —
+  // stopping as soon as one pointer runs out would drop digits from the longer string,
+  // and stopping as soon as both run out would drop a final carry like 1 + 1 = 10.
+  while (i >= 0 || j >= 0 || carry != 0) {
+    // Treat a digit past the start of its string as 0 so unequal-length operands
+    // still line up correctly by their least-significant bit.
+    int bitA = (i >= 0) ? a.charAt(i) - '0' : 0;
+    int bitB = (j >= 0) ? b.charAt(j) - '0' : 0;
+    int sum = bitA + bitB + carry;
+    // The output bit is the sum mod 2, exactly like decimal addition mod 10
+    result.append(sum % 2);
+    // Anything beyond one bit rolls into the carry for the next column
+    carry = sum / 2;
+    // Move both pointers one column to the left (toward more significant bits)
+    i--;
+    j--;
+  }
+  // Digits were appended least-significant-first, so reverse to restore normal order
+  return result.reverse().toString();
+}`
+  },
 ];
