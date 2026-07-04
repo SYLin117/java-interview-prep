@@ -88,7 +88,7 @@ public List<String> fizzBuzz(int n) {
 }`
   },
   {
-    num: 1, lc: 1, title: 'Two Sum', d: 'easy', companies: ['Garmin'],
+    num: 1, lc: 1, title: 'Two Sum', d: 'easy', companies: ['Temu', 'Garmin'],
     bucket: 'Arrays & Hashing', category: 'Array · Hash Map',
     url: 'https://leetcode.com/problems/two-sum/',
     approach: 'Complement hashing in a single pass. As you scan each element nums[i], the partner you need is complement = target - nums[i]; if that complement is already in a value→index hash map you have the pair and return both indices. Otherwise record this value and index so a LATER element can discover it as its own complement. Checking before inserting keeps the two indices distinct, so nothing pairs with itself; storing the index (not mere presence) lets it return positions. Each lookup and insert is amortized O(1), turning the O(n²) double loop into O(n) time, O(n) space.',
@@ -474,7 +474,7 @@ public List<String> decode(String s) {
 }`
   },
   {
-    num: 11, lc: 53, title: 'Maximum Subarray', d: 'medium', companies: ['Garmin'],
+    num: 11, lc: 53, title: 'Maximum Subarray', d: 'medium', companies: ['Temu', 'Garmin'],
     bucket: 'Arrays & Hashing', category: 'Array · DP (Kadane)',
     url: 'https://leetcode.com/problems/maximum-subarray/',
     approach: 'Kadane\'s algorithm — a one-pass dynamic program. Define current = the max sum of a subarray that must END at index i. The recurrence is current = max(nums[i], current + nums[i]): extending the previous run is worthwhile only while that run\'s sum stays positive; the moment it would drag nums[i] down, we discard it and restart fresh at nums[i]. \'best\' tracks the largest current ever seen, the global answer. Correct because any optimal subarray ends at some index, and current holds the best subarray ending there. Seeding both with nums[0] handles all-negative inputs (returns the least-negative element). Time O(n) one pass; space O(1), beating the O(n²) brute force.',
@@ -663,7 +663,7 @@ public int firstMissingPositive(int[] nums) {
 }`
   },
   {
-    num: 16, lc: 56, title: 'Merge Intervals', d: 'medium', companies: ['Garmin'],
+    num: 16, lc: 56, title: 'Merge Intervals', d: 'medium', companies: ['Temu', 'Garmin'],
     bucket: 'Arrays & Hashing', category: 'Array · Intervals',
     url: 'https://leetcode.com/problems/merge-intervals/',
     approach: 'Sort-and-sweep (greedy interval merging). Sort all intervals by start time so that any intervals which could overlap become adjacent; this is the key insight, because once sorted, a new interval can only overlap the most recently merged group, never an earlier one. Sweep left to right keeping a result list: if the current interval\'s start is beyond the last group\'s end there is no overlap, so append it as a new group; otherwise extend that group\'s end to max(lastEnd, curEnd) to absorb nested or partial overlaps. Sorting costs O(n log n) which dominates the single O(n) sweep; output uses O(n) space. Pitfall: take the max when extending, since a fully nested interval like [2,3] inside [1,10] must not shrink the end to 3.',
@@ -700,7 +700,7 @@ public int[][] merge(int[][] intervals) {
 }`
   },
   {
-    num: 17, lc: 54, title: 'Spiral Matrix', d: 'medium',
+    num: 17, lc: 54, title: 'Spiral Matrix', d: 'medium', companies: ['Temu'],
     bucket: 'Arrays & Hashing', category: 'Matrix',
     url: 'https://leetcode.com/problems/spiral-matrix/',
     approach: 'Boundary-shrinking simulation. Maintain four boundaries top, bottom, left, right that fence off the unvisited region. Each loop iteration peels one full ring: walk the top row left to right then increment top, walk the right column top to bottom then decrement right, walk the bottom row right to left then decrement bottom, walk the left column bottom to top then increment left. The two guards top ≤ bottom and left ≤ right before the bottom-row and left-column passes are essential, otherwise a single remaining row or column would be traversed twice in non-square matrices. Every cell is added exactly once, giving O(m·n) time and O(1) extra space beyond the output. It cleanly handles single-row and single-column inputs without special cases thanks to those mid-loop boundary checks.',
@@ -746,7 +746,7 @@ public List<Integer> spiralOrder(int[][] matrix) {
 }`
   },
   {
-    num: 18, lc: 48, title: 'Rotate Image', d: 'medium',
+    num: 18, lc: 48, title: 'Rotate Image', d: 'medium', companies: ['Temu'],
     bucket: 'Arrays & Hashing', category: 'Matrix',
     url: 'https://leetcode.com/problems/rotate-image/',
     approach: 'Transpose-then-reverse, an in-place two-step rotation. The insight is that a 90° clockwise rotation decomposes into two simple operations: first transpose the matrix (swap element [i][j] with [j][i], which reflects across the main diagonal), then reverse each row (which mirrors left-right). Composing a diagonal reflection with a horizontal reflection yields exactly a 90° clockwise turn. The transpose only swaps the upper triangle (j starts at i+1) so no swap is undone, and the row reversals are independent, so both steps run in O(n²) time using O(1) extra space — no second matrix needed. Pitfall: looping j over the full row instead of just j > i would swap each pair twice and leave the matrix unchanged.',
@@ -2307,7 +2307,7 @@ public boolean checkInclusion(String s1, String s2) {
 }`
   },
   {
-    num: 30, lc: 560, title: 'Subarray Sum Equals K', d: 'medium',
+    num: 30, lc: 560, title: 'Subarray Sum Equals K', d: 'medium', companies: ['Temu'],
     bucket: 'Sliding Window', category: 'Array · Prefix Sum · Hash Map',
     url: 'https://leetcode.com/problems/subarray-sum-equals-k/',
     approach: 'Prefix sums plus a hash map of counts. A subarray (j, i] sums to k exactly when prefix[i] − prefix[j] = k, i.e. prefix[j] = prefix[i] − k. So as we sweep left to right maintaining the running prefix sum, the number of valid subarrays ending at i is how many earlier prefixes equal (sum − k); we look that up in O(1) and add it, then record the current prefix. Seeding the map with {0: 1} accounts for subarrays starting at index 0. One pass gives O(n) time and O(n) space. The hash map is essential because negative numbers break the monotonic sliding window — the two-pointer shrink trick does not apply, whereas this method handles negatives cleanly and beats the O(n²) pair scan.',
@@ -2338,7 +2338,7 @@ public int subarraySum(int[] nums, int k) {
 }`
   },
   {
-    num: 31, lc: 239, title: 'Sliding Window Maximum', d: 'hard',
+    num: 31, lc: 239, title: 'Sliding Window Maximum', d: 'hard', companies: ['Temu'],
     bucket: 'Sliding Window', category: 'Monotonic Deque',
     url: 'https://leetcode.com/problems/sliding-window-maximum/',
     approach: 'Monotonic decreasing deque holding INDICES, not values. The invariant is that values at the stored indices strictly decrease from front to back, so the front index is always the maximum of the current window. For each i: first evict the front if it has slid out of the window (index ≤ i − k); then pop from the back every index whose value is less than nums[i], because a newer, larger element makes them irrelevant for all future windows; finally push i. Once the first window is complete (i ≥ k − 1) read the front as that window\'s max. Each index is pushed and popped at most once, so O(n) time and O(k) space — far better than O(n·k) re-scanning or an O(n log k) heap.',
@@ -2691,7 +2691,7 @@ public int largestRectangleArea(int[] heights) {
 }`
   },
   {
-    num: 37, lc: 394, title: 'Decode String', d: 'medium',
+    num: 37, lc: 394, title: 'Decode String', d: 'medium', companies: ['Temu'],
     bucket: 'Stack', category: 'String',
     url: 'https://leetcode.com/problems/decode-string/',
     approach: 'Two parallel stacks (counts + prefix-strings) plus a running buffer. Walk the input one char at a time: digits build the current count (shift-and-add for multi-digit numbers); "[" snapshots the count + prefix-so-far onto the stacks and resets the inner state to empty; "]" pops the matching count and prefix and appends the inner segment that many times to the prefix; letters extend the current buffer. The dual stacks naturally handle arbitrary nesting because each "[" pushes a frame and each "]" pops back to the parent level. Time is O(n times max_k) for building the output and space is O(depth) for the stack frames.',
@@ -3123,7 +3123,7 @@ public double findMedianSortedArrays(int[] a, int[] b) {
 }`
   },
   {
-    num: 43, lc: 50, title: 'Pow(x, n)', d: 'medium',
+    num: 43, lc: 50, title: 'Pow(x, n)', d: 'medium', companies: ['Temu'],
     bucket: 'Binary Search', category: 'Math · Fast Exponentiation',
     url: 'https://leetcode.com/problems/powx-n/',
     approach: 'Fast exponentiation by squaring (binary exponentiation). Writing n in binary, x^n is the product of x^(2^k) over the bit positions k that are set, so you only need log n multiplications instead of n. Iterate over the bits of |n|: each step squares x (advancing x to the next power of two) and, when the current low bit is 1, multiplies it into the result. Negative exponents invert x and negate n. The key pitfall is Integer.MIN_VALUE, whose negation overflows int — promoting n to long before negating avoids that. Total cost is O(log n) time and O(1) space, beating the naive O(n) repeated-multiply loop.',
@@ -3450,7 +3450,7 @@ public ListNode reverseList(ListNode head) {
 }`
   },
   {
-    num: 45, lc: 21, title: 'Merge Two Sorted Lists', d: 'easy',
+    num: 45, lc: 21, title: 'Merge Two Sorted Lists', d: 'easy', companies: ['Temu'],
     bucket: 'Linked List', category: 'Two Pointers',
     url: 'https://leetcode.com/problems/merge-two-sorted-lists/',
     approach: 'Two-pointer merge with a dummy head. The dummy sentinel removes the special case of choosing the very first node: a tail pointer always has somewhere to append. Each step compares the two current heads and splices the smaller one onto the tail, advancing only that list — picking with a non-strict ≤ keeps the merge stable when values tie. When one list is exhausted the other is, by assumption, already sorted, so you attach its entire remainder in O(1) instead of walking it. Total work is O(n+m) time and O(1) extra space since nodes are relinked in place; dummy.next skips the sentinel to give the real head.',
@@ -3751,7 +3751,7 @@ public int findDuplicate(int[] nums) {
 }`
   },
   {
-    num: 53, lc: 146, title: 'LRU Cache', d: 'medium',
+    num: 53, lc: 146, title: 'LRU Cache', d: 'medium', companies: ['Temu'],
     bucket: 'Linked List', category: 'Design',
     url: 'https://leetcode.com/problems/lru-cache/',
     approach: 'Hash map plus doubly-linked list ordered by recency, here obtained for free by subclassing LinkedHashMap in access-order mode. The map gives O(1) key lookup while the linked list records usage order; constructing the parent with accessOrder=true makes every get() and put() relink the touched entry to the most-recent end, so the head is always the least-recently-used candidate. Overriding removeEldestEntry to return size() > capacity lets the library evict that head automatically right after each insertion, preserving the size bound. Every operation is O(1) amortized because hashing and list relinking are constant work, and space is O(capacity). The hand-rolled alternative wires the same hash-map-plus-linked-list by hand, which is more code for identical behavior.',
@@ -3792,7 +3792,7 @@ class LRUCache extends LinkedHashMap<Integer, Integer> {
 }`
   },
   {
-    num: 54, lc: 148, title: 'Sort List', d: 'medium',
+    num: 54, lc: 148, title: 'Sort List', d: 'medium', companies: ['Temu'],
     bucket: 'Linked List', category: 'Merge Sort',
     url: 'https://leetcode.com/problems/sort-list/',
     approach: 'Top-down merge sort adapted to linked lists, which suits them because splitting and merging only require pointer relinking, never random indexing. Each call splits the list into two near-equal halves with the slow/fast (tortoise & hare) technique, severing the link after slow so the two halves become independent lists. It recursively sorts each half, then merges them with a dummy-headed two-pointer walk that always splices the smaller front node, guaranteeing a stable ascending order. The recursion depth is log n and each of those levels does O(n) merge work, giving O(n log n) time; space is O(log n) for the call stack rather than the O(n) buffers an array merge sort needs. A subtle pitfall is forgetting to set prev.next = null, which leaves the halves entangled and loops forever.',
@@ -4480,7 +4480,7 @@ public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
 }`
   },
   {
-    num: 67, lc: 105, title: 'Construct Binary Tree from Preorder and Inorder', d: 'medium',
+    num: 67, lc: 105, title: 'Construct Binary Tree from Preorder and Inorder', d: 'medium', companies: ['Temu'],
     bucket: 'Trees', category: 'Recursion',
     url: 'https://leetcode.com/problems/construct-binary-tree-from-preorder-and-inorder-traversal/',
     approach: 'Recursive divide-and-conquer driven by the two traversal orders. Preorder visits root first, so consuming its entries left to right always hands us the next subtree\'s root; a shared preIdx pointer advances through preorder in exactly that order. Inorder lists left-subtree values, root, then right-subtree values, so locating the root inside inorder splits the remaining range into the left and right spans we recurse into. The one subtlety is order: build the LEFT child first so preIdx consumes preorder\'s left block before the right. A HashMap from value to inorder index makes each root lookup O(1), giving O(n) time and space; without it, scanning inorder each time degrades to O(n²).',
@@ -4635,7 +4635,7 @@ private TreeNode deserializeHelper(Deque<String> tokens) {
 }`
   },
   {
-    num: 70, lc: 236, title: 'Lowest Common Ancestor of a Binary Tree', d: 'medium',
+    num: 70, lc: 236, title: 'Lowest Common Ancestor of a Binary Tree', d: 'medium', companies: ['Temu'],
     bucket: 'Trees', category: 'Recursion',
     url: 'https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-tree/',
     approach: 'Single post-order DFS that returns a \'found\' signal up the call stack. Base case: a null subtree finds nothing, and hitting p or q returns that node as the signal. For an internal node, recurse into both children. The crux: if the left recursion returns non-null AND the right recursion returns non-null, then p and q were located in DIFFERENT subtrees, so the current node is the lowest node that contains both — return it as the LCA. If only one side is non-null, bubble that result upward; it represents either a single target or an already-found LCA from deeper down. The self-descendant case falls out naturally because matching p or q returns immediately before descending. One pass, O(n) time, O(h) stack.',
@@ -4674,7 +4674,7 @@ public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
 }`
   },
   {
-    num: 71, lc: 543, title: 'Diameter of Binary Tree', d: 'easy',
+    num: 71, lc: 543, title: 'Diameter of Binary Tree', d: 'easy', companies: ['Temu'],
     bucket: 'Trees', category: 'DFS',
     url: 'https://leetcode.com/problems/diameter-of-binary-tree/',
     approach: 'Post-order DFS where each call returns the subtree\'s height in edges while a global \'diameter\' is updated as a side effect. The insight is that the longest path bending at any node equals leftDepth + rightDepth (the edge counts down each side meeting at that node), so by testing this U-shape at every node we are guaranteed to consider the true diameter wherever it lies. What we return to the parent is different — 1 + max(left, right) — because the parent can only extend through one branch, not fork into both. Computing height and updating the answer in the same traversal avoids the naive O(n^2) of recomputing depth at each node. One pass gives O(n) time and O(h) recursion-stack space.',
@@ -7264,7 +7264,7 @@ public int climbStairs(int n) {
 }`
   },
   {
-    num: 96, lc: 198, title: 'House Robber', d: 'medium',
+    num: 96, lc: 198, title: 'House Robber', d: 'medium', companies: ['Temu'],
     bucket: 'Dynamic Programming - 1D', category: 'DP',
     url: 'https://leetcode.com/problems/house-robber/',
     approach: 'One-dimensional dynamic programming. For each house you make a binary choice: skip it and keep the best total through the previous house, or rob it and add its loot to the best total through the house two positions back (skipping the immediate neighbor to respect the no-adjacent rule). That gives dp[i] = max(dp[i−1], dp[i−2] + nums[i]); the max guarantees optimality because both feasible options are considered at every step. Each state only needs the two prior results, so two rolling variables replace the array — O(n) time, O(1) space. A greedy \x27take every other house\x27 heuristic fails (e.g. [2,1,1,2]), which is why DP is required.',

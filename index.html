@@ -765,7 +765,7 @@
   .lc-company-pill {
     display: inline-block;
     padding: 0.08rem 0.4rem;
-    background: #006cb7;     /* Garmin blue */
+    background: #64748b;     /* neutral fallback for any future company */
     color: white;
     font-size: 0.62rem;
     font-weight: 700;
@@ -774,6 +774,8 @@
     text-transform: uppercase;
     line-height: 1.2;
   }
+  .lc-company-pill[data-company="garmin"] { background: #006cb7; }  /* Garmin blue */
+  .lc-company-pill[data-company="temu"]   { background: #ff6b1a; }  /* Temu orange */
   /* ─── Sticky filter bar (wraps the chips on both Topics + LeetCode views) ─── */
   .filter-bar {
     position: sticky;
@@ -1161,7 +1163,7 @@
     </div>
     <div class="view-toggle" role="tablist" aria-label="Section">
       <button class="view-btn active" data-view="topics" role="tab" aria-selected="true">Topics</button>
-      <button class="view-btn" data-view="leetcode" role="tab" aria-selected="false">LeetCode 110</button>
+      <button class="view-btn" data-view="leetcode" role="tab" aria-selected="false">LeetCode 200</button>
       <button class="view-btn" data-view="behavioral" role="tab" aria-selected="false">Garmin Behavioral</button>
     </div>
     <div class="search-box">
@@ -1225,7 +1227,8 @@
       math &amp; bit manipulation. Each problem links to LeetCode and ships with
       an approach hint, time/space complexity, and a clean commented Java
       solution. Problems frequently asked at
-      <strong style="color:#006cb7">Garmin</strong> are tagged for quick lookup.
+      <strong style="color:#006cb7">Garmin</strong> or
+      <strong style="color:#ff6b1a">Temu</strong> are tagged for quick lookup.
     </p>
   </section>
 
@@ -1484,7 +1487,7 @@
         <div class="lc-diff ${p.d}"><span class="pill">${p.d}</span></div>
         <div class="lc-title">${escapeHtml(p.title)}${
           p.companies && p.companies.length
-            ? `<span class="lc-companies">${p.companies.map(c => `<span class="lc-company-pill">${escapeHtml(c)}</span>`).join('')}</span>`
+            ? `<span class="lc-companies">${p.companies.map(c => `<span class="lc-company-pill" data-company="${escapeHtml(c).toLowerCase()}">${escapeHtml(c)}</span>`).join('')}</span>`
             : ''
         }</div>
         <div class="lc-cat-cell">${escapeHtml(p.category)}</div>
