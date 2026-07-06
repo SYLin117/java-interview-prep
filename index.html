@@ -907,6 +907,20 @@
     margin-right: 0.3rem;
     flex-shrink: 0;
   }
+  .lc-select {
+    font-family: inherit;
+    font-size: 0.8rem;
+    color: var(--text);
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 0.35rem 0.5rem;
+    cursor: pointer;
+    max-width: 240px;
+    transition: border-color 0.12s;
+  }
+  .lc-select:hover { border-color: var(--accent); }
+  .lc-select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   .lc-chip {
     display: inline-block;
     padding: 0.3rem 0.7rem;
@@ -2054,25 +2068,27 @@
   }
   const lcCompanies = Object.keys(companyTotals).sort();
 
-  let chipsHTML = `
+  let filtersHTML = `
     <div class="lc-filter-row">
-      <span class="lc-filter-label">Category</span>
-      <button class="lc-chip active" data-bucket="">All<span class="lc-chip-count">${leetcode.length}</span></button>`;
+      <label class="lc-filter-label" for="lc-cat-select">Category</label>
+      <select id="lc-cat-select" class="lc-select" data-filter="bucket" aria-label="Filter by category">
+        <option value="">All (${leetcode.length})</option>`;
   for (const b of lcBuckets) {
-    chipsHTML += `<button class="lc-chip" data-bucket="${escapeHtml(b).toLowerCase()}">${escapeHtml(b)}<span class="lc-chip-count">${bucketTotals[b]}</span></button>`;
+    filtersHTML += `<option value="${escapeHtml(b).toLowerCase()}">${escapeHtml(b)} (${bucketTotals[b]})</option>`;
   }
-  chipsHTML += `</div>`;
+  filtersHTML += `</select>`;
   if (lcCompanies.length) {
-    chipsHTML += `
-      <div class="lc-filter-row">
-        <span class="lc-filter-label">Tag</span>
-        <button class="lc-chip active" data-company="">All</button>`;
+    filtersHTML += `
+      <label class="lc-filter-label" for="lc-tag-select">Tag</label>
+      <select id="lc-tag-select" class="lc-select" data-filter="company" aria-label="Filter by tag">
+        <option value="">All</option>`;
     for (const c of lcCompanies) {
-      chipsHTML += `<button class="lc-chip lc-chip-company" data-company="${escapeHtml(c).toLowerCase()}">${escapeHtml(c)}<span class="lc-chip-count">${companyTotals[c]}</span></button>`;
+      filtersHTML += `<option value="${escapeHtml(c).toLowerCase()}">${escapeHtml(c)} (${companyTotals[c]})</option>`;
     }
-    chipsHTML += `</div>`;
+    filtersHTML += `</select>`;
   }
-  lcFiltersEl.innerHTML = chipsHTML;
+  filtersHTML += `</div>`;
+  lcFiltersEl.innerHTML = filtersHTML;
 
   // Filter state — all three dimensions compose via AND
   let lcActiveBucket  = null;
@@ -2101,21 +2117,12 @@
     });
   }
 
-  // Chip clicks — delegate via the container
-  lcFiltersEl.addEventListener('click', (e) => {
-    const chip = e.target.closest('.lc-chip');
-    if (!chip) return;
-    if (chip.dataset.bucket !== undefined) {
-      lcActiveBucket = chip.dataset.bucket || null;
-      lcFiltersEl.querySelectorAll('.lc-chip[data-bucket]').forEach(c => {
-        c.classList.toggle('active', (c.dataset.bucket || null) === lcActiveBucket);
-      });
-    } else if (chip.dataset.company !== undefined) {
-      lcActiveCompany = chip.dataset.company || null;
-      lcFiltersEl.querySelectorAll('.lc-chip[data-company]').forEach(c => {
-        c.classList.toggle('active', (c.dataset.company || null) === lcActiveCompany);
-      });
-    }
+  // Dropdown changes — category + tag (delegated on the container)
+  lcFiltersEl.addEventListener('change', (e) => {
+    const sel = e.target.closest('select[data-filter]');
+    if (!sel) return;
+    if (sel.dataset.filter === 'bucket') lcActiveBucket = sel.value || null;
+    else if (sel.dataset.filter === 'company') lcActiveCompany = sel.value || null;
     applyLcFilters();
   });
 
