@@ -1481,12 +1481,13 @@
   const topicFiltersEl = document.getElementById('topic-filters');
   let topicChipsHTML = `
     <div class="lc-filter-row">
-      <span class="lc-filter-label">Topic</span>
-      <button class="lc-chip active" data-topic="">All<span class="lc-chip-count">${allTopics.length}</span></button>`;
+      <label class="lc-filter-label" for="topic-select">Topic</label>
+      <select id="topic-select" class="lc-select" aria-label="Filter by topic">
+        <option value="">All (${allTopics.length})</option>`;
   allTopics.forEach((t) => {
-    topicChipsHTML += `<button class="lc-chip" data-topic="${t.id}">${escapeHtml(t.name)}<span class="lc-chip-count">${t.questions.length}</span></button>`;
+    topicChipsHTML += `<option value="${escapeHtml(t.id)}">${escapeHtml(t.name)} (${t.questions.length})</option>`;
   });
-  topicChipsHTML += `</div>`;
+  topicChipsHTML += `</select></div>`;
   topicFiltersEl.innerHTML = topicChipsHTML;
 
   const content = document.getElementById('content');
@@ -1568,25 +1569,25 @@
     });
   }
 
-  // Chip click delegation — switch active and re-apply
-  topicFiltersEl.addEventListener('click', (e) => {
-    const chip = e.target.closest('.lc-chip');
-    if (!chip) return;
-    activeTopic = chip.dataset.topic || null;
-    topicFiltersEl.querySelectorAll('.lc-chip').forEach(c => {
-      c.classList.toggle('active', (c.dataset.topic || null) === activeTopic);
-    });
+  // Dropdown change — switch active topic and re-apply
+  topicFiltersEl.addEventListener('change', (e) => {
+    const sel = e.target.closest('#topic-select');
+    if (!sel) return;
+    activeTopic = sel.value || null;
     applyTopicsFilters();
     window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
   });
 
-  // If the page loads with a topic hash, activate that chip
+  // If the page loads with a topic hash, select that topic in the dropdown
   function activateTopicChipFromHash() {
     const id = location.hash.slice(1);
     if (!id) return false;
-    const chip = topicFiltersEl.querySelector(`.lc-chip[data-topic="${CSS.escape(id)}"]`);
-    if (!chip) return false;
-    chip.click();
+    const sel = topicFiltersEl.querySelector('#topic-select');
+    if (!sel || !sel.querySelector(`option[value="${CSS.escape(id)}"]`)) return false;
+    sel.value = id;
+    activeTopic = id;
+    applyTopicsFilters();
+    window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
     return true;
   }
   activateTopicChipFromHash();
@@ -2185,18 +2186,16 @@
     // Category filter chips
     if (bFilters) {
       const cats = [...new Set(behavioral.map(c => c.category))];
-      let chipsHTML = `<div class="lc-filter-row"><span class="lc-filter-label">Category</span>` +
-        `<button class="lc-chip active" data-category="">All</button>`;
+      let chipsHTML = `<div class="lc-filter-row"><label class="lc-filter-label" for="behavioral-select">Category</label>` +
+        `<select id="behavioral-select" class="lc-select" aria-label="Filter by category"><option value="">All</option>`;
       cats.forEach(c => {
-        chipsHTML += `<button class="lc-chip" data-category="${escapeHtml(c).toLowerCase()}">${escapeHtml(c)}</button>`;
+        chipsHTML += `<option value="${escapeHtml(c).toLowerCase()}">${escapeHtml(c)}</option>`;
       });
-      bFilters.innerHTML = chipsHTML + `</div>`;
-      bFilters.addEventListener('click', (e) => {
-        const chip = e.target.closest('.lc-chip');
-        if (!chip) return;
-        activeBehavioralCategory = chip.dataset.category || null;
-        bFilters.querySelectorAll('.lc-chip').forEach(c =>
-          c.classList.toggle('active', (c.dataset.category || null) === activeBehavioralCategory));
+      bFilters.innerHTML = chipsHTML + `</select></div>`;
+      bFilters.addEventListener('change', (e) => {
+        const sel = e.target.closest('#behavioral-select');
+        if (!sel) return;
+        activeBehavioralCategory = sel.value || null;
         applyBehavioralFilters();
       });
     }
@@ -2306,18 +2305,16 @@
 
     // Concept-theme filter chips
     if (sdFilters) {
-      let chipsHTML = `<div class="lc-filter-row"><span class="lc-filter-label">Topic</span>` +
-        `<button class="lc-chip active" data-category="">All<span class="lc-chip-count">${systemDesignThemes.length}</span></button>`;
+      let chipsHTML = `<div class="lc-filter-row"><label class="lc-filter-label" for="sd-select">Topic</label>` +
+        `<select id="sd-select" class="lc-select" aria-label="Filter by topic"><option value="">All (${systemDesignThemes.length})</option>`;
       systemDesignThemes.forEach(t => {
-        chipsHTML += `<button class="lc-chip" data-category="${escapeHtml(t.id)}">${t.icon} ${escapeHtml(t.title)}<span class="lc-chip-count">${t.questions.length}</span></button>`;
+        chipsHTML += `<option value="${escapeHtml(t.id)}">${t.icon} ${escapeHtml(t.title)} (${t.questions.length})</option>`;
       });
-      sdFilters.innerHTML = chipsHTML + `</div>`;
-      sdFilters.addEventListener('click', (e) => {
-        const chip = e.target.closest('.lc-chip');
-        if (!chip) return;
-        activeSdCategory = chip.dataset.category || null;
-        sdFilters.querySelectorAll('.lc-chip').forEach(c =>
-          c.classList.toggle('active', (c.dataset.category || null) === activeSdCategory));
+      sdFilters.innerHTML = chipsHTML + `</select></div>`;
+      sdFilters.addEventListener('change', (e) => {
+        const sel = e.target.closest('#sd-select');
+        if (!sel) return;
+        activeSdCategory = sel.value || null;
         applySystemDesignFilters();
       });
     }
