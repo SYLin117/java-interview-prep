@@ -246,6 +246,11 @@ public List<List<String>> groupAnagrams(String[] strs) {
     String key = new String(chars);
     // computeIfAbsent lazily creates the bucket if first time seeing this key,
     // then we add the ORIGINAL (unsorted) string to it.
+    // LAMBDA (mapping Function): k -> new ArrayList<>() is the factory
+    // computeIfAbsent invokes ONLY when 'key' is absent; its return value becomes
+    // the new bucket. Without the lambda:
+    //   if (!groups.containsKey(key)) groups.put(key, new ArrayList<>());
+    //   groups.get(key).add(s);
     groups.computeIfAbsent(key, k -> new ArrayList<>()).add(s);
   }
   // The buckets themselves are the answer; keys are no longer needed
@@ -272,6 +277,10 @@ public List<List<String>> groupAnagrams(String[] strs) {
 public int[] topKFrequent(int[] nums, int k) {
   // Step 1: count frequencies — how many times each value appears
   Map<Integer, Integer> freq = new HashMap<>();
+  // METHOD REFERENCE (lambda shorthand): Integer::sum means (a, b) -> a + b — the
+  // remap function merge() applies when the key already exists (else it stores 1).
+  // Without it:
+  //   freq.put(n, freq.getOrDefault(n, 0) + 1);
   for (int n : nums) freq.merge(n, 1, Integer::sum);
 
   // Step 2: bucket-sort by frequency. buckets[f] holds all numbers occurring f times.
@@ -683,6 +692,12 @@ public int firstMissingPositive(int[] nums) {
 
 public int[][] merge(int[][] intervals) {
   // Sort by start time — overlapping intervals will be adjacent afterward
+  // LAMBDA (Comparator): (a, b) -> a[0] - b[0] IS the compare(a, b) body — a
+  // negative result means a comes before b, so this sorts by start ascending.
+  // Without the lambda you'd pass an anonymous class:
+  //   Arrays.sort(intervals, new Comparator<int[]>() {
+  //     public int compare(int[] a, int[] b) { return a[0] - b[0]; }
+  //   });
   Arrays.sort(intervals, (a, b) -> a[0] - b[0]);
   List<int[]> merged = new ArrayList<>();
   for (int[] cur : intervals) {
@@ -1576,6 +1591,12 @@ public int maxEqualRowsAfterFlips(int[][] matrix) {
     }
     // merge returns the bucket's new size, so the running max updates inline —
     // no second pass over the map needed at the end
+    // METHOD REFERENCE (lambda shorthand): Integer::sum means (a, b) -> a + b — the
+    // remap function merge() applies when the key exists (else it inserts 1).
+    // Without it:
+    //   int v = count.getOrDefault(key.toString(), 0) + 1;
+    //   count.put(key.toString(), v);
+    //   best = Math.max(best, v);
     best = Math.max(best, count.merge(key.toString(), 1, Integer::sum));
   }
   // Largest complement-class wins; always >= 1 because a lone row is trivially
@@ -2332,6 +2353,10 @@ public int subarraySum(int[] nums, int k) {
     sum += n;              // running prefix sum up to and including this element
     // Each earlier prefix equal to (sum - k) gives one valid subarray ending at this index
     count += prefixCount.getOrDefault(sum - k, 0);
+    // METHOD REFERENCE (lambda shorthand): Integer::sum means (a, b) -> a + b — the
+    // remap function merge() applies when 'sum' is already a key (else it stores 1).
+    // Without it:
+    //   prefixCount.put(sum, prefixCount.getOrDefault(sum, 0) + 1);
     prefixCount.merge(sum, 1, Integer::sum);   // record this prefix for future lookups
   }
   return count;
@@ -3576,6 +3601,12 @@ public ListNode removeNthFromEnd(ListNode head, int n) {
 
 public ListNode mergeKLists(ListNode[] lists) {
   // Heap holds at most k nodes at any time — one current head per list
+  // LAMBDA (Comparator): (a, b) -> a.val - b.val IS the compare(a, b) body — a
+  // negative result orders a before b, making this a MIN-heap by node value.
+  // Without the lambda:
+  //   new PriorityQueue<>(new Comparator<ListNode>() {
+  //     public int compare(ListNode a, ListNode b) { return a.val - b.val; }
+  //   });
   PriorityQueue<ListNode> heap = new PriorityQueue<>((a, b) -> a.val - b.val);
   // Seed with the head of each non-empty list (skip nulls)
   for (ListNode l : lists) if (l != null) heap.offer(l);
@@ -5050,6 +5081,11 @@ public List<List<Integer>> verticalOrder(TreeNode root) {
     int col = (int) entry[1];
     // Appending here (not overwriting) is what accumulates every node that
     // shares a column; BFS order guarantees shallower rows are appended first.
+    // LAMBDA (mapping Function): k -> new ArrayList<>() is the factory
+    // computeIfAbsent invokes ONLY when 'col' is absent; its return becomes the
+    // new list. Without the lambda:
+    //   if (!columns.containsKey(col)) columns.put(col, new ArrayList<>());
+    //   columns.get(col).add(node.val);
     columns.computeIfAbsent(col, k -> new ArrayList<>()).add(node.val);
     // Left shifts the column left, right shifts it right — this is the whole
     // definition of "vertical column" for this problem.
@@ -5480,6 +5516,12 @@ class MedianFinder {
 public int kthSmallest(int[][] matrix, int k) {
   int n = matrix.length;
   // Heap entry: [value, row, col]. Sort by value.
+  // LAMBDA (Comparator): (a, b) -> a[0] - b[0] IS the compare(a, b) body — a
+  // negative result orders a before b, so this is a MIN-heap by entry[0] (value).
+  // Without the lambda:
+  //   new PriorityQueue<>(new Comparator<int[]>() {
+  //     public int compare(int[] a, int[] b) { return a[0] - b[0]; }
+  //   });
   PriorityQueue<int[]> heap = new PriorityQueue<>((a, b) -> a[0] - b[0]);
   // Seed with the first column — these are the smallest candidate per row
   // (cap at k rows: rows beyond k can never hold the kth smallest)
@@ -5519,6 +5561,12 @@ public String reorganizeString(String s) {
   int[] count = new int[26];
   for (char c : s.toCharArray()) count[c - 'a']++;
   // Max-heap keyed by remaining count: always serve the most-frequent char first
+  // LAMBDA (Comparator): (a, b) -> b[1] - a[1] flips the operands (b before a), so
+  // a LARGER count[1] sorts first — that reversal is what makes this a MAX-heap.
+  // Without the lambda:
+  //   new PriorityQueue<>(new Comparator<int[]>() {
+  //     public int compare(int[] a, int[] b) { return b[1] - a[1]; }
+  //   });
   PriorityQueue<int[]> heap = new PriorityQueue<>((a, b) -> b[1] - a[1]);
   for (int i = 0; i < 26; i++) if (count[i] > 0) heap.offer(new int[]{ i, count[i] });
 
@@ -5558,6 +5606,14 @@ public String reorganizeString(String s) {
 public int[][] kClosest(int[][] points, int k) {
   // Max-heap ordered by squared distance, so the FARTHEST of our k-closest sits at the root
   // ready to be evicted the moment a closer point shows up.
+  // LAMBDA (Comparator): (a, b) -> distSq(b) - distSq(a) lists the operands b-then-a,
+  // so the point with the LARGER squared distance sorts first — a MAX-heap by distance.
+  // Without the lambda:
+  //   new PriorityQueue<>(new Comparator<int[]>() {
+  //     public int compare(int[] a, int[] b) {
+  //       return (b[0]*b[0] + b[1]*b[1]) - (a[0]*a[0] + a[1]*a[1]);
+  //     }
+  //   });
   PriorityQueue<int[]> maxHeap = new PriorityQueue<>(
     (a, b) -> (b[0] * b[0] + b[1] * b[1]) - (a[0] * a[0] + a[1] * a[1])
   );
@@ -5697,6 +5753,11 @@ public int[][] highFive(int[][] items) {
   for (int[] item : items) {
     int id = item[0], score = item[1];
     // Lazily create this student's heap on first sight of their id
+    // LAMBDA (mapping Function): k -> new PriorityQueue<>() is the factory
+    // computeIfAbsent invokes ONLY when 'id' is absent; its return becomes the value.
+    // Without the lambda:
+    //   PriorityQueue<Integer> heap = topFive.get(id);
+    //   if (heap == null) { heap = new PriorityQueue<>(); topFive.put(id, heap); }
     PriorityQueue<Integer> heap = topFive.computeIfAbsent(id, k -> new PriorityQueue<>());
     heap.offer(score);
     // Once a 6th score arrives, drop the smallest — heap always holds the top 5
@@ -6767,6 +6828,12 @@ public int[][] matrixRankTransform(int[][] matrix) {
   int m = matrix.length, n = matrix[0].length;
   // Bucket every cell by value, ascending, so smallest values get the lower ranks
   TreeMap<Integer, List<int[]>> byValue = new TreeMap<>();
+  // LAMBDA (mapping Function): x -> new ArrayList<>() is the factory computeIfAbsent
+  // invokes ONLY when this value is absent; its return becomes the new list.
+  // Without the lambda:
+  //   List<int[]> list = byValue.get(matrix[i][j]);
+  //   if (list == null) { list = new ArrayList<>(); byValue.put(matrix[i][j], list); }
+  //   list.add(new int[]{i, j});
   for (int i = 0; i < m; i++)
     for (int j = 0; j < n; j++)
       byValue.computeIfAbsent(matrix[i][j], x -> new ArrayList<>()).add(new int[]{i, j});
@@ -6831,6 +6898,12 @@ private void union(int[] p, int a, int b) { p[find(p, a)] = find(p, b); }`
 public int networkDelayTime(int[][] times, int n, int k) {
   // Adjacency list: u → list of {v, weight}
   Map<Integer, List<int[]>> graph = new HashMap<>();
+  // LAMBDA (mapping Function): x -> new ArrayList<>() is the factory computeIfAbsent
+  // invokes ONLY when t[0] is absent; its return becomes the new adjacency list.
+  // Without the lambda:
+  //   List<int[]> adj = graph.get(t[0]);
+  //   if (adj == null) { adj = new ArrayList<>(); graph.put(t[0], adj); }
+  //   adj.add(new int[]{ t[1], t[2] });
   for (int[] t : times)
     graph.computeIfAbsent(t[0], x -> new ArrayList<>()).add(new int[]{ t[1], t[2] });
 
@@ -6839,6 +6912,12 @@ public int networkDelayTime(int[][] times, int n, int k) {
   Arrays.fill(dist, Integer.MAX_VALUE);
   dist[k] = 0;
   // Min-heap keyed by current best distance → always expand the closest node
+  // LAMBDA (Comparator): (a, b) -> a[1] - b[1] IS the compare(a, b) body — a
+  // negative result orders a before b, so this is a MIN-heap by entry[1] (distance).
+  // Without the lambda:
+  //   new PriorityQueue<>(new Comparator<int[]>() {
+  //     public int compare(int[] a, int[] b) { return a[1] - b[1]; }
+  //   });
   PriorityQueue<int[]> pq = new PriorityQueue<>((a, b) -> a[1] - b[1]);
   pq.offer(new int[]{ k, 0 });
 
@@ -6890,6 +6969,12 @@ public int networkDelayTime(int[][] times, int n, int k) {
 public List<String> findItinerary(List<List<String>> tickets) {
   // Per-airport min-heap of destinations → lexicographically smallest pick is free
   Map<String, PriorityQueue<String>> graph = new HashMap<>();
+  // LAMBDA (mapping Function): k -> new PriorityQueue<>() is the factory computeIfAbsent
+  // invokes ONLY when the source airport is absent; its return becomes the new heap.
+  // Without the lambda:
+  //   PriorityQueue<String> dests = graph.get(t.get(0));
+  //   if (dests == null) { dests = new PriorityQueue<>(); graph.put(t.get(0), dests); }
+  //   dests.offer(t.get(1));
   for (List<String> t : tickets)
     graph.computeIfAbsent(t.get(0), k -> new PriorityQueue<>()).offer(t.get(1));
 
@@ -7197,6 +7282,12 @@ public int minOperations(int n, int m) {
   Map<Integer, Integer> dist = new HashMap<>();
   dist.put(n, n);
   // Min-heap keyed by accumulated cost so far — Dijkstra's greedy pick of "closest" node
+  // LAMBDA (Comparator): (a, b) -> a[0] - b[0] IS the compare(a, b) body — a
+  // negative result orders a before b, so this is a MIN-heap by entry[0] (cost).
+  // Without the lambda:
+  //   new PriorityQueue<>(new Comparator<int[]>() {
+  //     public int compare(int[] a, int[] b) { return a[0] - b[0]; }
+  //   });
   PriorityQueue<int[]> pq = new PriorityQueue<>((a, b) -> a[0] - b[0]);
   pq.offer(new int[]{ n, n });
 
@@ -8135,6 +8226,12 @@ public int minimumCost(int[] cost) {
 public int maxEvents(int[][] events) {
   // Sort by start day so the day-by-day sweep can push events onto the heap
   // exactly when they become attendable, never before.
+  // LAMBDA (Comparator): (a, b) -> a[0] - b[0] IS the compare(a, b) body — a
+  // negative result means a comes before b, so events sort by start day ascending.
+  // Without the lambda:
+  //   Arrays.sort(events, new Comparator<int[]>() {
+  //     public int compare(int[] a, int[] b) { return a[0] - b[0]; }
+  //   });
   Arrays.sort(events, (a, b) -> a[0] - b[0]);
   int n = events.length;
   // Min-heap of end days for every event that is open but not yet attended.
@@ -8257,6 +8354,13 @@ public int eraseOverlapIntervals(int[][] intervals) {
   if (intervals == null || intervals.length == 0) return 0;
   // Sort by END time: keeping the earliest-ending interval on a conflict
   // always leaves the most room for whatever comes next (exchange argument).
+  // LAMBDA (Comparator): (a, b) -> Integer.compare(a[1], b[1]) IS the compare(a, b)
+  // body — it returns -1/0/1 by end time, so intervals sort by end ascending.
+  // (Integer.compare avoids the int-overflow that a[1] - b[1] risks on large ends.)
+  // Without the lambda:
+  //   Arrays.sort(intervals, new Comparator<int[]>() {
+  //     public int compare(int[] a, int[] b) { return Integer.compare(a[1], b[1]); }
+  //   });
   Arrays.sort(intervals, (a, b) -> Integer.compare(a[1], b[1]));
   // End time of the last interval we decided to KEEP
   int prevEnd = intervals[0][1];
