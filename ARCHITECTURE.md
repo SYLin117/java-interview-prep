@@ -8,7 +8,7 @@ A hand-edited static interview-prep site served from Vercel. Two top-level views
 - **Content is data, not markup.** Questions live in `content.js`; LeetCode problems live in `leetcode.js`. Adding content never touches HTML.
 - **Two views, one page.** Header buttons toggle between a Topics view and a LeetCode view via the `[hidden]` attribute.
 - **Single inline script** in `index.html` orchestrates everything (render, toggle, search, chat, sidebar, resize). No modules, no `defer` — order matters.
-- **One serverless function** (`api/chat.js`) proxies chat to Groq with rate limiting and SSE normalization.
+- **Three serverless functions** in `api/`: `chat.js` proxies chat to Groq (rate limiting + SSE normalization), `leetcode.js` proxies official LeetCode problem statements, and `overrides.js` stores solution edits published from the page (Upstash Redis, master-key gated).
 - **Vercel hosting** with manual `vercel deploy --prod --yes`. Auto-deploy via the GitHub integration isn't wired up.
 
 ## File map
@@ -19,6 +19,8 @@ A hand-edited static interview-prep site served from Vercel. Two top-level views
 | `content.js` | `const topics = [...]` and `const extras = {...}` — the interview question bank. |
 | `leetcode.js` | `const leetcode = [...]` — 50 LeetCode problems with Java solutions. |
 | `api/chat.js` | Vercel Edge function that proxies chat to Groq. Auto-discovered by Vercel from `api/`. |
+| `api/leetcode.js` | Vercel Edge function that proxies LeetCode's GraphQL API for official problem statements. |
+| `api/overrides.js` | Vercel Edge function storing published solution edits in Upstash Redis; writes gated by `OVERRIDES_MASTER_KEY`. |
 | `CLAUDE.md` | Conventions for Claude Code agents working on the repo. |
 | `ARCHITECTURE.md` | This file — for human developers. |
 | `README.md` | Brief project overview. |
