@@ -11,6 +11,12 @@ const leetcodeUserOverrides = {
   16: `// example: [[1, 3], [2, 6], [8, 10], [15, 18]] -> [[1, 6], [8, 10], [15, 18]]
 public int[][] merge(int[][] intervals) {
   // Sort by start time — overlapping intervals will be adjacent
+  // LAMBDA (Comparator): (a, b) -> a[0] - b[0] IS the compare(a, b) body — a
+  // negative result means a comes before b, so this sorts by start ascending.
+  // Without the lambda you'd pass an anonymous class:
+  //   Arrays.sort(intervals, new Comparator<int[]>() {
+  //     public int compare(int[] a, int[] b) { return a[0] - b[0]; }
+  //   });
   Arrays.sort(intervals, (a, b) -> a[0] - b[0]);
   List<int[]> merged = new ArrayList<>();
   for (int[] cur : intervals) {
@@ -54,7 +60,11 @@ public int[][] merge(int[][] intervals) {
     sum += n;
     // Each earlier prefix equal to (sum - k) gives one valid subarray ending at this index
     count += prefixCount.getOrDefault(sum - k, 0);
-    // Integer::sum is equal to (oldValue, newValue) -> oldValue + newValue
+    // METHOD REFERENCE (lambda shorthand): Integer::sum is equal to the lambda
+    // (oldValue, newValue) -> oldValue + newValue — the remap function merge()
+    // applies when 'sum' is already a key (else it just stores the initial 1).
+    // Without it:
+    //   prefixCount.put(sum, prefixCount.getOrDefault(sum, 0) + 1);
     prefixCount.merge(sum, 1, Integer::sum);
   }
   return count;
