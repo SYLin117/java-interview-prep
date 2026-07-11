@@ -9,7 +9,7 @@ A hand-edited static interview-prep site served from Vercel. Two top-level views
 - **Two views, one page.** Header buttons toggle between a Topics view and a LeetCode view via the `[hidden]` attribute.
 - **Single inline script** in `index.html` orchestrates everything (render, toggle, search, chat, sidebar, resize). No modules, no `defer` — order matters.
 - **Three serverless functions** in `api/`: `chat.js` proxies chat to Groq (rate limiting + SSE normalization), `leetcode.js` proxies official LeetCode problem statements, and `overrides.js` stores solution edits published from the page (Upstash Redis, master-key gated).
-- **Vercel hosting** with manual `vercel deploy --prod --yes`. Auto-deploy via the GitHub integration isn't wired up.
+- **Vercel hosting** with the GitHub integration wired up: pushes to `main` auto-deploy to production; PR branches get preview deployments.
 
 ## File map
 
@@ -222,11 +222,11 @@ Each switch only required rewriting `api/chat.js`. The client wire format stayed
 - **Repo:** https://github.com/SYLin117/java-interview-prep (public)
 - **Vercel project:** `java-interview-prep` under the `ians-projects-9fd6e881` scope
 - **Production alias:** https://java-interview-prep-blush.vercel.app
-- **Deploy:** manual — `vercel deploy --prod --yes` from the project root
+- **Deploy:** automatic via the GitHub → Vercel integration — pushes/merges to `main` deploy to production
 
-The GitHub → Vercel integration was not connected during setup (the CLI reported it couldn't connect to the GitHub repo). To enable auto-deploy on push, the user needs to install the Vercel GitHub app for the `SYLin117` account and grant it access to this repo, then connect the project via the Vercel dashboard's Git settings.
+The integration was connected in July 2026 (it wasn't during initial setup). PR branches get preview deployments, reported as a "Vercel" commit status check on GitHub; preview URLs are behind Vercel's deployment protection (SSO), so viewing one requires a Vercel login. Manual deploys still work as a fallback: `vercel deploy --prod --yes` from the project root.
 
-Until that's wired, the workflow is: edit → commit → `vercel deploy --prod --yes`.
+The workflow is: edit → commit → push (merge to `main` for production).
 
 ## Adding content
 

@@ -30,7 +30,7 @@ npx serve .        # or: python -m http.server
 
 ## Deployment
 
-Deployed manually to Vercel from the project root:
+Auto-deployed by Vercel's Git integration: pushes/merges to `main` go to production, and PR branches get preview deployments (a "Vercel" status check on the PR; preview URLs require a Vercel login). Manual deploys from the project root still work as a fallback:
 
 ```
 vercel deploy --prod --yes
