@@ -30,7 +30,7 @@ The split was made deliberately so content can be edited without touching markup
 
 ## Chat assistant
 
-The floating 💬 button in the bottom-right opens a chat panel that calls `/api/chat`. The function proxies to **Groq Llama 3.3 70B Versatile** (free tier — OpenAI-compatible API) with a system prompt grounded in the site's topic list. Hard caps: `max_tokens=500` per response, per-turn input clipped to 2000 chars, last 20 turns of history sent.
+The floating 💬 button in the bottom-right opens a chat panel that calls `/api/chat`. The function proxies to **Groq Llama 3.3 70B Versatile** (free tier — OpenAI-compatible API) with a system prompt grounded in the site's topic list. Hard caps: `max_tokens=350` per response, per-turn input clipped to 2000 chars, last 8 turns of history sent (the client sends its full history; the function slices).
 
 **Wire format between function and client:** the function normalizes Groq's OpenAI-style SSE into simple `data: {"text": "chunk"}\n\n` events. The client just appends `evt.text` chunks. This keeps the browser code provider-agnostic — to swap providers, only `api/chat.js` needs to change.
 
@@ -38,7 +38,7 @@ The floating 💬 button in the bottom-right opens a chat panel that calls `/api
 
 **Provider history (why Groq):** the chat was originally wired to Anthropic Claude Haiku 4.5 (best quality, paid), then switched to Google Gemini 2.0 Flash (free tier), which started returning 429 "project quota exhausted" on a fresh key — likely a Google Cloud project-quota issue. Groq's free tier is more reliable in practice (14,400 requests/day on Llama 3.3 70B, no card required), so the chat now uses Groq. The system prompt and rate-limit logic are unchanged; only the upstream URL, auth header, request body shape, and SSE parser differ. If you ever want to swap back or try a different provider, follow the same pattern.
 
-**Rate limiting** is per-instance in-memory (`DAILY_LIMIT = 10` messages per IP per day). Edge instances are ephemeral and there can be several, so it's a soft deterrent only. For strict global limits, swap for Vercel KV or Upstash Redis. The real cost guard is `max_tokens=500` plus Groq's free-tier daily quota.
+**Rate limiting** is per-instance in-memory (`DAILY_LIMIT = 10` messages per IP per day). Edge instances are ephemeral and there can be several, so it's a soft deterrent only. For strict global limits, swap for Vercel KV or Upstash Redis. The real cost guard is `max_tokens=350` plus Groq's free-tier daily quota.
 
 Model id, system prompt, and token caps live at the top of `api/chat.js` — edit there.
 

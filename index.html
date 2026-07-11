@@ -2704,7 +2704,7 @@
   const chatSubmit   = chatForm.querySelector('button[type=submit]');
   const chatStatus   = document.getElementById('chat-status');
 
-  // Pre-built index of all 242 questions for instant on-site lookup before
+  // Pre-built index of every topic question for instant on-site lookup before
   // hitting the LLM. Cheap keyword overlap against question text — high
   // precision means we only short-circuit on confident matches.
   const CHAT_STOPWORDS = new Set(('the a an is are was were be been being to of in on at by for with about ' +
