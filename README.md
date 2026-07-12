@@ -9,7 +9,7 @@ Live site: https://java-interview-prep-blush.vercel.app
 Four views, toggled from the header:
 
 - **Topics** — 262 interview Q&As across 13 Java/Spring topics (collections, concurrency, JVM, Spring Boot, JPA, testing, …), each expandable with a suggested answer.
-- **LeetCode** — 200 popular problems grouped into 16 buckets (Arrays & Hashing → Math & Bit Manipulation), each with a paraphrased statement (upgraded to the official one on demand), approach, complexity, named-algorithm explainers, and an editable Java solution.
+- **LeetCode** — 200 popular problems grouped into 16 buckets (Arrays & Hashing → Math & Bit Manipulation), each with a paraphrased statement (upgraded to the official one on demand), approach, complexity, named-algorithm explainers, an editable Java solution, and a server-synced reviewed checkbox.
 - **Garmin Behavioral** — 9 behavioral question chains with STAR answers and follow-ups.
 - **System Design** — 46 concept Q&As across 8 themes, plus 12 full case-study walkthroughs.
 
@@ -17,6 +17,7 @@ Extras:
 
 - **Chat assistant** (💬) — a floating chat panel backed by `api/chat.js`, which proxies to Groq's free tier.
 - **Editable LeetCode solutions** — solutions are `contenteditable`. Edits save locally per device; with the master key (🔑 button) they can be **published to all visitors instantly** via `api/overrides.js` (Upstash Redis), or exported as `user-overrides.js` to commit to git.
+- **Reviewed progress** — each LeetCode problem has a checkbox persisted in Upstash Redis and synchronized across devices. The master key is required to change it.
 
 ## Local preview
 
@@ -36,13 +37,13 @@ Auto-deployed by Vercel's Git integration: pushes/merges to `main` go to product
 vercel deploy --prod --yes
 ```
 
-Optional env vars (Vercel → Settings → Environment Variables) to enable the dynamic features:
+Environment variables (Vercel → Settings → Environment Variables) for the dynamic features; all are configured in production as of July 2026:
 
 | Var | Enables |
 |---|---|
 | `GROQ_API_KEY` | Chat assistant (free key at console.groq.com) |
-| `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` | Publishing solution edits (free DB at console.upstash.com) |
-| `OVERRIDES_MASTER_KEY` | The secret that gates who can publish edits |
+| `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` | Publishing solution edits and syncing reviewed status (free DB at console.upstash.com) |
+| `OVERRIDES_MASTER_KEY` | The secret that gates publishing and reviewed-status changes |
 
 ## Development
 

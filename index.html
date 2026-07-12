@@ -706,7 +706,7 @@
   }
   .lc-row {
     display: grid;
-    grid-template-columns: 55px 100px 1fr 220px 60px 50px;
+    grid-template-columns: 48px 55px 100px 1fr 220px 60px 50px;
     border-bottom: 1px solid var(--line-soft);
     transition: background 0.12s;
   }
@@ -725,6 +725,16 @@
     align-items: center;
   }
   .lc-num { font-size: 0.9rem; color: var(--text-faint); justify-content: center; font-weight: 500; }
+  .lc-reviewed-cell { justify-content: center; }
+  .lc-reviewed-check {
+    width: 1.05rem;
+    height: 1.05rem;
+    margin: 0;
+    accent-color: #16803c;
+    cursor: pointer;
+  }
+  .lc-reviewed-check:disabled { cursor: not-allowed; opacity: 0.65; }
+  .lc-row.is-reviewed .lc-title { color: var(--text-dim); }
   .lc-diff { font-size: 0.75rem; font-weight: 600; }
   .lc-diff .pill {
     padding: 0.2rem 0.55rem;
@@ -1251,19 +1261,19 @@
   .lc-row.lc-bucket:first-child { border-top: none; }
 
   @media (max-width: 1024px) {
-    .lc-row { grid-template-columns: 50px 90px 1fr 60px 50px; }
+    .lc-row { grid-template-columns: 44px 50px 90px 1fr 60px 50px; }
     .lc-row .lc-cat-cell { display: none; }
   }
   @media (max-width: 768px) {
     .view-btn { padding: 0.35rem 0.65rem; font-size: 0.78rem; }
-    .lc-row { grid-template-columns: 40px 80px 1fr 50px 40px; }
+    .lc-row { grid-template-columns: 38px 40px 80px 1fr 50px 40px; }
     .lc-row.lc-data > div:not(.lc-detail) { padding: 0.7rem 0.5rem; font-size: 0.88rem; }
     .lc-row.lc-head > div { padding: 0.55rem 0.5rem; font-size: 0.7rem; }
     .lc-link-cell a { padding: 0.25rem 0.4rem; font-size: 0.72rem; }
     .lc-detail { padding: 0 1rem 1.2rem 1rem; font-size: 0.88rem; }
   }
   @media (max-width: 480px) {
-    .lc-row { grid-template-columns: 32px 65px 1fr 40px 32px; }
+    .lc-row { grid-template-columns: 34px 32px 65px 1fr 40px 32px; }
     .lc-row.lc-data > div:not(.lc-detail) { padding: 0.65rem 0.35rem; font-size: 0.85rem; }
     .lc-link-cell a { padding: 0.2rem 0.35rem; font-size: 0.68rem; }
   }
@@ -1628,6 +1638,7 @@
 
   let lcRowsHTML = `
     <div class="lc-row lc-head">
+      <div title="Reviewed">Done</div>
       <div>#</div>
       <div>Level</div>
       <div>Problem</div>
@@ -1654,7 +1665,8 @@
       ? leetcodeUserOverrides[p.num]
       : p.code;
     lcRowsHTML += `
-      <div class="lc-row lc-data" data-q="${search}" data-bucket="${escapeHtml(p.bucket).toLowerCase()}" data-companies="${companiesAttr}">
+      <div class="lc-row lc-data" data-q="${search}" data-bucket="${escapeHtml(p.bucket).toLowerCase()}" data-companies="${companiesAttr}" data-lc-num="${p.num}">
+        <div class="lc-reviewed-cell"><input class="lc-reviewed-check" type="checkbox" data-lc-num="${p.num}" aria-label="Mark ${escapeHtml(p.title)} reviewed" title="Unlock with the master key to update reviewed status" disabled></div>
         <div class="lc-num" title="LeetCode #${p.lc}">${p.lc}</div>
         <div class="lc-diff ${p.d}"><span class="pill">${p.d}</span></div>
         <div class="lc-title">${escapeHtml(p.title)}${
@@ -1963,6 +1975,7 @@
     row.addEventListener('click', (e) => {
       if (e.target.closest('.lc-detail')) return;     // let users select / copy / edit detail
       if (e.target.closest('.lc-link-cell a')) return; // let link click fall through
+      if (e.target.closest('.lc-reviewed-cell')) return; // checkbox changes review state only
       row.classList.toggle('expanded');
       if (row.classList.contains('expanded')) {
         // Upgrade the paraphrased blurb to LeetCode's official statement (via /api/leetcode).
@@ -1984,6 +1997,7 @@
   // or reachable, everything below stays dormant and the committed
   // user-overrides.js workflow keeps working exactly as before.
   const remoteOverrides = {};          // num → code, as served to every visitor
+  const reviewedProblems = new Set();  // problem nums persisted in Redis
   let overridesApiEnabled = false;     // did GET /api/overrides report enabled?
   let canPublish = false;              // does our stored key unlock writes?
   let publishKey = null;
@@ -1995,6 +2009,43 @@
   function overridesAuthHeaders() {
     return publishKey ? { authorization: 'Bearer ' + publishKey } : {};
   }
+
+  /** Apply server review state and keep checkboxes writable only while unlocked. */
+  function updateReviewedCheckboxes() {
+    lcTable.querySelectorAll('.lc-reviewed-check').forEach(checkbox => {
+      const num = +checkbox.dataset.lcNum;
+      const reviewed = reviewedProblems.has(num);
+      checkbox.checked = reviewed;
+      checkbox.disabled = !canPublish;
+      checkbox.title = canPublish
+        ? (reviewed ? 'Mark as not reviewed' : 'Mark as reviewed')
+        : 'Unlock with the master key to update reviewed status';
+      checkbox.closest('.lc-row').classList.toggle('is-reviewed', reviewed);
+    });
+  }
+
+  /** Persist one reviewed checkbox change and roll the UI back if it fails. */
+  function saveReviewedStatus(checkbox) {
+    const num = +checkbox.dataset.lcNum;
+    const reviewed = checkbox.checked;
+    checkbox.disabled = true;
+    fetch('/api/overrides', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json', ...overridesAuthHeaders() },
+      body: JSON.stringify({ num, reviewed }),
+    }).then(r => {
+      if (!r.ok) return r.json().catch(() => ({})).then(b => { throw new Error(b.error || ('HTTP ' + r.status)); });
+      if (reviewed) reviewedProblems.add(num);
+      else reviewedProblems.delete(num);
+    }).catch(err => {
+      alert('Couldn\'t update reviewed status: ' + err.message);
+    }).finally(updateReviewedCheckboxes);
+  }
+
+  lcTable.addEventListener('change', (e) => {
+    const checkbox = e.target.closest('.lc-reviewed-check');
+    if (checkbox) saveReviewedStatus(checkbox);
+  });
 
   /**
    * Push the fetched published overrides into the already-rendered table.
@@ -2100,6 +2151,7 @@
       updateKeyButton();
       updateResetButtons();
       updateExportButton();
+      updateReviewedCheckboxes();
       return;
     }
     const key = prompt('Enter the master key to enable publishing:');
@@ -2115,6 +2167,7 @@
         updateKeyButton();
         updateResetButtons();
         updateExportButton();
+        updateReviewedCheckboxes();
       })
       .catch(() => alert('Couldn\'t reach the overrides API to verify the key.'));
   }
@@ -2137,9 +2190,12 @@
         try { localStorage.removeItem('lc_master_key'); } catch { /* private mode */ }
       }
       Object.assign(remoteOverrides, data.overrides || {});
+      reviewedProblems.clear();
+      for (const num of (data.reviewed || [])) reviewedProblems.add(+num);
       applyRemoteOverrides();
       updateKeyButton();
       updateExportButton();
+      updateReviewedCheckboxes();
     })
     .catch(() => { /* degrade silently */ });
 
@@ -2704,7 +2760,7 @@
   const chatSubmit   = chatForm.querySelector('button[type=submit]');
   const chatStatus   = document.getElementById('chat-status');
 
-  // Pre-built index of all 242 questions for instant on-site lookup before
+  // Pre-built index of every topic question for instant on-site lookup before
   // hitting the LLM. Cheap keyword overlap against question text — high
   // precision means we only short-circuit on confident matches.
   const CHAT_STOPWORDS = new Set(('the a an is are was were be been being to of in on at by for with about ' +
