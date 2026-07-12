@@ -10,8 +10,8 @@ This file explains how the site works. For editing conventions (adding questions
 - **Content is data, not markup.** Every view renders from a plain-JS data file (`content.js`, `leetcode.js`, `behavioral.js`, `systemdesign.js`, …). Adding content never touches HTML.
 - **Four views, one page.** Header buttons toggle between the views via the `[hidden]` attribute; URL-hash routing keeps each view linkable.
 - **Single inline script** in `index.html` orchestrates everything (render, view toggle, filters, search, chat, editing). No modules, no `defer` on data scripts — order matters.
-- **Three serverless functions** in `api/`: `chat.js` proxies chat to Groq (rate limiting + SSE normalization), `leetcode.js` proxies official LeetCode problem statements, and `overrides.js` stores solution edits published from the page (Upstash Redis, master-key gated). All three are optional — the page degrades to fully-static behavior without them.
-- **Vercel hosting** with manual `vercel deploy --prod --yes`. Auto-deploy via the GitHub integration isn't wired up.
+- **Three serverless functions** in `api/`: `chat.js` proxies chat to Groq (rate limiting + SSE normalization), `leetcode.js` proxies official LeetCode problem statements, and `overrides.js` stores published solution edits and reviewed status (Upstash Redis, master-key gated). All three are optional — the page degrades to fully-static behavior without them.
+- **Vercel hosting** with the GitHub integration wired up: merges to `main` auto-deploy to production; PR branches get preview deployments.
 
 ## File map
 
@@ -27,7 +27,7 @@ This file explains how the site works. For editing conventions (adding questions
 | `systemdesign.js` | `const systemDesignThemes = [...]` (concept Q&A) + `const systemDesignCases = [...]` (case-study walkthroughs). |
 | `api/chat.js` | Vercel Edge function that proxies chat to Groq. Auto-discovered by Vercel from `api/`. |
 | `api/leetcode.js` | Vercel Edge function that proxies LeetCode's GraphQL API for official problem statements. |
-| `api/overrides.js` | Vercel Edge function storing published solution edits in Upstash Redis; writes gated by `OVERRIDES_MASTER_KEY`. |
+| `api/overrides.js` | Vercel Edge function storing published solution edits and reviewed problem IDs in Upstash Redis; writes gated by `OVERRIDES_MASTER_KEY`. |
 | `eslint.config.mjs` | Flat ESLint config — classic-script globals for root files, ESM globals for `api/`. |
 | `.github/rulesets/protect-main.json` | Branch protection as code (PR required, Vercel status check, admin bypass). |
 | `CLAUDE.md` | Conventions for Claude Code agents working on the repo. |
@@ -101,7 +101,7 @@ Don't regress this — it's a key UX detail, applied identically in the Behavior
 
 ### Render pipeline
 
-Iterates over `leetcode[]` once, inserting a styled bucket-header row (with a per-bucket problem count) whenever the `bucket` field changes — which is why the array must stay pre-sorted by bucket. Each `.lc-row.lc-data` has 6 columns: official LeetCode number (`lc`), difficulty pill, title (plus company pills like Garmin/Temu from the `companies` field), category, "LeetCode ↗" link, and expand toggle. Some columns collapse at smaller widths via media queries.
+Iterates over `leetcode[]` once, inserting a styled bucket-header row (with a per-bucket problem count) whenever the `bucket` field changes — which is why the array must stay pre-sorted by bucket. Each `.lc-row.lc-data` has 7 columns: reviewed checkbox, official LeetCode number (`lc`), difficulty pill, title (plus company pills like Garmin/Temu from the `companies` field), category, "LeetCode ↗" link, and expand toggle. Some columns collapse at smaller widths via media queries.
 
 The stable internal `num` (not in array order) keys everything cross-file: `user-overrides.js`, `descriptions.js`, and `algorithms.js`.
 
@@ -129,7 +129,7 @@ Every solution block is `contenteditable`. What a visitor sees for problem `num`
 
 1. **localStorage draft** (`lc_code_<num>`) — your in-progress edit, this device only
 2. **published override** — fetched from `GET /api/overrides`, served to every visitor instantly
-3. **`user-overrides.js`** — committed personal edits (needs commit + redeploy)
+3. **`user-overrides.js`** — committed personal edits (ships when merged to `main`)
 4. **canonical `leetcode.js`** code
 
 `lcBaseCode(num)` resolves layers 2–4; drafts overlay at runtime. Edits auto-save to the draft with a 400 ms debounce; if an edit brings the text back to exactly the live base, the draft is deleted instead (so hand-undo leaves no stale draft). Typing tears up highlight.js's spans, so blur rebuilds the block from `textContent` and re-highlights. On init, highlighting runs *before* `contenteditable` is set because the highlighter's DOM rewrite would strip the attribute.
@@ -142,6 +142,10 @@ Four floating buttons (bottom-left, LeetCode view only):
 - **🔑 / 🔓** — prompts for the master key, verifies it against the server (`GET` reports `canEdit`), stores it in `localStorage` (`lc_master_key`), and flips to 🔓 while unlocked. A stored key the server no longer accepts (rotated on Vercel) is forgotten automatically.
 
 The per-row reset button is dual-mode: with a draft it reads **"Reset to original"** (discard the draft); with no draft, a published override present, and the key unlocked it becomes **"Remove published edit"** (confirm → `PUT { code: null }`).
+
+### Reviewed status
+
+Every problem row has a reviewed checkbox. `GET /api/overrides` returns the shared reviewed problem IDs with the published code overrides, so checked state follows the user across devices. Checkboxes remain read-only until the master key is unlocked; a change sends authenticated `PUT { num, reviewed: true|false }` and rolls the UI back if persistence fails. Reviewed IDs are stored separately from source overrides in the Redis hash `lc:reviewed`.
 
 ## Garmin Behavioral view
 
@@ -206,10 +210,10 @@ The wire format is the point: the client never learns which provider is upstream
 
 ### api/overrides.js
 
-- **`GET`** — public read, always `cache-control: no-store`. Returns `{ enabled, canEdit, overrides }`; `enabled: false` (not an error) when any env var is missing, `canEdit` reports whether the caller's bearer key is accepted (used to verify a typed key).
-- **`PUT`** — requires `Authorization: Bearer <master key>`; body `{ num, code }` saves, `{ num, code: null }` deletes. Keys are compared via SHA-256 digests (a plain `===` on secrets is timing-observable in principle). Validation: `num` a positive integer ≤ 100,000, `code` ≤ 50 KB. Failed key attempts are soft-limited at 30/IP/day (same per-instance caveat as chat).
+- **`GET`** — public read, always `cache-control: no-store`. Returns `{ enabled, canEdit, overrides, reviewed }`; `enabled: false` (not an error) when any env var is missing, `canEdit` reports whether the caller's bearer key is accepted (used to verify a typed key).
+- **`PUT`** — requires `Authorization: Bearer <master key>`; body `{ num, code }` saves an override, `{ num, code: null }` deletes it, and `{ num, reviewed: true|false }` updates reviewed status. Exactly one of `code` or `reviewed` is accepted. Keys are compared via SHA-256 digests (a plain `===` on secrets is timing-observable in principle). Validation: `num` a positive integer ≤ 100,000, `code` ≤ 50 KB. Failed key attempts are soft-limited at 30/IP/day (same per-instance caveat as chat).
 
-Storage is one Upstash Redis hash `lc:overrides` (field = problem `num`, value = Java source), reached over the REST API with commands POSTed as JSON arrays — keeping code payloads out of URL paths.
+Storage uses two Upstash Redis hashes: `lc:overrides` (field = problem `num`, value = Java source) and `lc:reviewed` (field = problem `num`, value = `1`). Commands are POSTed to the REST API as JSON arrays, keeping code payloads out of URL paths.
 
 ### api/leetcode.js
 
@@ -230,7 +234,9 @@ Each switch only required rewriting `api/chat.js` — the client wire format sta
 - **Repo:** https://github.com/SYLin117/java-interview-prep (public)
 - **Vercel project:** `java-interview-prep` under the `ians-projects-9fd6e881` scope
 - **Production alias:** https://java-interview-prep-blush.vercel.app
-- **Deploy:** manual — `vercel deploy --prod --yes` from the project root
+- **Deploy:** automatic via the GitHub → Vercel integration — pushes/merges to `main` deploy to production
+
+The integration was connected in July 2026 (it wasn't during initial setup). PR branches get preview deployments, reported as a "Vercel" commit status check on GitHub; preview URLs are behind Vercel's deployment protection (SSO), so viewing one requires a Vercel login. Manual deploys still work as a fallback: `vercel deploy --prod --yes` from the project root.
 
 Env vars (Vercel → Settings → Environment Variables, Production + Preview):
 
@@ -238,9 +244,9 @@ Env vars (Vercel → Settings → Environment Variables, Production + Preview):
 |---|---|
 | `GROQ_API_KEY` | Chat assistant |
 | `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` | Published-edit storage |
-| `OVERRIDES_MASTER_KEY` | The secret that gates who can publish |
+| `OVERRIDES_MASTER_KEY` | The secret that gates publishing edits and reviewed-status changes |
 
-The GitHub → Vercel integration was not connected during setup. Until it is, the workflow is: edit → commit → `vercel deploy --prod --yes`. Note that `.github/rulesets/protect-main.json` requires a "Vercel" status check on PRs — with the integration unconnected that check never reports, and merges rely on the ruleset's repository-admin bypass.
+The normal workflow is: edit → commit → push → open a PR → pass the required `Vercel` check → merge to `main`. The production overrides API was verified live on July 11, 2026 (`enabled: true`).
 
 ## Conventions baked in (don't regress)
 
@@ -251,7 +257,7 @@ The GitHub → Vercel integration was not connected during setup. Until it is, t
 - **`escapeHtml()` stays a hoisted `function` declaration** — the LeetCode renderer above it depends on hoisting.
 - **All data files stay classic scripts** (no `type="module"`) — they expose globals the inline script reads.
 - **`leetcode.js` stays pre-sorted by bucket** — the renderer groups consecutive entries.
-- **Never renumber existing `num` values** — they key `user-overrides.js`, `descriptions.js`, `algorithms.js`, and the published overrides in Redis.
+- **Never renumber existing `num` values** — they key `user-overrides.js`, `descriptions.js`, `algorithms.js`, published overrides, and reviewed status in Redis.
 
 ## Local preview
 
