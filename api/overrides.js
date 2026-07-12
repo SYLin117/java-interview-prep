@@ -4,7 +4,8 @@
 // tier) through its REST API; writes are gated by a single master key.
 //
 //   GET /api/overrides
-//     → { enabled: true, canEdit: false, overrides: { "16": "public int[][] merge…", … } }
+//     → { enabled: true, canEdit: false, overrides: { "16": "public int[][] merge…", … },
+//         reviewed: [1, 16, …] }
 //     Public read — the overrides are shown to every visitor anyway. Include
 //     an  Authorization: Bearer <master key>  header and `canEdit` reports
 //     whether that key is accepted (used by the page to verify a typed key).
@@ -12,6 +13,8 @@
 //   PUT /api/overrides           (requires  Authorization: Bearer <master key>)
 //     body { num: 16, code: "…" }   → save/replace the override for problem 16
 //     body { num: 16, code: null }  → delete it (revert to the committed file)
+//     body { num: 16, reviewed: true }  → mark problem 16 reviewed
+//     body { num: 16, reviewed: false } → clear its reviewed status
 //     → { ok: true }
 //
 // Storage model: one Redis hash ("lc:overrides"), field = problem num
@@ -30,6 +33,7 @@
 export const config = { runtime: 'edge' };
 
 const HASH_KEY = 'lc:overrides';
+const REVIEWED_HASH_KEY = 'lc:reviewed';
 const MAX_CODE_LEN = 50_000;   // one solution — far above any real solution size
 const MAX_NUM = 100_000;       // sanity bound for the problem id
 
@@ -107,19 +111,26 @@ export default async function handler(req) {
   if (req.method === 'GET') {
     // Unconfigured is a NORMAL state (feature not set up yet), not an error —
     // report it as data so the page can degrade without console noise.
-    if (!enabled) return json(200, { enabled: false, canEdit: false, overrides: {} });
+    if (!enabled) return json(200, { enabled: false, canEdit: false, overrides: {}, reviewed: [] });
 
     const canEdit = await isAuthorized(req, masterKey);
     let flat;
+    let reviewedFields;
     try {
-      flat = await redis(url, token, ['HGETALL', HASH_KEY]);
+      [flat, reviewedFields] = await Promise.all([
+        redis(url, token, ['HGETALL', HASH_KEY]),
+        redis(url, token, ['HKEYS', REVIEWED_HASH_KEY]),
+      ]);
     } catch (e) {
       return json(502, { error: `Storage read failed: ${e.message}` });
     }
     // HGETALL over REST comes back as a flat [field, value, field, value, …] array
     const overrides = {};
     for (let i = 0; i + 1 < (flat || []).length; i += 2) overrides[flat[i]] = flat[i + 1];
-    return json(200, { enabled: true, canEdit, overrides });
+    const reviewed = (reviewedFields || [])
+      .map(Number)
+      .filter(num => Number.isInteger(num) && num >= 1 && num <= MAX_NUM);
+    return json(200, { enabled: true, canEdit, overrides, reviewed });
   }
 
   if (req.method !== 'PUT') return json(405, { error: 'Method not allowed' });
@@ -140,19 +151,33 @@ export default async function handler(req) {
   }
   const num = body?.num;
   const code = body?.code;
+  const hasCode = Object.prototype.hasOwnProperty.call(body || {}, 'code');
+  const hasReviewed = Object.prototype.hasOwnProperty.call(body || {}, 'reviewed');
   if (!Number.isInteger(num) || num < 1 || num > MAX_NUM) {
     return json(400, { error: '"num" must be a positive integer' });
   }
-  if (code !== null && typeof code !== 'string') {
+  if (hasCode === hasReviewed) {
+    return json(400, { error: 'Provide exactly one of "code" or "reviewed"' });
+  }
+  if (hasCode && code !== null && typeof code !== 'string') {
     return json(400, { error: '"code" must be a string, or null to delete' });
   }
-  if (typeof code === 'string' && code.length > MAX_CODE_LEN) {
+  if (hasCode && typeof code === 'string' && code.length > MAX_CODE_LEN) {
     return json(400, { error: `"code" too large (max ${MAX_CODE_LEN} chars)` });
+  }
+  if (hasReviewed && typeof body.reviewed !== 'boolean') {
+    return json(400, { error: '"reviewed" must be a boolean' });
   }
 
   try {
-    if (code === null) await redis(url, token, ['HDEL', HASH_KEY, String(num)]);
-    else await redis(url, token, ['HSET', HASH_KEY, String(num), code]);
+    if (hasReviewed) {
+      if (body.reviewed) await redis(url, token, ['HSET', REVIEWED_HASH_KEY, String(num), '1']);
+      else await redis(url, token, ['HDEL', REVIEWED_HASH_KEY, String(num)]);
+    } else if (code === null) {
+      await redis(url, token, ['HDEL', HASH_KEY, String(num)]);
+    } else {
+      await redis(url, token, ['HSET', HASH_KEY, String(num), code]);
+    }
   } catch (e) {
     return json(502, { error: `Storage write failed: ${e.message}` });
   }
