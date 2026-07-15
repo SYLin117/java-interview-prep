@@ -18,7 +18,7 @@ const behavioral = [
     id: 1,
     category: 'Intro & Motivation',
     q: 'Tell me about yourself.',
-    a: `<strong>Present.</strong> I'm a software engineer with about five years of experience building and supporting enterprise web applications, mostly in Java and Spring Boot with some C#/.NET. Right now I'm at Foxconn as an Oracle Agile PLM developer and administrator — I gather requirements from non-technical business users in manufacturing and operations, then build custom Java extensions, secure REST APIs, and scheduled batch jobs that automate their product-data workflows. I was actually the first member of our PLM team in North America: I helped stand the function up from scratch — starting with a plant transfer from IBM — and I've grown into effectively leading the NA PLM team.<br><br>
+    a: `<strong>Present.</strong> I'm a software engineer with about five years of experience building and supporting enterprise web applications, mostly in Java and Spring Boot with some C#/.NET. Right now I'm at Foxconn as an Oracle Agile PLM developer and administrator — I gather requirements from non-technical business users in manufacturing and operations, then build custom Java extensions, secure REST APIs, and scheduled batch jobs that automate their product-data workflows and push engineering-change data downstream to SAP and our MES — replacing error-prone manual imports. I also own the integration-testing side with Postman and JUnit. I was actually the first member of our PLM team in North America: I helped stand the function up from scratch — starting with a plant transfer from IBM — and I've grown into effectively leading the NA PLM team.<br><br>
 <strong>Past.</strong> Before that I spent a couple of years at SYSTEX in Taipei building production web systems with Java, Spring Boot, and Hibernate — including a government household-registration platform that integrated several central-government APIs, and an ERP system for Taiwan's largest gym chain. I also earned my Master's in Computer Science along the way.<br><br>
 <strong>Strengths.</strong> What I'm known for is being the bridge between business users and engineering — turning vague business needs into reliable, well-documented software — and I care a lot about data integrity and getting integrations right.<br><br>
 <strong>Why here.</strong> I want to move into a stronger, product-focused engineering team, and Garmin really appeals to me — you build hardware people love, and my product-data background feels like a natural fit.<br><br>
@@ -182,7 +182,7 @@ const behavioral = [
 <li>I built in small increments and showed the users early, so changes surfaced while they were still cheap to make.</li>
 <li>I kept extra focus on data integrity — validating parts and BOMs throughout the transfer.</li>
 </ul>
-<strong>Result.</strong> We supported the transfer with the process documented and the data intact, and the early demos meant the inevitable changes were small adjustments instead of big rework.<br><br>
+<strong>Result.</strong> We supported the transfer — around 40,000 parts and roughly 300,000 BOM records — with the process documented and the data intact, and the early demos meant the inevitable changes were small adjustments instead of big rework.<br><br>
 <em>Tip: ambiguity questions are really about communication — show how you manufacture clarity.</em>`,
     followups: [
       {
@@ -212,7 +212,7 @@ const behavioral = [
 <li>I documented the process as we went so nothing lived only in my head — which let my supervisor and me divide and conquer, and made it easy to hand off as the team grew.</li>
 <li>When the crunch hit I put in extra hours on the highest-risk pieces and kept my manager updated, so there were no surprises.</li>
 </ul>
-<strong>Result.</strong> We supported the transfer on time with the part and BOM data intact. [Personalize: add scale if you can — e.g., volume of parts/BOMs migrated or systems integrated.]<br><br>
+<strong>Result.</strong> We supported the transfer on time with the part and BOM data intact — around 40,000 parts and roughly 300,000 BOM records migrated.<br><br>
 <em>Tip: under pressure, interviewers want prioritization and protecting quality — not just "I worked late."</em>`,
     followups: [
       {
@@ -286,6 +286,30 @@ const behavioral = [
       {
         q: 'What did you learn as a manager that you will bring as an engineer?',
         a: `Three things. The bigger picture — I think in terms of impact and stakeholders, not just my own ticket. Communication — I can translate between business users and engineering, which I did constantly in my PLM work. And ownership — I naturally pick up loose ends and unblock people. Those make me a more reliable engineer and a multiplier for the team, not just someone heads-down on their own tasks.`
+      }
+    ]
+  },
+
+  {
+    id: 10,
+    category: 'Intro & Motivation',
+    q: 'I noticed a gap on your resume between 2022 and 2024 — what were you doing during that time?',
+    a: `<strong>The facts.</strong> I finished my Master's in Taiwan in mid-2022 and then made a permanent move to the United States. Landing the first U.S. role took longer than I hoped — the 2022–2023 tech market was rough, with layoffs flooding the market with experienced engineers, and I was starting over in a new country without a local network. During that stretch I did a full-stack internship at Antra in 2023 to build U.S. experience, and I worked non-software jobs to support myself in the meantime — I've never been afraid of honest work.<br><br>
+<strong>Staying sharp.</strong> The whole time I kept my engineering skills current — the internship shipped a real Angular/ASP.NET product, and I kept coding and interviewing steadily until the right role came. [Personalize: name what you actually did — e.g., LeetCode practice, personal projects, courses.]<br><br>
+<strong>How it ended.</strong> That persistence landed the Foxconn role in June 2024, where I became the first PLM team member in North America and grew into leading the team. If anything, that period proved my resilience — and how sure I am that this is the career I want.<br><br>
+<em>Tip: answer this matter-of-factly and without apology — a calm, honest 45 seconds defuses it completely. Never sound embarrassed; the interviewer is checking for red flags, not judging the gap itself.</em>`,
+    followups: [
+      {
+        q: 'How did you keep your technical skills current during that period?',
+        a: `The anchor was the Antra internship — six months of real full-stack delivery with Angular, ASP.NET, and SQL Server, including OAuth 2.0 and WebSocket messaging. Around it I kept a steady routine of hands-on practice: coding regularly, studying system design, and interviewing. [Personalize: add your specifics — e.g., LeetCode cadence, a side project, or a course you completed.]`
+      },
+      {
+        q: 'Why did it take a while to land your first full-time U.S. role?',
+        a: `Mostly timing and circumstances: I arrived right as the 2022–2023 layoff wave put tens of thousands of experienced engineers on the market, and as a recent arrival I had no local network and no U.S. work history. Rather than wait it out, I kept improving my odds — the internship for U.S. experience, steady applications and interviews — and it paid off with Foxconn, where I've since grown into leading the NA PLM team. <em>Tip: stay matter-of-fact; zero self-pity, end on the outcome.</em>`
+      },
+      {
+        q: 'What did you take away from that period?',
+        a: `Resilience and perspective. I learned I can keep moving toward a goal without external structure — nobody was assigning me work, so discipline had to come from me. Working outside software also confirmed how much I genuinely love engineering; I wasn't drifting away from it for a day. And it made me value stability and a long-term home — which is part of why a company like Garmin appeals to me.`
       }
     ]
   }
