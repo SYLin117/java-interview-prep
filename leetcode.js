@@ -7,7 +7,8 @@
 // Entries are pre-sorted by bucket in display order; 'num' is a stable internal
 // key (1..200, NOT in array order) that keys user-overrides.js,
 // descriptions.js and algorithms.js. Problems Garmin is known to ask carry
-// companies: ['Garmin'].
+// companies: ['Garmin']. Temu tags also include matching questions reported
+// for Pinduoduo, Temu's sister platform under PDD Holdings.
 //
 // Shared node definitions assumed by the tree/linked-list/graph solutions:
 //   class ListNode { int val; ListNode next; ListNode(int v) { val = v; } }
@@ -258,7 +259,7 @@ public List<List<String>> groupAnagrams(String[] strs) {
 }`
   },
   {
-    num: 6, lc: 347, title: 'Top K Frequent Elements', d: 'medium',
+    num: 6, lc: 347, title: 'Top K Frequent Elements', d: 'medium', companies: ['Temu'],
     bucket: 'Arrays & Hashing', category: 'Array · Bucket Sort',
     url: 'https://leetcode.com/problems/top-k-frequent-elements/',
     approach: 'Bucket sort by frequency for linear time. First tally counts in a HashMap. The key insight is that any element\'s frequency lies between 1 and nums.length, so make an array of buckets indexed by frequency and drop each distinct value into buckets[its count]. Then walk the buckets from the highest index down, collecting values until you have k — they emerge in descending frequency order for free, no comparisons needed. This is O(n) time and O(n) space, beating the classic O(n log k) min-heap and the trivial O(n log n) sort-by-count. The bounded frequency range (≤ n) enables the bucket pass.',
@@ -1245,7 +1246,7 @@ public int minDeletionSize(String[] strs) {
 }`
   },
   {
-    num: 126, lc: 706, title: 'Design HashMap', d: 'easy', companies: ['Garmin'],
+    num: 126, lc: 706, title: 'Design HashMap', d: 'easy', companies: ['Temu', 'Garmin'],
     bucket: 'Arrays & Hashing', category: 'Design · Hashing',
     url: 'https://leetcode.com/problems/design-hashmap/',
     approach: 'Separate chaining over a fixed array of buckets. Map each key to a slot with key % BUCKETS, where every slot holds a small singly linked chain of (key, value) nodes, so colliding keys simply coexist in the same chain and are told apart by comparing stored keys. put must walk the chain BEFORE inserting and overwrite in place if the key exists — blindly prepending would leave two nodes for one key and get could return a stale value forever; a genuinely new key is prepended in O(1). get and remove walk the same single chain, with remove re-linking either the predecessor or the bucket head around the victim node. The key insight is that hashing confines every operation to one bucket while chaining absorbs collisions, so with 10^4 operations spread over 769 slots the chains stay a few nodes long and each op is O(1) on average. The naive alternatives each fail on one axis: a flat array indexed by key is O(1) but burns 10^6+ slots for a handful of entries, while one unsorted list of pairs is compact but makes every operation O(n). A prime bucket count spreads patterned keys (multiples of a stride) more evenly than a power of two would. Open addressing — one flat array probed linearly, with lazy deletion markers — is the equivalent alternative design.',
@@ -2142,7 +2143,7 @@ public int minSubArrayLen(int target, int[] nums) {
 }`
   },
   {
-    num: 25, lc: 3, title: 'Longest Substring Without Repeating Characters', d: 'medium', companies: ['Garmin'],
+    num: 25, lc: 3, title: 'Longest Substring Without Repeating Characters', d: 'medium', companies: ['Temu', 'Garmin'],
     bucket: 'Sliding Window', category: 'String',
     url: 'https://leetcode.com/problems/longest-substring-without-repeating-characters/',
     approach: 'Sliding window with a last-seen index map. Keep a window [left, r] guaranteed to hold only distinct characters. For each new char c, if we have seen it before at an index still inside the window (lastIdx[c] >= left), jump left to one past that occurrence so the duplicate is excluded; older occurrences before left are irrelevant. Then update lastIdx[c] and track the best window length. The left pointer never moves backward and each char is visited once, so it is O(n) time; the map holds at most one entry per distinct char, giving O(min(n, alphabet)) space. This beats checking all substrings for uniqueness in O(n²) or O(n³).',
@@ -2527,7 +2528,7 @@ public boolean containsNearbyDuplicate(int[] nums, int k) {
   },
   // ─── Stack (10) ───
   {
-    num: 32, lc: 20, title: 'Valid Parentheses', d: 'easy',
+    num: 32, lc: 20, title: 'Valid Parentheses', d: 'easy', companies: ['Temu'],
     bucket: 'Stack', category: 'String',
     url: 'https://leetcode.com/problems/valid-parentheses/',
     approach: 'Stack matching. Scan left to right pushing every opener onto a stack; on each closer, the most recently opened bracket (the stack top) is the only one it can legally close, so pop it and verify the types pair up. This mirrors the LIFO nesting structure of valid brackets exactly: a closer always resolves the innermost unmatched opener. Two failure modes: a closer with an empty stack (nothing to match) and a type mismatch on pop. After the scan, leftover openers leave the stack non-empty, so validity is simply stack.isEmpty(). Runs in O(n) time and O(n) space for the stack.',
@@ -3581,7 +3582,7 @@ public ListNode removeNthFromEnd(ListNode head, int n) {
 }`
   },
   {
-    num: 48, lc: 23, title: 'Merge K Sorted Lists', d: 'hard',
+    num: 48, lc: 23, title: 'Merge K Sorted Lists', d: 'hard', companies: ['Temu'],
     bucket: 'Linked List', category: 'Heap',
     url: 'https://leetcode.com/problems/merge-k-sorted-lists/',
     approach: 'Min-heap (priority queue) k-way merge. Because each list is individually sorted, the global minimum among all remaining nodes is always one of the k current heads, so we keep just those heads in a heap ordered by value. Repeatedly poll the smallest, append it to the result tail, and push that node\'s successor to refill its list\'s slot. The heap never exceeds k entries, giving O(k) space, and each of the N total nodes is pushed and popped once at O(log k) cost, for O(N log k) time — far better than merging lists one-by-one which degrades to O(N·k). A comparator of a.val - b.val orders the heap; the dummy head simplifies appending.',
@@ -3698,7 +3699,7 @@ public Node copyRandomList(Node head) {
 }`
   },
   {
-    num: 51, lc: 143, title: 'Reorder List', d: 'medium',
+    num: 51, lc: 143, title: 'Reorder List', d: 'medium', companies: ['Temu'],
     bucket: 'Linked List', category: 'Two Pointers',
     url: 'https://leetcode.com/problems/reorder-list/',
     approach: 'Three-phase in-place transform: find middle, reverse second half, then merge alternately. Phase one uses slow/fast pointers so slow lands at the left-middle on even lengths, keeping the second half no larger than the first. Phase two reverses that second half with the classic prev/curr/next flip after severing it from the first half (slow.next = null) to avoid a cycle. Phase three zips the two halves node by node, taking one from the front list then one from the reversed back list, which produces exactly the L0,Ln,L1,Ln-1 interleaving. All phases are linear and use only pointers, so the whole routine is O(n) time and O(1) space.',
@@ -4308,7 +4309,7 @@ private boolean mirror(TreeNode a, TreeNode b) {
 }`
   },
   {
-    num: 62, lc: 102, title: 'Binary Tree Level Order Traversal', d: 'medium',
+    num: 62, lc: 102, title: 'Binary Tree Level Order Traversal', d: 'medium', companies: ['Temu'],
     bucket: 'Trees', category: 'BFS',
     url: 'https://leetcode.com/problems/binary-tree-level-order-traversal/',
     approach: 'Breadth-first search with a FIFO queue, processing the tree one full level per outer loop. The key device is snapshotting the queue size at the START of each iteration: that count is exactly how many nodes belong to the current level, so popping precisely that many — even while their children are being enqueued behind them — cleanly separates the levels. Because the queue always holds at most one or two adjacent levels, the snapshot boundary is reliable. Each node is enqueued and dequeued once, giving O(n) time; the queue can hold up to a full bottom level, so O(n) space. A DFS with an explicit depth parameter that indexes into the result list is an equivalent alternative.',
@@ -4396,7 +4397,7 @@ public List<Integer> rightSideView(TreeNode root) {
 }`
   },
   {
-    num: 64, lc: 98, title: 'Validate Binary Search Tree', d: 'medium',
+    num: 64, lc: 98, title: 'Validate Binary Search Tree', d: 'medium', companies: ['Temu'],
     bucket: 'Trees', category: 'DFS',
     url: 'https://leetcode.com/problems/validate-binary-search-tree/',
     approach: 'Recursive range validation: every node must lie strictly inside an open interval (lo, hi) that encodes all ancestor constraints, not just its parent\'s. Descending left tightens the upper bound to the current value; descending right tightens the lower bound. This propagates the global BST invariant downward, so a value trapped in a right subtree but smaller than a higher ancestor is rejected — the flaw a naive parent-only check misses. Long bounds (Long.MIN/MAX) avoid overflow on Integer.MIN/MAX_VALUE nodes, and strict inequalities enforce uniqueness. One visit per node gives O(n) time and O(h) stack space. A strictly increasing in-order traversal check is an equivalent alternative.',
@@ -5422,7 +5423,7 @@ private String shortestRoot(TrieNode root, String word) {
   },
   // ─── Heap / Priority Queue (8) ───
   {
-    num: 74, lc: 215, title: 'Kth Largest Element in an Array', d: 'medium',
+    num: 74, lc: 215, title: 'Kth Largest Element in an Array', d: 'medium', companies: ['Temu'],
     bucket: 'Heap / Priority Queue', category: 'Heap',
     url: 'https://leetcode.com/problems/kth-largest-element-in-an-array/',
     approach: 'Bounded min-heap of size k. Push every element; whenever the heap exceeds size k, poll the smallest. The min-heap therefore always retains exactly the k largest values seen so far, with the kth-largest sitting at its root, so after the full pass peek() is the answer. Correctness: anything smaller than all k survivors gets evicted immediately, and the smallest of the top-k is precisely the kth largest. Each offer/poll is O(log k) and we do n of them → O(n log k) time with only O(k) extra space, beating an O(n log n) full sort. Quickselect can reach O(n) average but the heap is simpler and worst-case stable.',
@@ -6325,7 +6326,7 @@ public Node cloneGraph(Node node) {
 }`
   },
   {
-    num: 86, lc: 207, title: 'Course Schedule', d: 'medium', companies: ['Garmin'],
+    num: 86, lc: 207, title: 'Course Schedule', d: 'medium', companies: ['Temu', 'Garmin'],
     bucket: 'Graphs', category: 'Topological Sort',
     url: 'https://leetcode.com/problems/course-schedule/',
     approach: 'Cycle detection by topological sort using Kahn\'s algorithm (BFS on in-degrees). Build an adjacency list and an in-degree count per course, then repeatedly take any course with zero remaining prerequisites and decrement its dependents. The key invariant: a course can be scheduled only after all its prerequisites have been scheduled, so if the graph is acyclic every course eventually reaches in-degree 0 and gets processed. If a cycle exists, the nodes on it never drop to 0 and stay stuck in the graph. Hence the count of processed courses equals n exactly when there is no cycle. Building the graph and visiting each edge once gives O(V+E) time and O(V+E) space.',
@@ -6704,7 +6705,7 @@ private int dfs(int[][] g, int r, int c) {
 }`
   },
   {
-    num: 172, lc: 210, title: 'Course Schedule II', d: 'medium',
+    num: 172, lc: 210, title: 'Course Schedule II', d: 'medium', companies: ['Temu'],
     bucket: 'Graphs', category: 'Topological Sort',
     url: 'https://leetcode.com/problems/course-schedule-ii/',
     approach: 'Same Kahn\'s-algorithm BFS as Course Schedule, but this time the order in which nodes are polled from the queue IS the answer, not just a count. Build an adjacency list and an in-degree array from the prerequisite pairs, seed the queue with every course whose in-degree is already 0 (no prerequisites), then repeatedly poll a course, append it to the result, and decrement the in-degree of everything it unlocks — pushing any neighbor that drops to 0. The invariant that makes the emitted order valid: a course is only appended once every one of its prerequisites has already been appended and removed, so no course can ever precede a course it depends on. If a cycle exists, the courses on it never reach in-degree 0, so they never enter the queue, and the result list ends up shorter than n — the exact signal to return an empty array instead of a partial ordering. This runs in O(V + E) time and O(V + E) space since each edge and vertex is processed once. DFS with post-order-reversed finish times (detecting back edges via a three-color visited array) is an equivalent alternative that produces a different but equally valid ordering.',
@@ -8460,7 +8461,7 @@ public int reverse(int x) {
 }`
   },
   {
-    num: 191, lc: 9, title: 'Palindrome Number', d: 'easy', companies: ['Garmin'],
+    num: 191, lc: 9, title: 'Palindrome Number', d: 'easy', companies: ['Temu', 'Garmin'],
     bucket: 'Math & Bit Manipulation', category: 'Math · Digits',
     url: 'https://leetcode.com/problems/palindrome-number/',
     approach: 'Reverse only half the digits and compare against the half still unread, all through integer math with no string conversion. Peel the last digit off x with x % 10, feed it into a running reversed accumulator (reversed = reversed * 10 + digit), then chop x with x /= 10. Stop once x <= reversed, because at that crossover point reversed holds exactly the digits that used to be the back half of the number, so the two now line up for a direct comparison. Handling the odd-length case just means discarding the single middle digit via reversed / 10 before comparing. Negative numbers can never be palindromes because of the leading minus sign, and any positive multiple of 10 other than 0 has a trailing zero with no matching leading zero, so both are rejected up front. This beats the naive approach of building the full reversed number, which risks overflowing a 32-bit int for inputs near Integer.MAX_VALUE; reversing only half sidesteps that entirely. The equally valid alternative is converting x to a string and checking it with two pointers from both ends, trading the overflow-safety and O(1) space of the math approach for O(log x) extra space.',
