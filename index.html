@@ -776,7 +776,7 @@
     background: var(--accent-soft);
     border-color: var(--accent);
   }
-  /* Company tag pills next to a problem title (e.g., "Temu") */
+  /* Company tag pills next to a technical question or LeetCode title */
   .lc-companies {
     display: inline-flex;
     gap: 0.3rem;
@@ -1310,8 +1310,9 @@
   <h1 class="hero-title">Java &amp; Spring Boot Interview Questions</h1>
   <p class="hero-subtitle">
     A comprehensive question bank covering core Java, the Spring ecosystem, and adjacent
-    systems. Each topic has roughly 20 questions, ordered easy → hard. Click any question
-    to reveal the answer.
+    systems. Each topic has roughly 20 questions, ordered easy → hard. Questions reported
+    for <strong style="color:#ff6b1a">Temu</strong> or Pinduoduo carry a Temu tag. Click
+    any question to reveal the answer.
   </p>
   <div class="hero-meta">
     <div class="meta-cell">
@@ -1514,6 +1515,24 @@
     topicChipsHTML += `<option value="${escapeHtml(t.id)}">${escapeHtml(t.name)} (${t.questions.length})</option>`;
   });
   topicChipsHTML += `</select></div>`;
+  const topicCompanyTotals = {};
+  for (const t of allTopics) {
+    for (const q of t.questions) {
+      for (const c of (q.companies || [])) topicCompanyTotals[c] = (topicCompanyTotals[c] || 0) + 1;
+    }
+  }
+  const topicCompanies = Object.keys(topicCompanyTotals).sort();
+  if (topicCompanies.length) {
+    topicChipsHTML += `
+      <div class="lc-filter-row">
+        <label class="lc-filter-label" for="topic-company-select">Company</label>
+        <select id="topic-company-select" class="lc-select" aria-label="Filter technical questions by company">
+          <option value="">All companies</option>`;
+    for (const c of topicCompanies) {
+      topicChipsHTML += `<option value="${escapeHtml(c).toLowerCase()}">${escapeHtml(c)} (${topicCompanyTotals[c]})</option>`;
+    }
+    topicChipsHTML += `</select></div>`;
+  }
   topicFiltersEl.innerHTML = topicChipsHTML;
 
   const content = document.getElementById('content');
@@ -1537,11 +1556,16 @@
     const diffRank = { easy: 0, medium: 1, hard: 2 };
     const sortedQs = [...t.questions].sort((a, b) => diffRank[a.d] - diffRank[b.d]);
     sortedQs.forEach((q, qi) => {
+      const companiesAttr = (q.companies || []).map(c => c.toLowerCase()).join(',');
       rowsHTML += `
-        <div class="q-row q-data" data-q="${q.q.toLowerCase()}" data-a="${q.a.replace(/<[^>]*>/g, '').toLowerCase().replace(/"/g, '&quot;')}">
+        <div class="q-row q-data" data-q="${q.q.toLowerCase()}" data-a="${q.a.replace(/<[^>]*>/g, '').toLowerCase().replace(/"/g, '&quot;')}" data-companies="${companiesAttr}">
           <div class="q-num">${String(qi + 1).padStart(2, '0')}</div>
           <div class="q-diff ${q.d}"><span class="pill">${q.d}</span></div>
-          <div class="q-text">${q.q}</div>
+          <div class="q-text">${q.q}${
+            q.companies && q.companies.length
+              ? `<span class="lc-companies">${q.companies.map(c => `<span class="lc-company-pill" data-company="${escapeHtml(c).toLowerCase()}">${escapeHtml(c)}</span>`).join('')}</span>`
+              : ''
+          }</div>
           <div class="q-toggle">+</div>
           <div class="q-answer">${q.a}</div>
         </div>
@@ -1569,6 +1593,7 @@
 
   // ─────── Topic filter state + apply function ───────
   let activeTopic = null;       // null = show all topics
+  let activeTopicCompany = null;
   let topicsSearchTerm = '';
 
   /**
@@ -1585,21 +1610,26 @@
       rows.forEach(row => {
         const q = row.dataset.q || '';
         const a = row.dataset.a || '';
+        const companies = (row.dataset.companies || '').split(',').filter(Boolean);
+        const companyMatch = !activeTopicCompany || companies.includes(activeTopicCompany);
         const sectionNameMatch = section.dataset.topicName.includes(topicsSearchTerm);
-        const matches = !topicsSearchTerm || q.includes(topicsSearchTerm) || a.includes(topicsSearchTerm) || sectionNameMatch;
+        const searchMatch = !topicsSearchTerm || q.includes(topicsSearchTerm) || a.includes(topicsSearchTerm) || sectionNameMatch;
+        const matches = companyMatch && searchMatch;
         row.classList.toggle('hidden', !matches);
         if (matches) visibleCount++;
       });
-      // Hide section only when search is active AND has zero hits in this topic
-      section.classList.toggle('hidden', !!topicsSearchTerm && visibleCount === 0);
+      // Hide sections with no row matches when search or company filtering is active.
+      section.classList.toggle('hidden', (!!topicsSearchTerm || !!activeTopicCompany) && visibleCount === 0);
     });
   }
 
-  // Dropdown change — switch active topic and re-apply
+  // Dropdown changes — switch active topic/company and re-apply.
   topicFiltersEl.addEventListener('change', (e) => {
-    const sel = e.target.closest('#topic-select');
-    if (!sel) return;
-    activeTopic = sel.value || null;
+    const topicSelect = e.target.closest('#topic-select');
+    const companySelect = e.target.closest('#topic-company-select');
+    if (!topicSelect && !companySelect) return;
+    if (topicSelect) activeTopic = topicSelect.value || null;
+    if (companySelect) activeTopicCompany = companySelect.value || null;
     applyTopicsFilters();
     window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
   });
