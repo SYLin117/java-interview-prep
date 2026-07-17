@@ -101,7 +101,7 @@ Don't regress this — it's a key UX detail, applied identically in the Behavior
 
 ### Render pipeline
 
-Iterates over `leetcode[]` once, inserting a styled bucket-header row (with a per-bucket problem count) whenever the `bucket` field changes — which is why the array must stay pre-sorted by bucket. Each `.lc-row.lc-data` has 7 columns: reviewed checkbox, official LeetCode number (`lc`), difficulty pill, title (plus company pills like Garmin/Temu from the `companies` field), category, "LeetCode ↗" link, and expand toggle. Some columns collapse at smaller widths via media queries.
+Iterates over `leetcode[]` once, inserting a styled bucket-header row (with a per-bucket problem count) whenever the `bucket` field changes — which is why the array must stay pre-sorted by bucket. Each `.lc-row.lc-data` has 7 columns: reviewed checkbox, official LeetCode number (`lc`), difficulty pill, title (plus company pills from the `companies` field), category, "LeetCode ↗" link, and expand toggle. Existing Garmin/Temu tags live on entries; the dated mapping after the array adds reported CoStar, Walmart, Amazon, Home Depot, Lowe's, and DoorDash matches by stable problem `num`. Some columns collapse at smaller widths via media queries.
 
 The stable internal `num` (not in array order) keys everything cross-file: `user-overrides.js`, `descriptions.js`, and `algorithms.js`.
 

@@ -8,7 +8,8 @@
 // key (1..200, NOT in array order) that keys user-overrides.js,
 // descriptions.js and algorithms.js. Problems Garmin is known to ask carry
 // companies: ['Garmin']. Temu tags also include matching questions reported
-// for Pinduoduo, Temu's sister platform under PDD Holdings.
+// for Pinduoduo, Temu's sister platform under PDD Holdings. Additional company
+// tags are applied from the dated public reported-question snapshot below.
 //
 // Shared node definitions assumed by the tree/linked-list/graph solutions:
 //   class ListNode { int val; ListNode next; ListNode(int v) { val = v; } }
@@ -8862,3 +8863,43 @@ public String addBinary(String a, String b) {
 }`
   },
 ];
+
+// Publicly reported/company-tagged interview-question snapshot reviewed
+// 2026-07-17. These are matches against this site's existing 200 problems, not
+// official guarantees about any company's current interview loop.
+//
+// Sources:
+//   interviewsolver.com/interview-questions/costar-group
+//   interviewsolver.com/interview-questions/walmart-labs
+//   interviewsolver.com/interview-questions/amazon
+//   interviewsolver.com/interview-questions/the-home-depot
+//   interviewsolver.com/interview-questions/lowes
+//   interviewsolver.com/interview-questions/doordash
+{
+  const companyProblemNums = {
+    CoStar: [15, 25, 39, 56, 71, 85, 97, 150, 177],
+    Walmart: [5, 7, 45, 47, 56, 66, 84, 85, 88, 104, 134, 148, 155, 166],
+    Amazon: [
+      1, 2, 5, 6, 7, 8, 9, 11, 16, 17, 21, 23, 24, 25, 27, 28, 30, 31, 32,
+      36, 39, 42, 43, 45, 47, 48, 49, 50, 53, 56, 63, 70, 74, 75, 77, 80,
+      81, 82, 84, 86, 88, 89, 94, 95, 96, 98, 100, 102, 104, 110, 111, 118,
+      119, 120, 130, 134, 141, 147, 148, 150, 153, 155, 163, 170, 182, 190,
+      191,
+    ],
+    'Home Depot': [21, 24, 33, 50, 88, 97, 111, 128, 146, 163, 168],
+    "Lowe's": [
+      4, 5, 9, 11, 13, 14, 27, 36, 56, 66, 79, 80, 88, 110, 116, 123, 126,
+      131, 141, 146, 148, 155, 159, 192, 193,
+    ],
+    DoorDash: [4, 9, 26, 57, 102, 111, 126, 142, 144, 192],
+  };
+  const problemsByNum = new Map(leetcode.map(problem => [problem.num, problem]));
+
+  for (const [company, nums] of Object.entries(companyProblemNums)) {
+    for (const num of nums) {
+      const problem = problemsByNum.get(num);
+      if (!problem) continue;
+      problem.companies = [...new Set([...(problem.companies || []), company])];
+    }
+  }
+}
