@@ -4,7 +4,8 @@
   "private": true,
   "description": "Static Java/Spring interview prep site",
   "scripts": {
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test:chat": "node tests/chat-provider-adapters.mjs"
   },
   "devDependencies": {
     "eslint": "^9.18.0",

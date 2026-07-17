@@ -1,14 +1,10 @@
-// Vercel Edge function — proxies chat to Groq and streams normalized text
-// deltas back to the client as { text: "chunk" } SSE events.
+// Vercel Edge function — proxies chat to the selected LLM provider and streams
+// normalized text deltas back to the client as { text: "chunk" } SSE events.
 //
-// Requires env var GROQ_API_KEY (free tier — get one at https://console.groq.com).
-// Set it in Vercel Project → Settings → Environment Variables.
+// Supported server-side env vars: GROQ_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY.
+// Keys never leave this function or enter the model prompt.
 
 export const config = { runtime: 'edge' };
-
-// GPT-OSS 120B on Groq — strong Java/coding reasoning on the free tier.
-// Alternative: 'llama-3.3-70b-versatile' (less reasoning overhead).
-const MODEL = 'openai/gpt-oss-120b';
 
 const SYSTEM_PROMPT =
   "Interview prep assistant for a Java & Spring Boot study site " +
@@ -17,6 +13,123 @@ const SYSTEM_PROMPT =
   "Be concise: 1-3 short paragraphs. Inline `code` for identifiers; fenced ```java " +
   "blocks for short samples (≤15 lines). If asked something off-topic, say it's outside " +
   "the guide and offer a related Java/Spring topic instead.";
+
+const MAX_OUTPUT_TOKENS = 350;
+const DEFAULT_PROVIDER = 'groq';
+
+/**
+ * Provider adapter contract. JavaScript has no interface keyword, so JSDoc
+ * documents the shape each implementation must satisfy.
+ *
+ * @typedef {Object} ChatProvider
+ * @property {string} label - User-facing provider name.
+ * @property {string} model - Provider model ID.
+ * @property {string} modelLabel - Short user-facing model name.
+ * @property {() => string|undefined} apiKey - Reads the server-side API key.
+ * @property {(messages: Array<{role: string, content: string}>, apiKey: string) =>
+ *   {url: string, init: RequestInit}} buildRequest - Builds the upstream request.
+ * @property {(event: Object) => string} readDelta - Extracts text from one SSE event.
+ */
+
+/** @type {Record<string, ChatProvider>} */
+const PROVIDERS = {
+  groq: {
+    label: 'Groq',
+    model: 'openai/gpt-oss-120b',
+    modelLabel: 'GPT-OSS 120B',
+    apiKey: () => process.env.GROQ_API_KEY,
+    buildRequest(messages, apiKey) {
+      return {
+        url: 'https://api.groq.com/openai/v1/chat/completions',
+        init: {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            'authorization': `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model: this.model,
+            messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...messages],
+            max_completion_tokens: MAX_OUTPUT_TOKENS,
+            reasoning_effort: 'low',
+            include_reasoning: false,
+            temperature: 0.6,
+            stream: true,
+          }),
+        },
+      };
+    },
+    readDelta(event) {
+      return event?.choices?.[0]?.delta?.content || '';
+    },
+  },
+
+  gemini: {
+    label: 'Gemini',
+    model: 'gemini-3.5-flash',
+    modelLabel: '3.5 Flash',
+    apiKey: () => process.env.GEMINI_API_KEY,
+    buildRequest(messages, apiKey) {
+      const contents = messages.map((message) => ({
+        role: message.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: message.content }],
+      }));
+      return {
+        url: `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:streamGenerateContent?alt=sse`,
+        init: {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            'x-goog-api-key': apiKey,
+          },
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+            contents,
+            generationConfig: {
+              maxOutputTokens: MAX_OUTPUT_TOKENS,
+              thinkingConfig: { thinkingLevel: 'LOW' },
+            },
+          }),
+        },
+      };
+    },
+    readDelta(event) {
+      const parts = event?.candidates?.[0]?.content?.parts || [];
+      return parts.map((part) => part.text || '').join('');
+    },
+  },
+
+  openai: {
+    label: 'OpenAI',
+    model: 'gpt-5.6-luna',
+    modelLabel: 'GPT-5.6 Luna',
+    apiKey: () => process.env.OPENAI_API_KEY,
+    buildRequest(messages, apiKey) {
+      return {
+        url: 'https://api.openai.com/v1/responses',
+        init: {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            'authorization': `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model: this.model,
+            instructions: SYSTEM_PROMPT,
+            input: messages,
+            max_output_tokens: MAX_OUTPUT_TOKENS,
+            reasoning: { effort: 'low' },
+            store: false,
+            stream: true,
+          }),
+        },
+      };
+    },
+    readDelta(event) {
+      return event?.type === 'response.output_text.delta' ? event.delta || '' : '';
+    },
+  },
+};
 
 // Per-instance in-memory rate limit. Edge instances are ephemeral and there can
 // be several, so this is a soft deterrent only. For strict global limits, swap
@@ -62,48 +175,88 @@ function jsonError(status, message) {
 }
 
 /**
- * Edge function entry point — proxies a chat request to Groq and streams the
- * normalized response back to the caller.
+ * Return public provider metadata. Configuration status is safe to expose;
+ * actual keys remain server-side.
  *
- * Request body shape (POST):
- *   { messages: [{ role: 'user' | 'assistant', content: string }, ...] }
+ * @returns {Response} Provider catalog JSON.
+ */
+function providerCatalogResponse() {
+  const providers = Object.entries(PROVIDERS).map(([id, provider]) => ({
+    id,
+    label: provider.label,
+    model: provider.model,
+    modelLabel: provider.modelLabel,
+    enabled: Boolean(provider.apiKey()),
+  }));
+  return new Response(JSON.stringify({ defaultProvider: DEFAULT_PROVIDER, providers }), {
+    headers: {
+      'content-type': 'application/json',
+      'cache-control': 'no-store',
+    },
+  });
+}
+
+/**
+ * Normalize one provider's SSE stream into the browser's stable wire format.
  *
- * Response: an `text/event-stream` of SSE events of the form
- *   data: {"text": "chunk"}\n\n
- *   ...
- *   data: [DONE]\n\n
+ * @param {Response} upstream - Successful upstream streaming response.
+ * @param {ChatProvider} provider - Adapter used to parse provider events.
+ * @returns {ReadableStream} Stream of `data: {"text":"..."}\n\n` events.
+ */
+function normalizeProviderStream(upstream, provider) {
+  const encoder = new TextEncoder();
+  return new ReadableStream({
+    async start(controller) {
+      const reader = upstream.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      const processLine = (line) => {
+        if (!line.startsWith('data:')) return;
+        const data = line.slice(5).trim();
+        if (!data || data === '[DONE]') return;
+        try {
+          const text = provider.readDelta(JSON.parse(data));
+          if (text) {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text })}\n\n`));
+          }
+        } catch {
+          // Ignore malformed provider events; later valid deltas still stream.
+        }
+      };
+
+      try {
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+          lines.forEach(processLine);
+        }
+        buffer += decoder.decode();
+        if (buffer) buffer.split('\n').forEach(processLine);
+        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+        controller.close();
+      } catch (error) {
+        controller.error(error);
+      }
+    },
+  });
+}
+
+/**
+ * Edge function entry point.
  *
- * Both the request and the response are intentionally provider-agnostic — to
- * swap Groq for another model, you only need to change the upstream URL, auth
- * header, request body, and the JSON path used to extract the delta text. The
- * client never has to know.
+ * GET returns provider/model availability without exposing credentials.
+ * POST accepts `{ provider, messages }` and returns normalized streaming SSE.
  *
- * Failure modes (all return JSON errors via jsonError()):
- *   405 - non-POST method
- *   429 - per-IP daily limit reached
- *   503 - GROQ_API_KEY env var not set
- *   400 - malformed body or missing messages
- *   502 - upstream fetch failed or Groq returned non-2xx
- *
- * @param {Request} req - Incoming Fetch Request (Vercel Edge runtime).
- * @returns {Promise<Response>} JSON error on failure, or a streaming SSE response on success.
+ * @param {Request} req - Incoming Vercel Edge request.
+ * @returns {Promise<Response>} Provider catalog, JSON error, or normalized SSE.
  */
 export default async function handler(req) {
+  if (req.method === 'GET') return providerCatalogResponse();
   if (req.method !== 'POST') return jsonError(405, 'Method not allowed');
-
-  const ip =
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    req.headers.get('x-real-ip') ||
-    'unknown';
-
-  if (!rateLimit(ip)) {
-    return jsonError(429, 'Daily message limit reached. Try again tomorrow.');
-  }
-
-  const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) {
-    return jsonError(503, 'Chatbot not configured — admin needs to set GROQ_API_KEY.');
-  }
 
   let body;
   try {
@@ -112,98 +265,50 @@ export default async function handler(req) {
     return jsonError(400, 'Invalid JSON body');
   }
 
-  const messages = Array.isArray(body.messages) ? body.messages.slice(-8) : null;
-  if (!messages || messages.length === 0) return jsonError(400, 'messages array required');
+  const providerId =
+    typeof body.provider === 'string' && body.provider ? body.provider : DEFAULT_PROVIDER;
+  const provider = PROVIDERS[providerId];
+  if (!provider) return jsonError(400, 'Unsupported chat provider');
 
-  // Groq uses the OpenAI chat-completion schema: system message goes first.
-  const chatMessages = [
-    { role: 'system', content: SYSTEM_PROMPT },
-    ...messages.map((m) => ({
-      role: m.role === 'assistant' ? 'assistant' : 'user',
-      content: String(m.content || '').slice(0, 2000),
-    })),
-  ];
+  const rawMessages = Array.isArray(body.messages) ? body.messages.slice(-8) : null;
+  if (!rawMessages || rawMessages.length === 0) {
+    return jsonError(400, 'messages array required');
+  }
+  const messages = rawMessages.map((message) => ({
+    role: message?.role === 'assistant' ? 'assistant' : 'user',
+    content: String(message?.content || '').slice(0, 2000),
+  }));
 
+  const apiKey = provider.apiKey();
+  if (!apiKey) {
+    return jsonError(503, `${provider.label} is not configured on this site.`);
+  }
+
+  const ip =
+    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    req.headers.get('x-real-ip') ||
+    'unknown';
+  if (!rateLimit(ip)) {
+    return jsonError(429, 'Daily message limit reached. Try again tomorrow.');
+  }
+
+  const request = provider.buildRequest(messages, apiKey);
   let upstream;
   try {
-    upstream = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: chatMessages,
-        max_completion_tokens: 350,
-        reasoning_effort: 'low',
-        include_reasoning: false,
-        temperature: 0.6,
-        stream: true,
-      }),
-    });
-  } catch (e) {
-    return jsonError(502, `Upstream fetch failed: ${e.message}`);
+    upstream = await fetch(request.url, request.init);
+  } catch (error) {
+    return jsonError(502, `${provider.label} request failed: ${error.message}`);
   }
 
   if (!upstream.ok) {
     const detail = await upstream.text().catch(() => '');
-    return jsonError(502, `Groq returned ${upstream.status}: ${detail.slice(0, 300)}`);
+    return jsonError(
+      502,
+      `${provider.label} returned ${upstream.status}: ${detail.slice(0, 300)}`,
+    );
   }
 
-  // Transform Groq's SSE (OpenAI-compatible) into a simple { text: "..." }
-  // SSE stream for the client. Keeps the browser code provider-agnostic.
-  //
-  // Groq emits chunks like:
-  //   data: {"id":"...","choices":[{"delta":{"content":"hello"},...}]}
-  //   data: [DONE]
-  //
-  // We pull out choices[0].delta.content per chunk and re-emit as:
-  //   data: {"text": "hello"}
-  //   data: [DONE]
-  //
-  // The reader-loop handles arbitrary chunk boundaries — Edge fetch may split
-  // SSE events anywhere, so we accumulate a buffer and only process up to the
-  // last complete line each iteration.
-  const encoder = new TextEncoder();
-  const stream = new ReadableStream({
-    async start(controller) {
-      const reader = upstream.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
-      try {
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
-          for (const line of lines) {
-            if (!line.startsWith('data: ')) continue;
-            const data = line.slice(6).trim();
-            if (!data) continue;
-            if (data === '[DONE]') {
-              controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-              continue;
-            }
-            try {
-              const evt = JSON.parse(data);
-              const text = evt?.choices?.[0]?.delta?.content;
-              if (text) {
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text })}\n\n`));
-              }
-            } catch {
-              // ignore malformed lines
-            }
-          }
-        }
-      } finally {
-        controller.close();
-      }
-    },
-  });
-
-  return new Response(stream, {
+  return new Response(normalizeProviderStream(upstream, provider), {
     headers: {
       'content-type': 'text/event-stream',
       'cache-control': 'no-cache',

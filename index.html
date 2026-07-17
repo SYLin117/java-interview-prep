@@ -488,6 +488,34 @@
     line-height: 1;
   }
   #chat-close:hover { color: var(--text); }
+  .chat-provider-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.45rem 0.75rem;
+    background: white;
+    border-bottom: 1px solid var(--line);
+  }
+  .chat-provider-bar label {
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  #chat-provider {
+    min-width: 0;
+    flex: 1;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--bg-soft);
+    color: var(--text);
+    padding: 0.32rem 0.45rem;
+    font: inherit;
+    font-size: 0.78rem;
+    outline: none;
+  }
+  #chat-provider:focus { border-color: var(--accent); }
+  #chat-provider:disabled { color: var(--text-dim); cursor: not-allowed; }
   #chat-messages {
     flex: 1;
     overflow-y: auto;
@@ -1481,6 +1509,14 @@
   <div class="chat-head">
     <span>Interview Prep Assistant</span>
     <button id="chat-close" aria-label="Close chat">×</button>
+  </div>
+  <div class="chat-provider-bar">
+    <label for="chat-provider">Model</label>
+    <select id="chat-provider" aria-label="Chat model">
+      <option value="groq">Groq · GPT-OSS 120B</option>
+      <option value="gemini" disabled>Gemini · 3.5 Flash (checking…)</option>
+      <option value="openai" disabled>OpenAI · GPT-5.6 Luna (checking…)</option>
+    </select>
   </div>
   <div id="chat-messages"></div>
   <div id="chat-status" hidden></div>
@@ -2789,6 +2825,7 @@
   const chatInput    = document.getElementById('chat-input');
   const chatSubmit   = chatForm.querySelector('button[type=submit]');
   const chatStatus   = document.getElementById('chat-status');
+  const chatProvider = document.getElementById('chat-provider');
 
   // Pre-built index of every topic question for instant on-site lookup before
   // hitting the LLM. Cheap keyword overlap against question text — high
@@ -2879,6 +2916,56 @@
   const chatHistory = [];
   let chatGreeted = false;
   let chatAbort = null;   // tracks the in-flight fetch so we can cancel it
+  const CHAT_PROVIDER_KEY = 'chatProvider';
+
+  /**
+   * Load the public provider catalog from the Edge function. Options without a
+   * configured server-side key remain visible but disabled; no credential is
+   * ever returned to the browser.
+   */
+  async function loadChatProviders() {
+    try {
+      const res = await fetch('/api/chat', { headers: { accept: 'application/json' } });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!Array.isArray(data.providers) || data.providers.length === 0) return;
+
+      let savedProvider = '';
+      try { savedProvider = localStorage.getItem(CHAT_PROVIDER_KEY) || ''; } catch {}
+
+      chatProvider.innerHTML = '';
+      for (const provider of data.providers) {
+        const option = document.createElement('option');
+        option.value = provider.id;
+        option.disabled = !provider.enabled;
+        option.textContent =
+          provider.label + ' · ' + provider.modelLabel +
+          (provider.enabled ? '' : ' (not configured)');
+        chatProvider.appendChild(option);
+      }
+
+      const enabled = data.providers.filter(provider => provider.enabled);
+      const selected =
+        enabled.find(provider => provider.id === savedProvider) ||
+        enabled.find(provider => provider.id === data.defaultProvider) ||
+        enabled[0];
+      chatProvider.disabled = enabled.length === 0;
+      if (selected) {
+        chatProvider.value = selected.id;
+      } else {
+        showChatError('No LLM provider is configured. Add a server-side API key.');
+      }
+    } catch {
+      // Static local preview has no /api/chat; keep the built-in Groq fallback.
+    }
+  }
+
+  chatProvider.addEventListener('change', () => {
+    if (chatAbort) { chatAbort.abort(); chatAbort = null; }
+    try { localStorage.setItem(CHAT_PROVIDER_KEY, chatProvider.value); } catch {}
+    chatStatus.hidden = true;
+  });
+  loadChatProviders();
 
   // ─── Resize (desktop only — the handle is hidden via CSS on touch devices) ───
   const chatResizeHandle = document.getElementById('chat-resize');
@@ -3004,7 +3091,7 @@
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ messages: chatHistory }),
+        body: JSON.stringify({ provider: chatProvider.value, messages: chatHistory }),
         signal,
       });
       if (!res.ok) {

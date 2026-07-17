@@ -15,7 +15,7 @@ Four views, toggled from the header:
 
 Extras:
 
-- **Chat assistant** (💬) — a floating chat panel backed by `api/chat.js`, which proxies to Groq's free tier.
+- **Chat assistant** (💬) — a floating chat panel with a model selector backed by pluggable Groq, Gemini, and OpenAI adapters in `api/chat.js`.
 - **Editable LeetCode solutions** — solutions are `contenteditable`. Edits save locally per device; with the master key (🔑 button) they can be **published to all visitors instantly** via `api/overrides.js` (Upstash Redis), or exported as `user-overrides.js` to commit to git.
 - **Reviewed progress** — each LeetCode problem has a checkbox persisted in Upstash Redis and synchronized across devices. The master key is required to change it.
 
@@ -37,11 +37,13 @@ Auto-deployed by Vercel's Git integration: pushes/merges to `main` go to product
 vercel deploy --prod --yes
 ```
 
-Environment variables (Vercel → Settings → Environment Variables) for the dynamic features; all are configured in production as of July 2026:
+Environment variables (Vercel → Settings → Environment Variables) for the dynamic features:
 
 | Var | Enables |
 |---|---|
-| `GROQ_API_KEY` | Chat assistant (free key at console.groq.com) |
+| `GROQ_API_KEY` | Groq chat option (default: GPT-OSS 120B) |
+| `GEMINI_API_KEY` | Gemini chat option (Gemini 3.5 Flash) |
+| `OPENAI_API_KEY` | OpenAI chat option (GPT-5.6 Luna) |
 | `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` | Publishing solution edits and syncing reviewed status (free DB at console.upstash.com) |
 | `OVERRIDES_MASTER_KEY` | The secret that gates publishing and reviewed-status changes |
 
