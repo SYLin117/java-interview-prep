@@ -6,9 +6,9 @@
 
 export const config = { runtime: 'edge' };
 
-// Llama 3.3 70B on Groq — high quality, free tier, very fast.
-// Alternatives: 'llama-3.1-8b-instant' (faster, smaller), 'gemma2-9b-it'.
-const MODEL = 'llama-3.3-70b-versatile';
+// GPT-OSS 120B on Groq — strong Java/coding reasoning on the free tier.
+// Alternative: 'llama-3.3-70b-versatile' (less reasoning overhead).
+const MODEL = 'openai/gpt-oss-120b';
 
 const SYSTEM_PROMPT =
   "Interview prep assistant for a Java & Spring Boot study site " +
@@ -135,8 +135,10 @@ export default async function handler(req) {
       body: JSON.stringify({
         model: MODEL,
         messages: chatMessages,
-        max_tokens: 350,
-        temperature: 0.7,
+        max_completion_tokens: 350,
+        reasoning_effort: 'low',
+        include_reasoning: false,
+        temperature: 0.6,
         stream: true,
       }),
     });
