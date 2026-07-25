@@ -227,6 +227,10 @@
     border-bottom: 1px solid var(--line-soft);
     transition: background 0.12s;
   }
+  /* Extras adds a Category column between Level and Question. Its width is set
+     by the "Category" header plus its sort indicator and priority badge, not by
+     the pills, which are much narrower. */
+  .q-table.has-category .q-row { grid-template-columns: 55px 100px 118px 1fr 50px; }
   .q-row:last-child { border-bottom: none; }
   .q-row.q-data:hover { background: var(--bg-soft); }
   .q-row.q-head {
@@ -236,7 +240,7 @@
     font-weight: 600;
   }
   .q-row.q-head > div { padding: 0.7rem 1rem; }
-  .q-row.q-head > .q-sort-cell { padding: 0; }
+  .q-row.q-head > .q-sort-cell { padding: 0; min-width: 0; }
   .q-sort-button {
     width: 100%;
     min-height: 100%;
@@ -250,7 +254,9 @@
     font: inherit;
     text-align: left;
     cursor: pointer;
+    position: relative;   /* anchors the priority badge in the corner */
   }
+  .q-sort-indicator { flex-shrink: 0; }
   .q-sort-button[data-topic-sort="number"] { justify-content: center; }
   .q-sort-button:hover,
   .q-sort-button.active { color: var(--accent); }
@@ -263,18 +269,23 @@
     text-align: center;
   }
   .q-sort-button.active .q-sort-indicator { color: var(--accent); }
+  /* Corner superscript rather than a flex item: the No. column is only 55px and
+     could never fit label + arrow + badge on one line. */
   .q-sort-priority {
     display: none;
-    min-width: 1rem;
-    padding: 0.05rem 0.25rem;
+    position: absolute;
+    top: 0.12rem;
+    right: 0.15rem;
+    min-width: 0.85rem;
+    padding: 0.02rem 0.2rem;
     color: white;
     background: var(--accent);
     border-radius: 8px;
-    font-size: 0.58rem;
+    font-size: 0.55rem;
     line-height: 1.25;
     text-align: center;
   }
-  .q-sort-button.active .q-sort-priority:not(:empty) { display: inline-block; }
+  .q-sort-button.active .q-sort-priority:not(:empty) { display: block; }
   .q-sort-reset {
     width: 100%;
     height: 100%;
@@ -307,6 +318,17 @@
     padding: 0.2rem 0.55rem;
     border-radius: 12px;
     text-transform: capitalize;
+  }
+  .q-cat { font-size: 0.75rem; font-weight: 600; min-width: 0; }
+  .q-cat-pill {
+    padding: 0.2rem 0.5rem;
+    border-radius: 12px;
+    color: var(--text-dim);
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .q-diff.easy .pill { color: var(--easy); background: var(--easy-bg); }
   .q-diff.medium .pill { color: var(--med); background: var(--med-bg); }
@@ -723,6 +745,7 @@
     .hero { padding: 2rem 1rem 1.5rem; }
     .topic-nav, .section { padding: 1.5rem 1rem; }
     .q-row { grid-template-columns: 40px 85px 1fr 40px; }
+    .q-table.has-category .q-row { grid-template-columns: 40px 85px 96px 1fr 40px; }
     .q-row.q-data > div:not(.q-answer) { padding: 0.8rem 0.5rem; font-size: 0.9rem; }
     .q-row.q-head > div { padding: 0.6rem 0.5rem; font-size: 0.72rem; }
     .q-row.q-head > .q-sort-cell { padding: 0; }
@@ -735,6 +758,19 @@
 
   @media (max-width: 480px) {
     .q-row { grid-template-columns: 32px 70px 1fr 32px; }
+    /* A 5th column is a lot on a phone, so this table alone buys the question
+       text back by tightening its other columns and letting the widest header
+       label ellipsis. */
+    .q-table.has-category .q-row { grid-template-columns: 28px 58px 66px 1fr 28px; }
+    .q-table.has-category .q-sort-button { padding-inline: 0.3rem; overflow: hidden; }
+    .q-table.has-category .q-sort-button > span:first-child {
+      min-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .q-table.has-category .q-row.q-data > div:not(.q-answer) { padding-inline: 0.3rem; }
+    .q-cat-pill { padding: 0.15rem 0.35rem; font-size: 0.68rem; }
     .q-row.q-data > div:not(.q-answer) { padding: 0.7rem 0.35rem; font-size: 0.85rem; }
     .q-row.q-head > div { padding: 0.5rem 0.35rem; font-size: 0.68rem; }
     .q-row.q-head > .q-sort-cell { padding: 0; }
@@ -1703,31 +1739,54 @@
 
   const content = document.getElementById('content');
   const topicDifficultyRank = { easy: 0, medium: 1, hard: 2 };
-  const topicSortFields = [
-    { key: 'number', label: 'No.', value: (_question, index) => index + 1, compare: (a, b) => Number(a) - Number(b) },
-    { key: 'level', label: 'Level', value: question => question.d, compare: (a, b) => topicDifficultyRank[a] - topicDifficultyRank[b] },
-    {
+
+  // Extras questions are authored as "[K8s] How do you …" — the bracket prefix
+  // is the question's category. It gets its own column there, so the prefix is
+  // stripped from the question text rather than shown twice.
+  const extrasCategoryRank = { MQ: 0, Redis: 1, Docker: 2, K8s: 3, System: 4 };
+  const questionCategory = question => question.q.match(/^\[([^\]]+)\]/)?.[1] || '';
+  const questionWithoutCategory = question => question.q.replace(/^\[[^\]]+\]\s*/, '');
+  const topicHasCategoryColumn = topic => topic.id === 'extras';
+
+  const topicSortFieldByKey = {
+    number: { key: 'number', label: 'No.', value: (_question, index) => index + 1, compare: (a, b) => Number(a) - Number(b) },
+    level: { key: 'level', label: 'Level', value: question => question.d, compare: (a, b) => topicDifficultyRank[a] - topicDifficultyRank[b] },
+    category: {
+      key: 'category',
+      label: 'Category',
+      value: questionCategory,
+      // Curated order, not alphabetical, so Category ↑ matches how the section
+      // reads by default. Anything unranked (or uncategorised) sorts last.
+      compare: (a, b) => (extrasCategoryRank[a] ?? 99) - (extrasCategoryRank[b] ?? 99)
+        || a.localeCompare(b, undefined, { sensitivity: 'base' })
+    },
+    question: {
       key: 'question',
       label: 'Question',
-      value: question => question.q.replace(/<[^>]*>/g, ' '),
+      value: question => questionWithoutCategory(question).replace(/<[^>]*>/g, ' '),
       compare: (a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })
     }
+  };
+  const topicSortFieldsFor = topic => [
+    topicSortFieldByKey.number,
+    topicSortFieldByKey.level,
+    ...(topicHasCategoryColumn(topic) ? [topicSortFieldByKey.category] : []),
+    topicSortFieldByKey.question
   ];
-  const topicSortFieldByKey = Object.fromEntries(topicSortFields.map(field => [field.key, field]));
   const topicSortState = new WeakMap();
 
   function topicSortDatasetKey(field) {
     return 'sort' + field.key.charAt(0).toUpperCase() + field.key.slice(1);
   }
 
-  function topicSortAttributes(question, index) {
-    return topicSortFields.map(field =>
+  function topicSortAttributes(fields, question, index) {
+    return fields.map(field =>
       `data-sort-${field.key}="${escapeHtml(String(field.value(question, index)))}"`
     ).join(' ');
   }
 
-  function topicSortHeaderHtml() {
-    return topicSortFields.map(field => `
+  function topicSortHeaderHtml(fields) {
+    return fields.map(field => `
       <div class="q-sort-cell" role="columnheader" aria-sort="none">
         <button class="q-sort-button" type="button" data-topic-sort="${field.key}"
                 aria-describedby="topic-sort-help" aria-label="Sort by ${field.label}"
@@ -1744,21 +1803,19 @@
     section.dataset.topicName = t.name.toLowerCase();
 
     const num = i === allTopics.length - 1 ? 'Bonus Section' : 'Topic ' + String(i + 1).padStart(2, '0');
+    const sortFields = topicSortFieldsFor(t);
+    const hasCategory = topicHasCategoryColumn(t);
 
     let rowsHTML = `
       <div class="q-row q-head" role="row">
-        ${topicSortHeaderHtml()}
+        ${topicSortHeaderHtml(sortFields)}
         <div class="q-sort-cell" role="columnheader">
           <button class="q-sort-reset" type="button" disabled aria-label="Reset sorting" title="Restore the original question order">↺</button>
         </div>
       </div>
     `;
 
-    const extrasCategoryRank = { MQ: 0, Redis: 1, Docker: 2, K8s: 3, System: 4 };
-    const extrasRank = q => {
-      const category = q.q.match(/^\[([^\]]+)\]/)?.[1];
-      return extrasCategoryRank[category] ?? 5;
-    };
+    const extrasRank = q => extrasCategoryRank[questionCategory(q)] ?? 5;
     const sortedQs = [...t.questions].sort((a, b) => {
       if (t.id !== 'extras') return topicDifficultyRank[a.d] - topicDifficultyRank[b.d];
       return extrasRank(a) - extrasRank(b)
@@ -1767,11 +1824,13 @@
     });
     sortedQs.forEach((q, qi) => {
       const companiesAttr = (q.companies || []).map(c => c.toLowerCase()).join(',');
+      const category = hasCategory ? questionCategory(q) : '';
       rowsHTML += `
-        <div class="q-row q-data" data-q="${q.q.toLowerCase()}" data-a="${q.a.replace(/<[^>]*>/g, '').toLowerCase().replace(/"/g, '&quot;')}" data-companies="${companiesAttr}" ${topicSortAttributes(q, qi)}>
+        <div class="q-row q-data" data-q="${q.q.toLowerCase()}" data-a="${q.a.replace(/<[^>]*>/g, '').toLowerCase().replace(/"/g, '&quot;')}" data-companies="${companiesAttr}" ${topicSortAttributes(sortFields, q, qi)}>
           <div class="q-num">${String(qi + 1).padStart(2, '0')}</div>
           <div class="q-diff ${q.d}"><span class="pill">${q.d}</span></div>
-          <div class="q-text">${q.q}${
+          ${hasCategory ? `<div class="q-cat">${category ? `<span class="q-cat-pill">${escapeHtml(category)}</span>` : ''}</div>` : ''}
+          <div class="q-text">${hasCategory ? questionWithoutCategory(q) : q.q}${
             q.companies && q.companies.length
               ? `<span class="lc-companies">${q.companies.map(c => `<span class="lc-company-pill" data-company="${escapeHtml(c).toLowerCase()}">${escapeHtml(c)}</span>`).join('')}</span>`
               : ''
@@ -1790,7 +1849,7 @@
           t.id === 'extras' ? 'grouped by category with setup first, then easy → hard' : 'ordered roughly easy → hard'
         }.</p>
       </div>
-      <div class="q-table">${rowsHTML}</div>
+      <div class="q-table${hasCategory ? ' has-category' : ''}">${rowsHTML}</div>
     `;
 
     content.appendChild(section);

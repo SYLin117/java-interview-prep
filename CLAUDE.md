@@ -9,7 +9,7 @@ Static study site for Java / Spring Boot interview prep, served on Vercel. Hand-
 ## File layout
 
 - `index.html` — markup, CSS, render logic, the chat widget, and the view toggle (Topics ↔ LeetCode ↔ Garmin Behavioral ↔ System Design).
-- `content.js` — `const topics = [...]` and `const extras = {...}` for the interview-topic question bank. Technical questions reported for Temu or Pinduoduo carry `companies: ['Temu']`; the Topics view renders the pill and offers a company filter.
+- `content.js` — `const topics = [...]` and `const extras = {...}` for the interview-topic question bank. Technical questions reported for Temu or Pinduoduo carry `companies: ['Temu']`; the Topics view renders the pill and offers a company filter. **Extras questions must keep their `[MQ]` / `[Redis]` / `[Docker]` / `[K8s]` / `[System]` prefix** — the renderer splits it out into a sortable **Category** column (the prefix is stripped from the displayed text, so it isn't shown twice) and orders categories by `extrasCategoryRank` in `index.html`, not alphabetically. A new category needs an entry in that map or it sorts last.
 - `systemdesign.js` — `const systemDesignThemes = [...]` (8 concept themes, each with `{ id, icon, color, bg, title, questions: [{ d, q, a }] }` — 46 Q&A total) and `const systemDesignCases = [...]` (12 full design walkthroughs, each with `{ id, icon, title, tagline, problem, requirements[], estimation, components[], deepDive, flow, tradeoffs[], tags[] }`). All the prose fields are HTML (innerHTML) except `flow`, which is plain text rendered in a `<pre>`. Rendered in the **System Design** view. Ported from a standalone study site.
 - `behavioral.js` — `const behavioral = [...]` of behavioral-interview *question chains* (each: `category`, main `q`, STAR `a`, and a `followups: [{q, a}]` array). Personalized to the site owner; rendered in the **Garmin Behavioral** view. Answers are HTML (innerHTML). `[Personalize: …]` notes mark spots for the user to add a real metric/detail.
 - `leetcode.js` — `const leetcode = [...]` with the 200 popular LeetCode problems (title, difficulty, bucket, category, URL, approach hint, complexity, Java solution). Entries are pre-sorted by `bucket` (16 buckets in display order); `num` is a stable internal key (1..200, NOT in array order) that keys `user-overrides.js`, `descriptions.js` and `algorithms.js`. Existing Garmin/Temu tags live on individual entries; a dated public reported-question snapshot after the array adds CoStar, Walmart, Amazon, Home Depot, Lowe's, and DoorDash tags by stable `num`. Company tags render as colored pills and filter options.
@@ -131,6 +131,17 @@ Decisions baked in — preserve unless the user asks otherwise:
 ## Click behavior
 
 Clicking a `.q-row.q-data` toggles `.expanded`, but clicks originating inside `.q-answer` are deliberately ignored so users can select and copy answer text without collapsing the row. Don't regress this — the guard is `if (e.target.closest('.q-answer')) return;` in the row click handler.
+
+## Topic question sorting
+
+Topic table headers are multi-column sort controls with **SQL `ORDER BY` semantics — priority follows the order columns were added and is never reshuffled**:
+
+- Plain click on an unused column → restarts the sort with that column alone, ascending.
+- Plain click on a column already in the sort → flips only its direction, leaving the priority list intact (so a stray click can't destroy a multi-column sort).
+- Shift / ⌘ / Ctrl-click → appends a column as the next tie-breaker; on an already-sorted column it flips direction in place, and a second time removes it.
+- ↺ clears the sort. Original order is the final tie-break, via `data-sort-number`.
+
+State lives in the `topicSortState` WeakMap keyed by section, so each topic sorts independently. Columns are declared once in `topicSortFieldByKey` (`{ key, label, value, compare }`) and `topicSortFieldsFor(topic)` picks the per-topic set — that's the only place to touch when adding a sortable column. The priority badge is absolutely positioned in the header button's corner because the 55px No. column can't fit label + arrow + badge in flow, and it's hidden for single-column sorts.
 
 ## Linting
 
