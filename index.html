@@ -1598,7 +1598,17 @@
     `;
 
     const diffRank = { easy: 0, medium: 1, hard: 2 };
-    const sortedQs = [...t.questions].sort((a, b) => diffRank[a.d] - diffRank[b.d]);
+    const extrasCategoryRank = { MQ: 0, Kafka: 0, Redis: 1, Docker: 2, K8s: 3, System: 4 };
+    const extrasRank = q => {
+      const category = q.q.match(/^\[([^\]]+)\]/)?.[1];
+      return extrasCategoryRank[category] ?? 5;
+    };
+    const sortedQs = [...t.questions].sort((a, b) => {
+      if (t.id !== 'extras') return diffRank[a.d] - diffRank[b.d];
+      return extrasRank(a) - extrasRank(b)
+        || Number(Boolean(b.setup)) - Number(Boolean(a.setup))
+        || diffRank[a.d] - diffRank[b.d];
+    });
     sortedQs.forEach((q, qi) => {
       const companiesAttr = (q.companies || []).map(c => c.toLowerCase()).join(',');
       rowsHTML += `
@@ -1620,7 +1630,9 @@
       <div class="section-header">
         <div class="section-num">${num}</div>
         <h2 class="section-title">${t.name}</h2>
-        <p class="section-desc">${t.desc}. ${t.questions.length} questions, ordered roughly easy → hard.</p>
+        <p class="section-desc">${t.desc}. ${t.questions.length} questions, ${
+          t.id === 'extras' ? 'grouped by category with setup first, then easy → hard' : 'ordered roughly easy → hard'
+        }.</p>
       </div>
       <div class="q-table">${rowsHTML}</div>
     `;
