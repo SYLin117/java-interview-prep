@@ -274,7 +274,7 @@
     line-height: 1.25;
     text-align: center;
   }
-  .q-sort-button.active .q-sort-priority { display: inline-block; }
+  .q-sort-button.active .q-sort-priority:not(:empty) { display: inline-block; }
   .q-sort-reset {
     width: 100%;
     height: 100%;
@@ -1026,6 +1026,10 @@
     font-size: 0.72rem;
     line-height: 1.35;
   }
+  .topic-sort-help code {
+    font-family: "JetBrains Mono", "SF Mono", Consolas, monospace;
+    font-size: 0.92em;
+  }
   .lc-select {
     font-family: inherit;
     font-size: 0.8rem;
@@ -1694,7 +1698,7 @@
     }
     topicChipsHTML += `</select></div>`;
   }
-  topicChipsHTML += `<div class="topic-sort-help" id="topic-sort-help">Sort questions: click headers to add or promote criteria · the latest column becomes priority 1</div>`;
+  topicChipsHTML += `<div class="topic-sort-help" id="topic-sort-help">Sort questions like SQL <code>ORDER BY</code>: click a header to sort by it, click again to flip direction · shift-click (or ⌘/Ctrl-click) another header to add the next tie-breaker — columns keep the priority they were added in · shift-click a sorted column twice to drop it, ↺ clears the sort</div>`;
   topicFiltersEl.innerHTML = topicChipsHTML;
 
   const content = document.getElementById('content');
@@ -1727,7 +1731,7 @@
       <div class="q-sort-cell" role="columnheader" aria-sort="none">
         <button class="q-sort-button" type="button" data-topic-sort="${field.key}"
                 aria-describedby="topic-sort-help" aria-label="Sort by ${field.label}"
-                title="Click to add or promote this column to priority 1">
+                title="Click to sort by this column · shift-click to add it as the next tie-breaker">
           <span>${field.label}</span><span class="q-sort-indicator" aria-hidden="true">↕</span><span class="q-sort-priority" aria-hidden="true"></span>
         </button>
       </div>`).join('');
@@ -1802,11 +1806,12 @@
       const priority = button.querySelector('.q-sort-priority');
       button.classList.toggle('active', Boolean(criterion));
       indicator.textContent = criterion ? (criterion.direction === 'asc' ? '↑' : '↓') : '↕';
-      priority.textContent = criterion ? String(criterionIndex + 1) : '';
+      // The badge only earns its space once the sort actually has tie-breakers.
+      priority.textContent = criterion && criteria.length > 1 ? String(criterionIndex + 1) : '';
       cell.setAttribute('aria-sort', !criterion ? 'none' : criterionIndex === 0 ? (criterion.direction === 'asc' ? 'ascending' : 'descending') : 'other');
       button.setAttribute('aria-label', !criterion
         ? `Sort by ${field.label}`
-        : `${field.label}, priority ${criterionIndex + 1}, ${criterion.direction === 'asc' ? 'ascending' : 'descending'}`);
+        : `${field.label}, sort priority ${criterionIndex + 1} of ${criteria.length}, ${criterion.direction === 'asc' ? 'ascending' : 'descending'}`);
     });
     section.querySelector('.q-sort-reset').disabled = criteria.length === 0;
   }
@@ -1839,20 +1844,33 @@
       return;
     }
 
+    // SQL ORDER BY semantics: the first column picked stays priority 1 and each
+    // shift-click appends the next tie-breaker, so the priority order is fixed
+    // once chosen — clicking a column only ever changes its own direction.
     const key = sortButton.dataset.topicSort;
+    const addColumn = e.shiftKey || e.metaKey || e.ctrlKey;
     const criteria = [...(topicSortState.get(section) || [])];
     const existingIndex = criteria.findIndex(criterion => criterion.key === key);
-    if (existingIndex === 0) {
-      criteria[0] = {
+
+    if (!addColumn && existingIndex === -1) {
+      // A plain click on an unused column restarts the sort from that column.
+      criteria.length = 0;
+      criteria.push({ key, direction: 'asc' });
+    } else if (!addColumn) {
+      // A plain click on a column already in the sort only flips its direction,
+      // so a configured multi-column sort survives a stray click. ↺ clears it.
+      criteria[existingIndex] = {
         key,
-        direction: criteria[0].direction === 'asc' ? 'desc' : 'asc'
+        direction: criteria[existingIndex].direction === 'asc' ? 'desc' : 'asc'
       };
-    } else if (existingIndex > 0) {
-      const [promoted] = criteria.splice(existingIndex, 1);
-      criteria.unshift(promoted);
+    } else if (existingIndex === -1) {
+      criteria.push({ key, direction: 'asc' });
+    } else if (criteria[existingIndex].direction === 'asc') {
+      criteria[existingIndex] = { key, direction: 'desc' };
     } else {
-      criteria.unshift({ key, direction: 'asc' });
+      criteria.splice(existingIndex, 1);
     }
+
     topicSortState.set(section, criteria);
     applyTopicSort(section);
   });
