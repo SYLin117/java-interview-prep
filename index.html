@@ -1694,7 +1694,7 @@
     }
     topicChipsHTML += `</select></div>`;
   }
-  topicChipsHTML += `<div class="topic-sort-help" id="topic-sort-help">Sort questions: click a column header · Shift-click to add another column</div>`;
+  topicChipsHTML += `<div class="topic-sort-help" id="topic-sort-help">Sort questions: click a header to make it priority 1 · Shift-click to add a lower priority</div>`;
   topicFiltersEl.innerHTML = topicChipsHTML;
 
   const content = document.getElementById('content');
@@ -1727,7 +1727,7 @@
       <div class="q-sort-cell" role="columnheader" aria-sort="none">
         <button class="q-sort-button" type="button" data-topic-sort="${field.key}"
                 aria-describedby="topic-sort-help" aria-label="Sort by ${field.label}"
-                title="Click to sort · Shift-click to add to the current sort">
+                title="Click to make priority 1 · Shift-click to add as a lower priority">
           <span>${field.label}</span><span class="q-sort-indicator" aria-hidden="true">↕</span><span class="q-sort-priority" aria-hidden="true"></span>
         </button>
       </div>`).join('');
@@ -1848,9 +1848,16 @@
         key,
         direction: criteria[existingIndex].direction === 'asc' ? 'desc' : 'asc'
       };
+    } else if (existingIndex === 0) {
+      criteria[0] = {
+        key,
+        direction: criteria[0].direction === 'asc' ? 'desc' : 'asc'
+      };
+    } else if (existingIndex > 0) {
+      const [promoted] = criteria.splice(existingIndex, 1);
+      criteria.unshift(promoted);
     } else {
-      const direction = existingIndex === 0 && criteria[0].direction === 'asc' ? 'desc' : 'asc';
-      criteria.splice(0, criteria.length, { key, direction });
+      criteria.unshift({ key, direction: 'asc' });
     }
     topicSortState.set(section, criteria);
     applyTopicSort(section);
