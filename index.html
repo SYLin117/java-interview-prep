@@ -978,6 +978,59 @@
   }
   .lc-select:hover { border-color: var(--accent); }
   .lc-select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .lc-sort-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  .lc-sort-criterion {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.2rem 0.25rem 0.2rem 0.45rem;
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+  .lc-sort-priority {
+    min-width: 1rem;
+    color: var(--text-faint);
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-align: center;
+  }
+  .lc-sort-criterion .lc-select {
+    padding: 0.15rem 0.25rem;
+    background: transparent;
+    border: 0;
+  }
+  .lc-sort-direction,
+  .lc-sort-add,
+  .lc-sort-clear {
+    font-family: inherit;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 0.28rem 0.5rem;
+    cursor: pointer;
+  }
+  .lc-sort-direction {
+    min-width: 2rem;
+    color: var(--accent);
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+  .lc-sort-direction:hover,
+  .lc-sort-add:hover,
+  .lc-sort-clear:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .lc-sort-add:disabled { opacity: 0.45; cursor: not-allowed; }
+  .lc-sort-add:disabled:hover { color: var(--text-dim); border-color: var(--line); }
   .lc-chip {
     display: inline-block;
     padding: 0.3rem 0.7rem;
@@ -1011,6 +1064,8 @@
   }
   @media (max-width: 480px) {
     .lc-chip { padding: 0.25rem 0.55rem; font-size: 0.72rem; }
+    .lc-sort-criterion { width: 100%; }
+    .lc-sort-criterion .lc-select { flex: 1; max-width: none; }
   }
   /* Header wraps on mobile → filter bar drops further down to clear it */
   @media (max-width: 768px) {
@@ -1718,6 +1773,31 @@
   // escapeHtml() is defined further down (chat widget) — hoisted, safe to call.
   const lcTable = document.getElementById('leetcode-table');
 
+  // One schema drives the sort UI, row metadata, and comparison behavior. Adding
+  // another sortable column only requires one entry here; the sort engine and
+  // multi-column controls do not contain column-specific branches.
+  const lcSortFields = [
+    { key: 'no', label: 'No.', value: p => p.lc, compare: (a, b) => Number(a) - Number(b) },
+    {
+      key: 'level',
+      label: 'Level',
+      value: p => p.d,
+      compare: (a, b) => ({ easy: 0, medium: 1, hard: 2 }[a] ?? 3) - ({ easy: 0, medium: 1, hard: 2 }[b] ?? 3)
+    },
+    { key: 'question', label: 'Question name', value: p => p.title, compare: (a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }) }
+  ];
+  const lcSortFieldByKey = Object.fromEntries(lcSortFields.map(field => [field.key, field]));
+
+  function lcSortAttributes(problem) {
+    return lcSortFields.map(field =>
+      `data-sort-${field.key}="${escapeHtml(String(field.value(problem)))}"`
+    ).join(' ');
+  }
+
+  function lcSortDatasetKey(field) {
+    return 'sort' + field.key.charAt(0).toUpperCase() + field.key.slice(1);
+  }
+
   // Count problems per bucket so the header shows "(N)" next to each group.
   const bucketCounts = {};
   for (const p of leetcode) bucketCounts[p.bucket] = (bucketCounts[p.bucket] || 0) + 1;
@@ -1751,7 +1831,7 @@
       ? leetcodeUserOverrides[p.num]
       : p.code;
     lcRowsHTML += `
-      <div class="lc-row lc-data" data-q="${search}" data-bucket="${escapeHtml(p.bucket).toLowerCase()}" data-companies="${companiesAttr}" data-lc-num="${p.num}">
+      <div class="lc-row lc-data" data-q="${search}" data-bucket="${escapeHtml(p.bucket).toLowerCase()}" data-companies="${companiesAttr}" data-lc-num="${p.num}" ${lcSortAttributes(p)}>
         <div class="lc-reviewed-cell"><input class="lc-reviewed-check" type="checkbox" data-lc-num="${p.num}" aria-label="Mark ${escapeHtml(p.title)} reviewed" title="Unlock with the master key to update reviewed status" disabled></div>
         <div class="lc-num" title="LeetCode #${p.lc}">${p.lc}</div>
         <div class="lc-diff ${p.d}"><span class="pill">${p.d}</span></div>
@@ -2458,13 +2538,70 @@
     }
     filtersHTML += `</select>`;
   }
-  filtersHTML += `</div>`;
+  filtersHTML += `</div>
+    <div class="lc-filter-row">
+      <span class="lc-filter-label">Sort</span>
+      <div id="lc-sort-controls" class="lc-sort-controls"></div>
+      <button id="lc-sort-add" class="lc-sort-add" type="button">+ Then by</button>
+      <button id="lc-sort-clear" class="lc-sort-clear" type="button">Clear sort</button>
+    </div>`;
   lcFiltersEl.innerHTML = filtersHTML;
 
   // Filter state — all three dimensions compose via AND
   let lcActiveBucket  = null;
   let lcActiveCompany = null;
   let lcSearchTerm    = '';
+  let lcSortCriteria  = [];
+
+  const lcSortControls = document.getElementById('lc-sort-controls');
+  const lcSortAdd = document.getElementById('lc-sort-add');
+  const lcSortClear = document.getElementById('lc-sort-clear');
+  const lcDefaultRowOrder = Array.from(lcTable.children);
+  const lcProblemRows = Array.from(lcTable.querySelectorAll('.lc-row.lc-data'));
+  const lcOriginalPosition = new Map(lcProblemRows.map((row, index) => [row, index]));
+
+  function renderLcSortControls() {
+    const controls = lcSortCriteria.length ? lcSortCriteria : [{ key: '', direction: 'asc' }];
+    const selectedKeys = new Set(lcSortCriteria.map(criterion => criterion.key));
+    lcSortControls.innerHTML = controls.map((criterion, index) => {
+      let options = `<option value="">${index === 0 ? 'Default order' : 'Choose column'}</option>`;
+      for (const field of lcSortFields) {
+        const disabled = selectedKeys.has(field.key) && field.key !== criterion.key;
+        options += `<option value="${field.key}"${field.key === criterion.key ? ' selected' : ''}${disabled ? ' disabled' : ''}>${field.label}</option>`;
+      }
+      const directionLabel = criterion.direction === 'desc' ? 'Descending' : 'Ascending';
+      return `<span class="lc-sort-criterion">
+        <span class="lc-sort-priority" aria-hidden="true">${index + 1}</span>
+        <select class="lc-select" data-sort-index="${index}" aria-label="Sort priority ${index + 1}">${options}</select>
+        ${criterion.key ? `<button class="lc-sort-direction" type="button" data-sort-direction="${index}" aria-label="${directionLabel}; change direction" title="${directionLabel}">${criterion.direction === 'desc' ? '↓' : '↑'}</button>` : ''}
+      </span>`;
+    }).join('');
+    lcSortAdd.hidden = lcSortCriteria.length === 0;
+    lcSortAdd.disabled = lcSortCriteria.length >= lcSortFields.length;
+    lcSortClear.hidden = lcSortCriteria.length === 0;
+  }
+
+  function applyLcSort() {
+    if (lcSortCriteria.length === 0) {
+      lcDefaultRowOrder.forEach(node => lcTable.appendChild(node));
+      applyLcFilters();
+      return;
+    }
+
+    const sortedRows = [...lcProblemRows].sort((rowA, rowB) => {
+      for (const criterion of lcSortCriteria) {
+        const field = lcSortFieldByKey[criterion.key];
+        const datasetKey = lcSortDatasetKey(field);
+        const comparison = field.compare(rowA.dataset[datasetKey], rowB.dataset[datasetKey]);
+        if (comparison !== 0) return criterion.direction === 'desc' ? -comparison : comparison;
+      }
+      return lcOriginalPosition.get(rowA) - lcOriginalPosition.get(rowB);
+    });
+    sortedRows.forEach(row => lcTable.appendChild(row));
+    applyLcFilters();
+  }
+
+  renderLcSortControls();
 
   /**
    * Re-apply all three LeetCode filters (search + bucket + company) to the row list.
@@ -2484,17 +2621,56 @@
       if (visible) visibleByBucket[bucket] = (visibleByBucket[bucket] || 0) + 1;
     });
     lcTable.querySelectorAll('.lc-row.lc-bucket').forEach(header => {
-      header.classList.toggle('hidden', !visibleByBucket[header.dataset.bucket]);
+      header.classList.toggle('hidden', lcSortCriteria.length > 0 || !visibleByBucket[header.dataset.bucket]);
     });
   }
 
   // Dropdown changes — category + tag (delegated on the container)
   lcFiltersEl.addEventListener('change', (e) => {
     const sel = e.target.closest('select[data-filter]');
-    if (!sel) return;
-    if (sel.dataset.filter === 'bucket') lcActiveBucket = sel.value || null;
-    else if (sel.dataset.filter === 'company') lcActiveCompany = sel.value || null;
-    applyLcFilters();
+    if (sel) {
+      if (sel.dataset.filter === 'bucket') lcActiveBucket = sel.value || null;
+      else if (sel.dataset.filter === 'company') lcActiveCompany = sel.value || null;
+      applyLcFilters();
+      return;
+    }
+
+    const sortSelect = e.target.closest('select[data-sort-index]');
+    if (!sortSelect) return;
+    const index = Number(sortSelect.dataset.sortIndex);
+    if (sortSelect.value) {
+      const next = { key: sortSelect.value, direction: lcSortCriteria[index]?.direction || 'asc' };
+      if (index < lcSortCriteria.length) lcSortCriteria[index] = next;
+      else lcSortCriteria.push(next);
+    } else {
+      lcSortCriteria.splice(index, 1);
+    }
+    renderLcSortControls();
+    applyLcSort();
+  });
+
+  lcFiltersEl.addEventListener('click', (e) => {
+    const directionButton = e.target.closest('button[data-sort-direction]');
+    if (directionButton) {
+      const criterion = lcSortCriteria[Number(directionButton.dataset.sortDirection)];
+      criterion.direction = criterion.direction === 'asc' ? 'desc' : 'asc';
+      renderLcSortControls();
+      applyLcSort();
+      return;
+    }
+    if (e.target.closest('#lc-sort-add')) {
+      const usedKeys = new Set(lcSortCriteria.map(criterion => criterion.key));
+      const nextField = lcSortFields.find(field => !usedKeys.has(field.key));
+      if (nextField) lcSortCriteria.push({ key: nextField.key, direction: 'asc' });
+      renderLcSortControls();
+      applyLcSort();
+      return;
+    }
+    if (e.target.closest('#lc-sort-clear')) {
+      lcSortCriteria = [];
+      renderLcSortControls();
+      applyLcSort();
+    }
   });
 
   // ─────── Garmin Behavioral view: render question chains + category filter ───────
