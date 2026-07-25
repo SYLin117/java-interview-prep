@@ -1598,7 +1598,7 @@
     `;
 
     const diffRank = { easy: 0, medium: 1, hard: 2 };
-    const extrasCategoryRank = { MQ: 0, Kafka: 0, Redis: 1, Docker: 2, K8s: 3, System: 4 };
+    const extrasCategoryRank = { MQ: 0, Redis: 1, Docker: 2, K8s: 3, System: 4 };
     const extrasRank = q => {
       const category = q.q.match(/^\[([^\]]+)\]/)?.[1];
       return extrasCategoryRank[category] ?? 5;
