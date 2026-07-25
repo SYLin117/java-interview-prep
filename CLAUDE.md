@@ -30,7 +30,9 @@ The split was made deliberately so content can be edited without touching markup
 
 ## Chat assistant
 
-The floating 💬 button in the bottom-right opens a chat panel with a model selector. `GET /api/chat` returns the public provider catalog and whether each provider is configured; `POST /api/chat` accepts `{ provider, messages }`. The options are **Groq GPT-OSS 120B** (default), **Gemini 3.5 Flash**, and **OpenAI GPT-5.6 Luna**. Hard caps: 350 output tokens, per-turn input clipped to 2,000 chars, and the last 8 turns of history.
+The floating 💬 button in the bottom-right opens a chat panel with a model selector. `GET /api/chat` returns the public provider catalog and whether each provider is configured; `POST /api/chat` accepts `{ provider, messages, context }`. The options are **Groq GPT-OSS 120B** (default), **Gemini 3.5 Flash**, and **OpenAI GPT-5.6 Luna**. Hard caps: 350 output tokens, per-turn input clipped to 2,000 chars, context clipped to 1,500 chars, and the last 8 turns of history.
+
+**Question-bank grounding (retrieval, not answering):** before each send, `findQbContext()` in `index.html` ranks the 279 topic questions against the user's message (stemmed token F1, ≥0.34, top 2) and passes the matched Q&A as `context`. `buildSystemPrompt()` appends it to the system prompt, and the "See *topic* →" links under a reply come from those same matches. **The model always writes the reply.** An earlier version rendered the best match directly and skipped the LLM call, which answered "how does garbage collection work" with the stored answer to "can Java still have memory leaks?" and made follow-ups like "tell me more" re-serve the same entry — don't reintroduce a local-answer short-circuit.
 
 **Wire format between function and client:** every adapter normalizes its upstream SSE into simple `data: {"text": "chunk"}\n\n` events. The client only appends `evt.text` chunks, so provider-specific request and response formats stay inside `api/chat.js`.
 

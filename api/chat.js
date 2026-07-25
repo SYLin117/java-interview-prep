@@ -15,7 +15,33 @@ const SYSTEM_PROMPT =
   "the guide and offer a related Java/Spring topic instead.";
 
 const MAX_OUTPUT_TOKENS = 350;
+const MAX_CONTEXT_CHARS = 1500;
 const DEFAULT_PROVIDER = 'groq';
+
+/**
+ * Build the system prompt, optionally grounded in the reader's own study notes.
+ *
+ * The browser retrieves the closest Q&A entries from the on-site question bank
+ * and sends them as `context`. The model still writes every answer — the notes
+ * only keep it consistent with what the reader has already studied. Retrieval
+ * used to short-circuit the model entirely, which meant a question phrased even
+ * slightly differently got a stored answer to a different question.
+ *
+ * @param {string} context - Retrieved Q&A text, or '' when nothing matched.
+ * @returns {string} System prompt for the upstream provider.
+ */
+function buildSystemPrompt(context) {
+  if (!context) return SYSTEM_PROMPT;
+  return (
+    SYSTEM_PROMPT +
+    "\n\nReference material from the reader's own notes on this site:\n" +
+    context +
+    '\n\nAnswer the question yourself. Stay consistent with these notes and go past them — ' +
+    'add the reasoning, trade-offs, or examples they do not already cover instead of restating them. ' +
+    'If they do not cover what was asked, ignore them and answer from your own knowledge. ' +
+    'Never mention that reference material was provided.'
+  );
+}
 
 /**
  * Provider adapter contract. JavaScript has no interface keyword, so JSDoc
@@ -26,7 +52,7 @@ const DEFAULT_PROVIDER = 'groq';
  * @property {string} model - Provider model ID.
  * @property {string} modelLabel - Short user-facing model name.
  * @property {() => string|undefined} apiKey - Reads the server-side API key.
- * @property {(messages: Array<{role: string, content: string}>, apiKey: string) =>
+ * @property {(messages: Array<{role: string, content: string}>, apiKey: string, system: string) =>
  *   {url: string, init: RequestInit}} buildRequest - Builds the upstream request.
  * @property {(event: Object) => string} readDelta - Extracts text from one SSE event.
  */
@@ -38,7 +64,7 @@ const PROVIDERS = {
     model: 'openai/gpt-oss-120b',
     modelLabel: 'GPT-OSS 120B',
     apiKey: () => process.env.GROQ_API_KEY,
-    buildRequest(messages, apiKey) {
+    buildRequest(messages, apiKey, system) {
       return {
         url: 'https://api.groq.com/openai/v1/chat/completions',
         init: {
@@ -49,7 +75,7 @@ const PROVIDERS = {
           },
           body: JSON.stringify({
             model: this.model,
-            messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...messages],
+            messages: [{ role: 'system', content: system }, ...messages],
             max_completion_tokens: MAX_OUTPUT_TOKENS,
             reasoning_effort: 'low',
             include_reasoning: false,
@@ -69,7 +95,7 @@ const PROVIDERS = {
     model: 'gemini-3.5-flash',
     modelLabel: '3.5 Flash',
     apiKey: () => process.env.GEMINI_API_KEY,
-    buildRequest(messages, apiKey) {
+    buildRequest(messages, apiKey, system) {
       const contents = messages.map((message) => ({
         role: message.role === 'assistant' ? 'model' : 'user',
         parts: [{ text: message.content }],
@@ -83,7 +109,7 @@ const PROVIDERS = {
             'x-goog-api-key': apiKey,
           },
           body: JSON.stringify({
-            system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+            system_instruction: { parts: [{ text: system }] },
             contents,
             generationConfig: {
               maxOutputTokens: MAX_OUTPUT_TOKENS,
@@ -104,7 +130,7 @@ const PROVIDERS = {
     model: 'gpt-5.6-luna',
     modelLabel: 'GPT-5.6 Luna',
     apiKey: () => process.env.OPENAI_API_KEY,
-    buildRequest(messages, apiKey) {
+    buildRequest(messages, apiKey, system) {
       return {
         url: 'https://api.openai.com/v1/responses',
         init: {
@@ -115,7 +141,7 @@ const PROVIDERS = {
           },
           body: JSON.stringify({
             model: this.model,
-            instructions: SYSTEM_PROMPT,
+            instructions: system,
             input: messages,
             max_output_tokens: MAX_OUTPUT_TOKENS,
             reasoning: { effort: 'low' },
@@ -249,7 +275,8 @@ function normalizeProviderStream(upstream, provider) {
  * Edge function entry point.
  *
  * GET returns provider/model availability without exposing credentials.
- * POST accepts `{ provider, messages }` and returns normalized streaming SSE.
+ * POST accepts `{ provider, messages, context }` and returns normalized
+ * streaming SSE. `context` is optional retrieved Q&A used to ground the reply.
  *
  * @param {Request} req - Incoming Vercel Edge request.
  * @returns {Promise<Response>} Provider catalog, JSON error, or normalized SSE.
@@ -279,6 +306,9 @@ export default async function handler(req) {
     content: String(message?.content || '').slice(0, 2000),
   }));
 
+  const context =
+    typeof body.context === 'string' ? body.context.slice(0, MAX_CONTEXT_CHARS).trim() : '';
+
   const apiKey = provider.apiKey();
   if (!apiKey) {
     return jsonError(503, `${provider.label} is not configured on this site.`);
@@ -292,7 +322,7 @@ export default async function handler(req) {
     return jsonError(429, 'Daily message limit reached. Try again tomorrow.');
   }
 
-  const request = provider.buildRequest(messages, apiKey);
+  const request = provider.buildRequest(messages, apiKey, buildSystemPrompt(context));
   let upstream;
   try {
     upstream = await fetch(request.url, request.init);

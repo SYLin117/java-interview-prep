@@ -692,27 +692,11 @@
   }
   #chat-form button:disabled { opacity: 0.55; cursor: wait; }
 
-  .chat-source-tag {
-    display: inline-block;
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--accent);
-    background: var(--accent-soft);
-    padding: 0.15rem 0.5rem;
-    border-radius: 4px;
-    margin-bottom: 0.4rem;
-  }
-  .chat-source-q {
-    font-weight: 600;
-    color: var(--text);
-    margin-bottom: 0.5rem;
-    line-height: 1.35;
-  }
+  /* Citation for the notes that grounded an answer; several may follow one reply. */
   .chat-source-link {
     display: inline-block;
     margin-top: 0.5rem;
+    margin-right: 0.6rem;
     font-size: 0.8rem;
     color: var(--accent);
     text-decoration: none;
@@ -3282,7 +3266,18 @@
    */
   function chatTokenize(s) {
     const m = String(s).toLowerCase().match(/[a-z][a-z0-9]+/g);
-    return m ? m.filter(t => t.length > 2 && !CHAT_STOPWORDS.has(t)) : [];
+    return m ? m.filter(t => t.length > 2 && !CHAT_STOPWORDS.has(t)).map(chatStem) : [];
+  }
+  /**
+   * Crude suffix stripper so "collection", "collections", and "collector" all
+   * compare equal. Aggressive and not linguistically correct — it only has to
+   * be *consistent*, since both sides of every comparison run through it.
+   *
+   * @param {string} t - A lowercase token.
+   * @returns {string} Its stem.
+   */
+  function chatStem(t) {
+    return t.replace(/ies$/, 'y').replace(/(ions|ion|ors|or|ers|er|ing|es|s)$/, '') || t;
   }
   const qbIndex = [];
   allTopics.forEach(t => {
@@ -3297,36 +3292,51 @@
     });
   });
   /**
-   * Look up the user's query in the on-site Q&A index using token overlap.
+   * Retrieve the question-bank entries most related to the user's message, to
+   * be sent to the model as grounding context.
    *
-   * Scores each indexed question by how many of the query's significant tokens
-   * it contains, then returns the best match — but ONLY if it clears two bars:
-   *   - score >= 0.6: at least 60% of the user's tokens are present in the question
-   *   - overlap >= 2: at least 2 tokens match in absolute terms
+   * These results are *context, never an answer*. An earlier version rendered
+   * the best match directly and skipped the LLM call, which meant "how does
+   * garbage collection work" was answered with the stored answer to "can Java
+   * still have memory leaks?" — they share two tokens — and a follow-up like
+   * "tell me more" simply re-served the same entry. Retrieval now only informs
+   * the model, so an imperfect match costs a little prompt budget instead of
+   * replacing the reply.
    *
-   * Both bars together mean we only short-circuit on confident matches. This
-   * saves LLM tokens (and latency) when the user asks something canonical that's
-   * already in the bank — the chat widget renders the local answer and skips
-   * the network call entirely.
+   * Ranking is the F1 of token precision and recall. Precision alone (the old
+   * `overlap / queryTokens`) let any short query match a long question that
+   * happened to share two words; requiring recall too means the matched
+   * question must be substantially *about* those tokens.
    *
    * @param {string} query - The user's chat input.
-   * @returns {{topicId, topicName, question, answer, tokens}|null} Matched entry, or null if no confident hit.
+   * @param {number} [limit] - Maximum entries to return.
+   * @returns {Array<{topicId, topicName, question, answer, score}>} Best matches, strongest first.
    */
-  function findQbMatch(query) {
+  function findQbContext(query, limit = 2) {
     const qTokens = chatTokenize(query);
-    if (qTokens.length < 2) return null;
-    let best = { score: 0, overlap: 0, entry: null };
+    if (qTokens.length < 2) return [];
+    const scored = [];
     for (const entry of qbIndex) {
       let overlap = 0;
       for (const t of qTokens) if (entry.tokens.has(t)) overlap++;
-      const score = overlap / qTokens.length;
-      if (overlap > best.overlap || (overlap === best.overlap && score > best.score)) {
-        best = { score, overlap, entry };
-      }
+      if (overlap < 2) continue;
+      const precision = overlap / qTokens.length;
+      const recall = overlap / entry.tokens.size;
+      const score = (2 * precision * recall) / (precision + recall);
+      if (score >= 0.34) scored.push({ ...entry, score });
     }
-    // Confident only: ≥60% of significant query tokens AND ≥2 absolute matches
-    if (best.score >= 0.6 && best.overlap >= 2) return best.entry;
-    return null;
+    return scored.sort((a, b) => b.score - a.score).slice(0, limit);
+  }
+  /**
+   * Flatten answer HTML to plain text for the model's context block.
+   *
+   * @param {string} html - Answer markup from the question bank.
+   * @returns {string} Collapsed plain text.
+   */
+  function qbPlainText(html) {
+    const el = document.createElement('div');
+    el.innerHTML = html;
+    return (el.textContent || '').replace(/\s+/g, ' ').trim();
   }
   /**
    * Escape HTML-significant characters so a raw string can be safely embedded
@@ -3490,29 +3500,13 @@
     chatStatus.hidden = true;
     const bubble = addChatMsg('assistant', '');
 
-    // Pre-match against the on-site question bank. If we have a confident hit,
-    // render that answer locally and skip the LLM call entirely.
-    const match = findQbMatch(text);
-    if (match) {
-      bubble.innerHTML =
-        '<div class="chat-source-tag">📚 From your notes</div>' +
-        '<div class="chat-source-q">' + escapeHtml(match.question) + '</div>' +
-        match.answer +
-        '<a class="chat-source-link" href="#' + encodeURIComponent(match.topicId) +
-        '">See ' + escapeHtml(match.topicName) + ' →</a>';
-      bubble.querySelectorAll('pre code').forEach(b => {
-        if (window.hljs) window.hljs.highlightElement(b);
-      });
-      // Store a plain-text snapshot so follow-up questions have context
-      chatHistory.push({
-        role: 'assistant',
-        content: match.answer.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 600),
-      });
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-      chatSubmit.disabled = false;
-      chatInput.focus();
-      return;
-    }
+    // Retrieve related bank entries and send them along as grounding context.
+    // The model always writes the reply — retrieval only keeps it consistent
+    // with what's already on the site, and supplies the "See <topic>" links.
+    const sources = findQbContext(text);
+    const context = sources
+      .map(s => 'Q: ' + qbPlainText(s.question) + '\nA: ' + qbPlainText(s.answer).slice(0, 700))
+      .join('\n\n');
 
     bubble.classList.add('streaming');
     let acc = '';
@@ -3526,7 +3520,7 @@
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ provider: chatProvider.value, messages: chatHistory }),
+        body: JSON.stringify({ provider: chatProvider.value, messages: chatHistory, context }),
         signal,
       });
       if (!res.ok) {
@@ -3563,6 +3557,15 @@
       bubble.querySelectorAll('pre code').forEach(b => {
         if (window.hljs) window.hljs.highlightElement(b);
       });
+      // Cite the notes that grounded the answer — one link per topic.
+      const seenTopics = new Set();
+      for (const s of sources) {
+        if (seenTopics.has(s.topicId)) continue;
+        seenTopics.add(s.topicId);
+        bubble.insertAdjacentHTML('beforeend',
+          '<a class="chat-source-link" href="#' + encodeURIComponent(s.topicId) +
+          '">See ' + escapeHtml(s.topicName) + ' →</a>');
+      }
       chatHistory.push({ role: 'assistant', content: acc });
       chatMessages.scrollTop = chatMessages.scrollHeight;
     } catch (err) {
