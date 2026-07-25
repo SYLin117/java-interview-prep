@@ -3291,6 +3291,24 @@
       });
     });
   });
+  // Inverse document frequency over the bank. Without it every token counts the
+  // same, so "difference" (55 of 279 questions), "between" (57) and "spring"
+  // (46) drown out the one word that actually identifies the topic — "cache"
+  // appears in 2. That is how "spring cache vs redis" retrieved notes on Redis
+  // TTL and on Spring Data JPA.
+  const qbDocFreq = new Map();
+  for (const entry of qbIndex) {
+    for (const t of entry.tokens) qbDocFreq.set(t, (qbDocFreq.get(t) || 0) + 1);
+  }
+  const qbIdf = t => Math.log(qbIndex.length / (1 + (qbDocFreq.get(t) || 0)));
+  // A match must include at least one token this distinctive (roughly: present
+  // in under ~8% of questions), so generic phrasing alone can never match.
+  const QB_DISTINCTIVE_IDF = 2.5;
+  const qbWeight = tokens => {
+    let sum = 0;
+    for (const t of tokens) sum += qbIdf(t);
+    return sum;
+  };
   /**
    * Retrieve the question-bank entries most related to the user's message, to
    * be sent to the model as grounding context.
@@ -3303,26 +3321,33 @@
    * the model, so an imperfect match costs a little prompt budget instead of
    * replacing the reply.
    *
-   * Ranking is the F1 of token precision and recall. Precision alone (the old
-   * `overlap / queryTokens`) let any short query match a long question that
-   * happened to share two words; requiring recall too means the matched
-   * question must be substantially *about* those tokens.
+   * Ranking is the F1 of IDF-weighted precision and recall, and a match must
+   * share at least one distinctive token. Counting tokens equally let generic
+   * phrasing carry a match on its own; weighting by IDF means a rare word like
+   * "cache" outvotes "difference", "between" and "spring" combined.
    *
    * @param {string} query - The user's chat input.
    * @param {number} [limit] - Maximum entries to return.
    * @returns {Array<{topicId, topicName, question, answer, score}>} Best matches, strongest first.
    */
   function findQbContext(query, limit = 2) {
-    const qTokens = chatTokenize(query);
+    const qTokens = [...new Set(chatTokenize(query))];
     if (qTokens.length < 2) return [];
+    const queryWeight = qbWeight(qTokens);
+    if (queryWeight <= 0) return [];
     const scored = [];
     for (const entry of qbIndex) {
-      let overlap = 0;
-      for (const t of qTokens) if (entry.tokens.has(t)) overlap++;
-      if (overlap < 2) continue;
-      const precision = overlap / qTokens.length;
-      const recall = overlap / entry.tokens.size;
-      const score = (2 * precision * recall) / (precision + recall);
+      const shared = qTokens.filter(t => entry.tokens.has(t));
+      if (shared.length < 2) continue;
+      // Generic overlap alone is not a match — something specific must line up.
+      if (!shared.some(t => qbIdf(t) >= QB_DISTINCTIVE_IDF)) continue;
+      const sharedWeight = qbWeight(shared);
+      const precision = sharedWeight / queryWeight;
+      const recall = sharedWeight / qbWeight(entry.tokens);
+      // F0.5 — precision counts more than recall. Plain F1 penalised long,
+      // specific questions for their extra words, which pushed "Explain cache
+      // patterns" below a TTL question on a query about caching.
+      const score = (1.25 * precision * recall) / (0.25 * precision + recall);
       if (score >= 0.34) scored.push({ ...entry, score });
     }
     return scored.sort((a, b) => b.score - a.score).slice(0, limit);
@@ -3504,8 +3529,10 @@
     // The model always writes the reply — retrieval only keeps it consistent
     // with what's already on the site, and supplies the "See <topic>" links.
     const sources = findQbContext(text);
+    // 600 per answer keeps both entries inside the API's 1,500-char context cap,
+    // which was clipping the second one mid-sentence at 700.
     const context = sources
-      .map(s => 'Q: ' + qbPlainText(s.question) + '\nA: ' + qbPlainText(s.answer).slice(0, 700))
+      .map(s => 'Q: ' + qbPlainText(s.question) + '\nA: ' + qbPlainText(s.answer).slice(0, 600))
       .join('\n\n');
 
     bubble.classList.add('streaming');
@@ -3553,6 +3580,15 @@
         }
       }
       bubble.classList.remove('streaming');
+      // A model can return 200 with no content at all (its output budget spent
+      // on reasoning, a safety stop, an upstream hiccup). Without this guard the
+      // bubble rendered empty and the citation links below were the only thing
+      // left in it — which reads as though the site answered from its own notes.
+      if (!acc.trim()) {
+        bubble.remove();
+        showChatError('The model returned an empty response. Try again, or pick another model.');
+        return;
+      }
       bubble.innerHTML = renderChatMd(acc);
       bubble.querySelectorAll('pre code').forEach(b => {
         if (window.hljs) window.hljs.highlightElement(b);
@@ -3642,6 +3678,9 @@
       return '\x00B' + (blocks.length - 1) + '\x00';
     });
     s = s.replace(/`([^`\n]+)`/g, (_, code) => '<code>' + code + '</code>');
+    // Models lean on **bold** for the terms being compared; without this the
+    // asterisks render literally.
+    s = s.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
     s = s.replace(/\n/g, '<br>');
     s = s.replace(/\x00B(\d+)\x00/g, (_, n) => blocks[+n]);
     return s;

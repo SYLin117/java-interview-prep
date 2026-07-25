@@ -14,7 +14,10 @@ const SYSTEM_PROMPT =
   "blocks for short samples (≤15 lines). If asked something off-topic, say it's outside " +
   "the guide and offer a related Java/Spring topic instead.";
 
-const MAX_OUTPUT_TOKENS = 350;
+// Shared budget for reasoning + visible text on reasoning models. At 350 a
+// grounded answer with a short code sample was being cut off mid-block, and a
+// reply that spent the whole budget reasoning arrived empty.
+const MAX_OUTPUT_TOKENS = 800;
 const MAX_CONTEXT_CHARS = 1500;
 const DEFAULT_PROVIDER = 'groq';
 
