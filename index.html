@@ -236,6 +236,58 @@
     font-weight: 600;
   }
   .q-row.q-head > div { padding: 0.7rem 1rem; }
+  .q-row.q-head > .q-sort-cell { padding: 0; }
+  .q-sort-button {
+    width: 100%;
+    min-height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.7rem 1rem;
+    color: inherit;
+    background: transparent;
+    border: 0;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  .q-sort-button[data-topic-sort="number"] { justify-content: center; }
+  .q-sort-button:hover,
+  .q-sort-button.active { color: var(--accent); }
+  .q-sort-button:focus-visible,
+  .q-sort-reset:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .q-sort-indicator {
+    min-width: 0.8rem;
+    color: var(--text-faint);
+    font-size: 0.72rem;
+    text-align: center;
+  }
+  .q-sort-button.active .q-sort-indicator { color: var(--accent); }
+  .q-sort-priority {
+    display: none;
+    min-width: 1rem;
+    padding: 0.05rem 0.25rem;
+    color: white;
+    background: var(--accent);
+    border-radius: 8px;
+    font-size: 0.58rem;
+    line-height: 1.25;
+    text-align: center;
+  }
+  .q-sort-button.active .q-sort-priority { display: inline-block; }
+  .q-sort-reset {
+    width: 100%;
+    height: 100%;
+    padding: 0.7rem 0.25rem;
+    color: var(--text-faint);
+    background: transparent;
+    border: 0;
+    font: inherit;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  .q-sort-reset:hover:not(:disabled) { color: var(--accent); }
+  .q-sort-reset:disabled { opacity: 0.3; cursor: default; }
   .q-row.q-data > div:not(.q-answer) {
     padding: 0.95rem 1rem;
     display: flex;
@@ -673,6 +725,8 @@
     .q-row { grid-template-columns: 40px 85px 1fr 40px; }
     .q-row.q-data > div:not(.q-answer) { padding: 0.8rem 0.5rem; font-size: 0.9rem; }
     .q-row.q-head > div { padding: 0.6rem 0.5rem; font-size: 0.72rem; }
+    .q-row.q-head > .q-sort-cell { padding: 0; }
+    .q-sort-button { padding: 0.6rem 0.5rem; }
     .q-answer { padding: 0 1rem 1.2rem 1rem; font-size: 0.9rem; }
     .q-row.expanded .q-answer { padding-top: 1rem; }
     .section-title { font-size: 1.4rem; }
@@ -683,6 +737,9 @@
     .q-row { grid-template-columns: 32px 70px 1fr 32px; }
     .q-row.q-data > div:not(.q-answer) { padding: 0.7rem 0.35rem; font-size: 0.85rem; }
     .q-row.q-head > div { padding: 0.5rem 0.35rem; font-size: 0.68rem; }
+    .q-row.q-head > .q-sort-cell { padding: 0; }
+    .q-sort-button { gap: 0.15rem; padding: 0.5rem 0.35rem; }
+    .q-sort-priority { min-width: 0.85rem; padding-inline: 0.2rem; }
     .q-num { font-size: 0.8rem; }
     .q-diff .pill { padding: 0.15rem 0.4rem; font-size: 0.68rem; }
     .q-toggle { font-size: 1.1rem; }
@@ -963,6 +1020,11 @@
     color: var(--text-faint);
     margin-right: 0.3rem;
     flex-shrink: 0;
+  }
+  .topic-sort-help {
+    color: var(--text-faint);
+    font-size: 0.72rem;
+    line-height: 1.35;
   }
   .lc-select {
     font-family: inherit;
@@ -1632,9 +1694,45 @@
     }
     topicChipsHTML += `</select></div>`;
   }
+  topicChipsHTML += `<div class="topic-sort-help" id="topic-sort-help">Sort questions: click a column header · Shift-click to add another column</div>`;
   topicFiltersEl.innerHTML = topicChipsHTML;
 
   const content = document.getElementById('content');
+  const topicDifficultyRank = { easy: 0, medium: 1, hard: 2 };
+  const topicSortFields = [
+    { key: 'number', label: 'No.', value: (_question, index) => index + 1, compare: (a, b) => Number(a) - Number(b) },
+    { key: 'level', label: 'Level', value: question => question.d, compare: (a, b) => topicDifficultyRank[a] - topicDifficultyRank[b] },
+    {
+      key: 'question',
+      label: 'Question',
+      value: question => question.q.replace(/<[^>]*>/g, ' '),
+      compare: (a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })
+    }
+  ];
+  const topicSortFieldByKey = Object.fromEntries(topicSortFields.map(field => [field.key, field]));
+  const topicSortState = new WeakMap();
+
+  function topicSortDatasetKey(field) {
+    return 'sort' + field.key.charAt(0).toUpperCase() + field.key.slice(1);
+  }
+
+  function topicSortAttributes(question, index) {
+    return topicSortFields.map(field =>
+      `data-sort-${field.key}="${escapeHtml(String(field.value(question, index)))}"`
+    ).join(' ');
+  }
+
+  function topicSortHeaderHtml() {
+    return topicSortFields.map(field => `
+      <div class="q-sort-cell" role="columnheader" aria-sort="none">
+        <button class="q-sort-button" type="button" data-topic-sort="${field.key}"
+                aria-describedby="topic-sort-help" aria-label="Sort by ${field.label}"
+                title="Click to sort · Shift-click to add to the current sort">
+          <span>${field.label}</span><span class="q-sort-indicator" aria-hidden="true">↕</span><span class="q-sort-priority" aria-hidden="true"></span>
+        </button>
+      </div>`).join('');
+  }
+
   allTopics.forEach((t, i) => {
     const section = document.createElement('section');
     section.className = 'section topic-section';
@@ -1644,30 +1742,29 @@
     const num = i === allTopics.length - 1 ? 'Bonus Section' : 'Topic ' + String(i + 1).padStart(2, '0');
 
     let rowsHTML = `
-      <div class="q-row q-head">
-        <div>#</div>
-        <div>Level</div>
-        <div>Question</div>
-        <div></div>
+      <div class="q-row q-head" role="row">
+        ${topicSortHeaderHtml()}
+        <div class="q-sort-cell" role="columnheader">
+          <button class="q-sort-reset" type="button" disabled aria-label="Reset sorting" title="Restore the original question order">↺</button>
+        </div>
       </div>
     `;
 
-    const diffRank = { easy: 0, medium: 1, hard: 2 };
     const extrasCategoryRank = { MQ: 0, Redis: 1, Docker: 2, K8s: 3, System: 4 };
     const extrasRank = q => {
       const category = q.q.match(/^\[([^\]]+)\]/)?.[1];
       return extrasCategoryRank[category] ?? 5;
     };
     const sortedQs = [...t.questions].sort((a, b) => {
-      if (t.id !== 'extras') return diffRank[a.d] - diffRank[b.d];
+      if (t.id !== 'extras') return topicDifficultyRank[a.d] - topicDifficultyRank[b.d];
       return extrasRank(a) - extrasRank(b)
         || Number(Boolean(b.setup)) - Number(Boolean(a.setup))
-        || diffRank[a.d] - diffRank[b.d];
+        || topicDifficultyRank[a.d] - topicDifficultyRank[b.d];
     });
     sortedQs.forEach((q, qi) => {
       const companiesAttr = (q.companies || []).map(c => c.toLowerCase()).join(',');
       rowsHTML += `
-        <div class="q-row q-data" data-q="${q.q.toLowerCase()}" data-a="${q.a.replace(/<[^>]*>/g, '').toLowerCase().replace(/"/g, '&quot;')}" data-companies="${companiesAttr}">
+        <div class="q-row q-data" data-q="${q.q.toLowerCase()}" data-a="${q.a.replace(/<[^>]*>/g, '').toLowerCase().replace(/"/g, '&quot;')}" data-companies="${companiesAttr}" ${topicSortAttributes(q, qi)}>
           <div class="q-num">${String(qi + 1).padStart(2, '0')}</div>
           <div class="q-diff ${q.d}"><span class="pill">${q.d}</span></div>
           <div class="q-text">${q.q}${
@@ -1693,6 +1790,70 @@
     `;
 
     content.appendChild(section);
+  });
+
+  function updateTopicSortHeaders(section, criteria) {
+    section.querySelectorAll('.q-sort-button').forEach(button => {
+      const criterionIndex = criteria.findIndex(criterion => criterion.key === button.dataset.topicSort);
+      const criterion = criteria[criterionIndex];
+      const field = topicSortFieldByKey[button.dataset.topicSort];
+      const cell = button.closest('[role="columnheader"]');
+      const indicator = button.querySelector('.q-sort-indicator');
+      const priority = button.querySelector('.q-sort-priority');
+      button.classList.toggle('active', Boolean(criterion));
+      indicator.textContent = criterion ? (criterion.direction === 'asc' ? '↑' : '↓') : '↕';
+      priority.textContent = criterion ? String(criterionIndex + 1) : '';
+      cell.setAttribute('aria-sort', !criterion ? 'none' : criterionIndex === 0 ? (criterion.direction === 'asc' ? 'ascending' : 'descending') : 'other');
+      button.setAttribute('aria-label', !criterion
+        ? `Sort by ${field.label}`
+        : `${field.label}, priority ${criterionIndex + 1}, ${criterion.direction === 'asc' ? 'ascending' : 'descending'}`);
+    });
+    section.querySelector('.q-sort-reset').disabled = criteria.length === 0;
+  }
+
+  function applyTopicSort(section) {
+    const criteria = topicSortState.get(section) || [];
+    const rows = Array.from(section.querySelectorAll('.q-row.q-data'));
+    rows.sort((rowA, rowB) => {
+      for (const criterion of criteria) {
+        const field = topicSortFieldByKey[criterion.key];
+        const datasetKey = topicSortDatasetKey(field);
+        const comparison = field.compare(rowA.dataset[datasetKey], rowB.dataset[datasetKey]);
+        if (comparison !== 0) return criterion.direction === 'desc' ? -comparison : comparison;
+      }
+      return Number(rowA.dataset.sortNumber) - Number(rowB.dataset.sortNumber);
+    });
+    const table = section.querySelector('.q-table');
+    rows.forEach(row => table.appendChild(row));
+    updateTopicSortHeaders(section, criteria);
+  }
+
+  content.addEventListener('click', (e) => {
+    const sortButton = e.target.closest('.q-sort-button');
+    const resetButton = e.target.closest('.q-sort-reset');
+    if (!sortButton && !resetButton) return;
+    const section = e.target.closest('.topic-section');
+    if (resetButton) {
+      topicSortState.set(section, []);
+      applyTopicSort(section);
+      return;
+    }
+
+    const key = sortButton.dataset.topicSort;
+    const criteria = [...(topicSortState.get(section) || [])];
+    const existingIndex = criteria.findIndex(criterion => criterion.key === key);
+    if (e.shiftKey) {
+      if (existingIndex === -1) criteria.push({ key, direction: 'asc' });
+      else criteria[existingIndex] = {
+        key,
+        direction: criteria[existingIndex].direction === 'asc' ? 'desc' : 'asc'
+      };
+    } else {
+      const direction = existingIndex === 0 && criteria[0].direction === 'asc' ? 'desc' : 'asc';
+      criteria.splice(0, criteria.length, { key, direction });
+    }
+    topicSortState.set(section, criteria);
+    applyTopicSort(section);
   });
 
   document.querySelectorAll('.q-row.q-data').forEach(row => {
