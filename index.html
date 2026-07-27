@@ -173,6 +173,13 @@
     font-weight: 500;
     margin-left: 0.3rem;
   }
+  /* Derived label lists (the bonus-section categories) grow with the data and
+     run much longer than a single figure, so they size down and may wrap. */
+  .meta-cell .value.value-tags {
+    font-size: 1.1rem;
+    line-height: 1.4;
+  }
+  .meta-cell .value.value-tags small { margin-left: 0; }
 
   /* (.topic-nav / .topic-grid / .topic-card removed — replaced by .lc-filters chips at the top of the Topics view) */
   /* .topic-num retained for the per-question row numbering inside .q-row */
@@ -766,6 +773,7 @@
     .q-answer { padding: 0 0.8rem 1rem 0.8rem; font-size: 0.88rem; }
     .meta-cell { padding: 0.9rem; }
     .meta-cell .value { font-size: 1.25rem; }
+    .meta-cell .value.value-tags { font-size: 0.95rem; }
     .hero-meta { gap: 0.6rem; margin-top: 1.5rem; }
     h1.hero-title { font-size: 1.55rem; }
     .hero-subtitle { font-size: 0.95rem; }
@@ -1474,8 +1482,8 @@
       <input type="text" id="search" placeholder="Search questions..." autocomplete="off">
     </div>
     <div class="stats">
-      <span><strong id="topic-count">13</strong> topics</span>
-      <span><strong id="q-count">262</strong> questions</span>
+      <span><strong id="topic-count">&mdash;</strong> topics</span>
+      <span><strong id="q-count">&mdash;</strong> questions</span>
     </div>
   </div>
 </header>
@@ -1494,19 +1502,19 @@
   <div class="hero-meta">
     <div class="meta-cell">
       <div class="label">Core Topics</div>
-      <div class="value">12</div>
+      <div class="value" id="stat-core-topics">&mdash;</div>
     </div>
     <div class="meta-cell">
       <div class="label">Questions per Topic</div>
-      <div class="value">20</div>
+      <div class="value" id="stat-per-topic">&mdash;</div>
     </div>
     <div class="meta-cell">
       <div class="label">Difficulty Split</div>
-      <div class="value">8 / 8 / 4</div>
+      <div class="value" id="stat-difficulty">&mdash;</div>
     </div>
     <div class="meta-cell">
       <div class="label">Bonus Section</div>
-      <div class="value">MQ <small>·</small> Redis <small>·</small> K8s</div>
+      <div class="value value-tags" id="stat-bonus">&mdash;</div>
     </div>
   </div>
 </section>
@@ -1566,7 +1574,7 @@
     <div class="hero-meta">
       <div class="meta-cell">
         <div class="label">Question Chains</div>
-        <div class="value">9</div>
+        <div class="value" id="stat-bhv-chains">&mdash;</div>
       </div>
       <div class="meta-cell">
         <div class="label">Format</div>
@@ -1574,7 +1582,7 @@
       </div>
       <div class="meta-cell">
         <div class="label">Total Q&amp;A</div>
-        <div class="value">42</div>
+        <div class="value" id="stat-bhv-total">&mdash;</div>
       </div>
       <div class="meta-cell">
         <div class="label">Level</div>
@@ -1609,15 +1617,15 @@
     <div class="hero-meta">
       <div class="meta-cell">
         <div class="label">Concept Q&amp;A</div>
-        <div class="value">46</div>
+        <div class="value" id="stat-sd-questions">&mdash;</div>
       </div>
       <div class="meta-cell">
         <div class="label">Topics</div>
-        <div class="value">8</div>
+        <div class="value" id="stat-sd-themes">&mdash;</div>
       </div>
       <div class="meta-cell">
         <div class="label">Case Studies</div>
-        <div class="value">12</div>
+        <div class="value" id="stat-sd-cases">&mdash;</div>
       </div>
       <div class="meta-cell">
         <div class="label">Level</div>
@@ -1731,6 +1739,60 @@
   const questionCategory = question => question.q.match(/^\[([^\]]+)\]/)?.[1] || '';
   const questionWithoutCategory = question => question.q.replace(/^\[[^\]]+\]\s*/, '');
   const topicHasCategoryColumn = topic => topic.id === 'extras';
+
+  // ─────── Hero stat cells ───────
+  // Every figure in the three .hero-meta blocks is derived from the data files.
+  // They used to be hand-written and had silently drifted — "12 core topics"
+  // with 13 in content.js, "42" behavioral Q&A with 46 in behavioral.js — so
+  // adding content now updates the headline numbers instead of aging them.
+  function setStat(id, html, title) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = html;
+    if (title) el.title = title;
+  }
+
+  // Topics view. "Core" excludes the extras/bonus section, which gets its own cell.
+  const coreQuestionCounts = topics.map(t => t.questions.length);
+  const perTopicMin = Math.min(...coreQuestionCounts);
+  const perTopicMax = Math.max(...coreQuestionCounts);
+  const coreQuestionTotal = coreQuestionCounts.reduce((a, n) => a + n, 0);
+  const difficultyTotals = { easy: 0, medium: 0, hard: 0 };
+  for (const t of allTopics) {
+    for (const q of t.questions) difficultyTotals[q.d] = (difficultyTotals[q.d] || 0) + 1;
+  }
+  // Curated order (MQ, Redis, Docker, …), matching how the bonus section reads.
+  const bonusCategories = [...new Set(extras.questions.map(questionCategory))]
+    .filter(Boolean)
+    .sort((a, b) => (extrasCategoryRank[a] ?? 99) - (extrasCategoryRank[b] ?? 99)
+      || a.localeCompare(b, undefined, { sensitivity: 'base' }));
+
+  setStat('stat-core-topics', topics.length, `${coreQuestionTotal} questions outside the bonus section`);
+  setStat(
+    'stat-per-topic',
+    perTopicMin === perTopicMax ? perTopicMin : `${perTopicMin}<small>–</small>${perTopicMax}`,
+    `${(coreQuestionTotal / topics.length).toFixed(1)} on average across ${topics.length} core topics`
+  );
+  setStat(
+    'stat-difficulty',
+    `${difficultyTotals.easy} <small>/</small> ${difficultyTotals.medium} <small>/</small> ${difficultyTotals.hard}`,
+    'easy / medium / hard, across every topic including the bonus section'
+  );
+  setStat(
+    'stat-bonus',
+    bonusCategories.map(escapeHtml).join(' <small>·</small> '),
+    `${extras.questions.length} questions`
+  );
+
+  // Behavioral view — one chain is its main question plus its follow-ups.
+  const behavioralQATotal = behavioral.reduce((a, c) => a + 1 + (c.followups || []).length, 0);
+  setStat('stat-bhv-chains', behavioral.length);
+  setStat('stat-bhv-total', behavioralQATotal, 'Main questions plus follow-ups');
+
+  // System Design view.
+  setStat('stat-sd-questions', systemDesignThemes.reduce((a, t) => a + t.questions.length, 0));
+  setStat('stat-sd-themes', systemDesignThemes.length);
+  setStat('stat-sd-cases', systemDesignCases.length);
 
   const topicSortFieldByKey = {
     number: { key: 'number', label: 'No.', value: (_question, index) => index + 1, compare: (a, b) => Number(a) - Number(b) },
