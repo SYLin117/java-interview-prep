@@ -1752,7 +1752,10 @@
   // Extras questions are authored as "[K8s] How do you …" — the bracket prefix
   // is the question's category. It gets its own column there, so the prefix is
   // stripped from the question text rather than shown twice.
-  const extrasCategoryRank = { MQ: 0, Redis: 1, Docker: 2, K8s: 3, System: 4 };
+  // Curated reading order: messaging → caching → databases → containers and
+  // orchestration → cluster and server hardware → open-ended design. Anything
+  // missing from this map sorts last (see the ?? 99 fallbacks below).
+  const extrasCategoryRank = { MQ: 0, Redis: 1, SQL: 2, NoSQL: 3, Docker: 4, K8s: 5, HPC: 6, BMC: 7, System: 8 };
   const questionCategory = question => question.q.match(/^\[([^\]]+)\]/)?.[1] || '';
   const questionWithoutCategory = question => question.q.replace(/^\[[^\]]+\]\s*/, '');
   const topicHasCategoryColumn = topic => topic.id === 'extras';
@@ -1795,10 +1798,16 @@
     `${difficultyTotals.easy} <small>/</small> ${difficultyTotals.medium} <small>/</small> ${difficultyTotals.hard}`,
     'easy / medium / hard, across every topic including the bonus section'
   );
+  // This cell sits in a row of single-figure stats. Listing all nine categories
+  // wrapped to three lines and dragged every sibling cell to match, so show a
+  // few and count the rest; the tooltip still names them all.
+  const bonusShown = bonusCategories.slice(0, 5);
+  const bonusRest = bonusCategories.length - bonusShown.length;
   setStat(
     'stat-bonus',
-    bonusCategories.map(escapeHtml).join(' <small>·</small> '),
-    `${extras.questions.length} questions`
+    bonusShown.map(escapeHtml).join(' <small>·</small> ')
+      + (bonusRest ? ` <small>+${bonusRest}</small>` : ''),
+    `${bonusCategories.join(' · ')} — ${extras.questions.length} questions`
   );
 
   // Behavioral view — one chain is its main question plus its follow-ups.
@@ -1878,7 +1887,7 @@
       </div>
     `;
 
-    const extrasRank = q => extrasCategoryRank[questionCategory(q)] ?? 5;
+    const extrasRank = q => extrasCategoryRank[questionCategory(q)] ?? 99;
     const sortedQs = [...t.questions].sort((a, b) => {
       if (t.id !== 'extras') return topicDifficultyRank[a.d] - topicDifficultyRank[b.d];
       return extrasRank(a) - extrasRank(b)
