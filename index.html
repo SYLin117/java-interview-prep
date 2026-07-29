@@ -1450,6 +1450,18 @@
     .lc-row .lc-cat-cell { display: none; }
   }
   @media (max-width: 768px) {
+    /* The four tabs need ~395px and the header row offers 343px on a 375px
+       phone, so the strip used to push the whole page sideways. It now shrinks
+       to the row and scrolls inside itself — the body never scrolls. The 480px
+       block below trims the labels so that scroll is rarely needed. */
+    .view-toggle {
+      flex: 1 1 100%;
+      min-width: 0;
+      overflow-x: auto;
+      scrollbar-width: none;          /* Firefox */
+      -ms-overflow-style: none;       /* legacy Edge */
+    }
+    .view-toggle::-webkit-scrollbar { display: none; }
     .view-btn { padding: 0.35rem 0.65rem; font-size: 0.78rem; }
     .lc-row { grid-template-columns: 38px 40px 80px 1fr 50px 40px; }
     .lc-row.lc-data > div:not(.lc-detail) { padding: 0.7rem 0.5rem; font-size: 0.88rem; }
@@ -1458,6 +1470,11 @@
     .lc-detail { padding: 0 1rem 1.2rem 1rem; font-size: 0.88rem; }
   }
   @media (max-width: 480px) {
+    /* "Garmin Behavioral" alone is 125px of the strip. Dropping the qualifiers
+       keeps all four tabs on screen without a swipe; the visible label stays
+       the accessible name, so nothing is hidden from a screen reader. */
+    .view-btn-extra { display: none; }
+    .view-btn { padding: 0.35rem 0.5rem; }
     .lc-row { grid-template-columns: 34px 32px 65px 1fr 40px 32px; }
     .lc-row.lc-data > div:not(.lc-detail) { padding: 0.65rem 0.35rem; font-size: 0.85rem; }
     .lc-link-cell a { padding: 0.2rem 0.35rem; font-size: 0.68rem; }
@@ -1474,8 +1491,8 @@
     </div>
     <div class="view-toggle" role="tablist" aria-label="Section">
       <button class="view-btn active" data-view="topics" role="tab" aria-selected="true">Topics</button>
-      <button class="view-btn" data-view="leetcode" role="tab" aria-selected="false">LeetCode 200</button>
-      <button class="view-btn" data-view="behavioral" role="tab" aria-selected="false">Garmin Behavioral</button>
+      <button class="view-btn" data-view="leetcode" role="tab" aria-selected="false">LeetCode<span class="view-btn-extra"> 200</span></button>
+      <button class="view-btn" data-view="behavioral" role="tab" aria-selected="false"><span class="view-btn-extra">Garmin </span>Behavioral</button>
       <button class="view-btn" data-view="systemdesign" role="tab" aria-selected="false">System Design</button>
     </div>
     <div class="search-box">
