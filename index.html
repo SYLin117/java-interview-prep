@@ -234,10 +234,6 @@
     border-bottom: 1px solid var(--line-soft);
     transition: background 0.12s;
   }
-  /* Extras adds a Category column between Level and Question. Its width is set
-     by the "Category" header plus its sort indicator and priority badge, not by
-     the pills, which are much narrower. */
-  .q-table.has-category .q-row { grid-template-columns: 55px 100px 118px 1fr 50px; }
   .q-row:last-child { border-bottom: none; }
   .q-row.q-data:hover { background: var(--bg-soft); }
   .q-row.q-head {
@@ -325,17 +321,6 @@
     padding: 0.2rem 0.55rem;
     border-radius: 12px;
     text-transform: capitalize;
-  }
-  .q-cat { font-size: 0.75rem; font-weight: 600; min-width: 0; }
-  .q-cat-pill {
-    padding: 0.2rem 0.5rem;
-    border-radius: 12px;
-    color: var(--text-dim);
-    background: var(--bg-soft);
-    border: 1px solid var(--line);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
   .q-diff.easy .pill { color: var(--easy); background: var(--easy-bg); }
   .q-diff.medium .pill { color: var(--med); background: var(--med-bg); }
@@ -736,7 +721,6 @@
     .hero { padding: 2rem 1rem 1.5rem; }
     .topic-nav, .section { padding: 1.5rem 1rem; }
     .q-row { grid-template-columns: 40px 85px 1fr 40px; }
-    .q-table.has-category .q-row { grid-template-columns: 40px 85px 96px 1fr 40px; }
     .q-row.q-data > div:not(.q-answer) { padding: 0.8rem 0.5rem; font-size: 0.9rem; }
     .q-row.q-head > div { padding: 0.6rem 0.5rem; font-size: 0.72rem; }
     .q-row.q-head > .q-sort-cell { padding: 0; }
@@ -749,19 +733,6 @@
 
   @media (max-width: 480px) {
     .q-row { grid-template-columns: 32px 70px 1fr 32px; }
-    /* A 5th column is a lot on a phone, so this table alone buys the question
-       text back by tightening its other columns and letting the widest header
-       label ellipsis. */
-    .q-table.has-category .q-row { grid-template-columns: 28px 58px 66px 1fr 28px; }
-    .q-table.has-category .q-sort-button { padding-inline: 0.3rem; overflow: hidden; }
-    .q-table.has-category .q-sort-button > span:first-child {
-      min-width: 0;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-    }
-    .q-table.has-category .q-row.q-data > div:not(.q-answer) { padding-inline: 0.3rem; }
-    .q-cat-pill { padding: 0.15rem 0.35rem; font-size: 0.68rem; }
     .q-row.q-data > div:not(.q-answer) { padding: 0.7rem 0.35rem; font-size: 0.85rem; }
     .q-row.q-head > div { padding: 0.5rem 0.35rem; font-size: 0.68rem; }
     .q-row.q-head > .q-sort-cell { padding: 0; }
@@ -1530,8 +1501,8 @@
       <div class="value" id="stat-difficulty">&mdash;</div>
     </div>
     <div class="meta-cell">
-      <div class="label">Bonus Section</div>
-      <div class="value value-tags" id="stat-bonus">&mdash;</div>
+      <div class="label">Bonus Sections</div>
+      <div class="value" id="stat-bonus">&mdash;</div>
     </div>
   </div>
 </section>
@@ -1708,7 +1679,50 @@
 <script src="behavioral.js"></script>
 <script src="systemdesign.js"></script>
 <script>
-  const allTopics = [...topics, extras];
+  // ─────── Bonus sections ───────
+  // content.js keeps every bonus question in one `extras` object, each tagged
+  // with a [MQ] / [Redis] / … prefix. Each tag becomes its own section here.
+  // Splitting at render time rather than in the data means adding a question is
+  // still one line in one array, and the tag stays the single source of truth
+  // for where it lands — there is no second list to keep in sync.
+  const extrasCategories = {
+    MQ:     { name: 'Message Queues',          desc: 'Kafka, RabbitMQ, delivery semantics and ordering' },
+    Redis:  { name: 'Redis & Caching',         desc: 'Data types, persistence, replication and cache patterns' },
+    SQL:    { name: 'SQL & Relational Data',   desc: 'Isolation levels, indexing and query planning' },
+    NoSQL:  { name: 'NoSQL Data Stores',       desc: 'Store families, CAP, and modelling for documents' },
+    Docker: { name: 'Docker & Containers',     desc: 'Images, Dockerfiles and multi-stage builds' },
+    K8s:    { name: 'Kubernetes',              desc: 'Pods, probes, configuration and traffic routing' },
+    HPC:    { name: 'HPC & AI Clusters',       desc: 'GPU scheduling, interconnects and honest benchmarking' },
+    BMC:    { name: 'Server Management',       desc: 'Out-of-band management, IPMI and Redfish' },
+    System: { name: 'System Design Drills',    desc: 'Open-ended scale and throughput scenarios' }
+  };
+  const questionCategory = question => question.q.match(/^\[([^\]]+)\]/)?.[1] || '';
+  const questionWithoutCategory = question => question.q.replace(/^\[[^\]]+\]\s*/, '');
+
+  // Sections follow the order this map declares: messaging → caching →
+  // databases → containers → cluster hardware → design. A tag with no entry
+  // still renders — named after itself, sorted last — rather than vanishing.
+  const extrasOrder = Object.keys(extrasCategories);
+  const extrasRank = category => {
+    const i = extrasOrder.indexOf(category);
+    return i < 0 ? 99 : i;
+  };
+  const extrasTopics = [...new Set(extras.questions.map(questionCategory))]
+    .filter(Boolean)
+    .sort((a, b) => extrasRank(a) - extrasRank(b)
+      || a.localeCompare(b, undefined, { sensitivity: 'base' }))
+    .map(category => ({
+      id: 'extras-' + category.toLowerCase(),
+      name: extrasCategories[category]?.name || category,
+      desc: extrasCategories[category]?.desc || extras.desc,
+      bonus: true,
+      // The [Tag] prefix is stripped: the section title already says it.
+      questions: extras.questions
+        .filter(q => questionCategory(q) === category)
+        .map(q => ({ ...q, q: questionWithoutCategory(q) }))
+    }));
+
+  const allTopics = [...topics, ...extrasTopics];
 
   document.getElementById('topic-count').textContent = allTopics.length;
   const totalQs = allTopics.reduce((a, t) => a + t.questions.length, 0);
@@ -1749,17 +1763,6 @@
   const content = document.getElementById('content');
   const topicDifficultyRank = { easy: 0, medium: 1, hard: 2 };
 
-  // Extras questions are authored as "[K8s] How do you …" — the bracket prefix
-  // is the question's category. It gets its own column there, so the prefix is
-  // stripped from the question text rather than shown twice.
-  // Curated reading order: messaging → caching → databases → containers and
-  // orchestration → cluster and server hardware → open-ended design. Anything
-  // missing from this map sorts last (see the ?? 99 fallbacks below).
-  const extrasCategoryRank = { MQ: 0, Redis: 1, SQL: 2, NoSQL: 3, Docker: 4, K8s: 5, HPC: 6, BMC: 7, System: 8 };
-  const questionCategory = question => question.q.match(/^\[([^\]]+)\]/)?.[1] || '';
-  const questionWithoutCategory = question => question.q.replace(/^\[[^\]]+\]\s*/, '');
-  const topicHasCategoryColumn = topic => topic.id === 'extras';
-
   // ─────── Hero stat cells ───────
   // Every figure in the three .hero-meta blocks is derived from the data files.
   // They used to be hand-written and had silently drifted — "12 core topics"
@@ -1781,13 +1784,7 @@
   for (const t of allTopics) {
     for (const q of t.questions) difficultyTotals[q.d] = (difficultyTotals[q.d] || 0) + 1;
   }
-  // Curated order (MQ, Redis, Docker, …), matching how the bonus section reads.
-  const bonusCategories = [...new Set(extras.questions.map(questionCategory))]
-    .filter(Boolean)
-    .sort((a, b) => (extrasCategoryRank[a] ?? 99) - (extrasCategoryRank[b] ?? 99)
-      || a.localeCompare(b, undefined, { sensitivity: 'base' }));
-
-  setStat('stat-core-topics', topics.length, `${coreQuestionTotal} questions outside the bonus section`);
+  setStat('stat-core-topics', topics.length, `${coreQuestionTotal} questions outside the bonus sections`);
   setStat(
     'stat-per-topic',
     perTopicMin === perTopicMax ? perTopicMin : `${perTopicMin}<small>–</small>${perTopicMax}`,
@@ -1798,16 +1795,12 @@
     `${difficultyTotals.easy} <small>/</small> ${difficultyTotals.medium} <small>/</small> ${difficultyTotals.hard}`,
     'easy / medium / hard, across every topic including the bonus section'
   );
-  // This cell sits in a row of single-figure stats. Listing all nine categories
-  // wrapped to three lines and dragged every sibling cell to match, so show a
-  // few and count the rest; the tooltip still names them all.
-  const bonusShown = bonusCategories.slice(0, 5);
-  const bonusRest = bonusCategories.length - bonusShown.length;
+  // Now that each tag is its own section this is a count like its siblings,
+  // which also ends the wrapping problem the old nine-name list caused.
   setStat(
     'stat-bonus',
-    bonusShown.map(escapeHtml).join(' <small>·</small> ')
-      + (bonusRest ? ` <small>+${bonusRest}</small>` : ''),
-    `${bonusCategories.join(' · ')} — ${extras.questions.length} questions`
+    extrasTopics.length,
+    `${extrasTopics.map(t => t.name).join(' · ')} — ${extras.questions.length} questions`
   );
 
   // Behavioral view — one chain is its main question plus its follow-ups.
@@ -1823,26 +1816,18 @@
   const topicSortFieldByKey = {
     number: { key: 'number', label: 'No.', value: (_question, index) => index + 1, compare: (a, b) => Number(a) - Number(b) },
     level: { key: 'level', label: 'Level', value: question => question.d, compare: (a, b) => topicDifficultyRank[a] - topicDifficultyRank[b] },
-    category: {
-      key: 'category',
-      label: 'Category',
-      value: questionCategory,
-      // Curated order, not alphabetical, so Category ↑ matches how the section
-      // reads by default. Anything unranked (or uncategorised) sorts last.
-      compare: (a, b) => (extrasCategoryRank[a] ?? 99) - (extrasCategoryRank[b] ?? 99)
-        || a.localeCompare(b, undefined, { sensitivity: 'base' })
-    },
     question: {
       key: 'question',
       label: 'Question',
-      value: question => questionWithoutCategory(question).replace(/<[^>]*>/g, ' '),
+      value: question => question.q.replace(/<[^>]*>/g, ' '),
       compare: (a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })
     }
   };
-  const topicSortFieldsFor = topic => [
+  // Every section now has the same columns — the Category column existed only
+  // to disambiguate the old combined extras section, which no longer exists.
+  const topicSortFields = [
     topicSortFieldByKey.number,
     topicSortFieldByKey.level,
-    ...(topicHasCategoryColumn(topic) ? [topicSortFieldByKey.category] : []),
     topicSortFieldByKey.question
   ];
   const topicSortState = new WeakMap();
@@ -1874,9 +1859,10 @@
     section.id = t.id;
     section.dataset.topicName = t.name.toLowerCase();
 
-    const num = i === allTopics.length - 1 ? 'Bonus Section' : 'Topic ' + String(i + 1).padStart(2, '0');
-    const sortFields = topicSortFieldsFor(t);
-    const hasCategory = topicHasCategoryColumn(t);
+    const num = t.bonus
+      ? 'Bonus ' + String(i - topics.length + 1).padStart(2, '0')
+      : 'Topic ' + String(i + 1).padStart(2, '0');
+    const sortFields = topicSortFields;
 
     let rowsHTML = `
       <div class="q-row q-head" role="row">
@@ -1887,22 +1873,18 @@
       </div>
     `;
 
-    const extrasRank = q => extrasCategoryRank[questionCategory(q)] ?? 99;
-    const sortedQs = [...t.questions].sort((a, b) => {
-      if (t.id !== 'extras') return topicDifficultyRank[a.d] - topicDifficultyRank[b.d];
-      return extrasRank(a) - extrasRank(b)
-        || Number(Boolean(b.setup)) - Number(Boolean(a.setup))
-        || topicDifficultyRank[a.d] - topicDifficultyRank[b.d];
-    });
+    // Setup walkthroughs lead their section, then easy → hard. Only the bonus
+    // questions carry `setup`, so this needs no per-topic special case.
+    const sortedQs = [...t.questions].sort((a, b) =>
+      Number(Boolean(b.setup)) - Number(Boolean(a.setup))
+      || topicDifficultyRank[a.d] - topicDifficultyRank[b.d]);
     sortedQs.forEach((q, qi) => {
       const companiesAttr = (q.companies || []).map(c => c.toLowerCase()).join(',');
-      const category = hasCategory ? questionCategory(q) : '';
       rowsHTML += `
         <div class="q-row q-data" data-q="${q.q.toLowerCase()}" data-a="${q.a.replace(/<[^>]*>/g, '').toLowerCase().replace(/"/g, '&quot;')}" data-companies="${companiesAttr}" ${topicSortAttributes(sortFields, q, qi)}>
           <div class="q-num">${String(qi + 1).padStart(2, '0')}</div>
           <div class="q-diff ${q.d}"><span class="pill">${q.d}</span></div>
-          ${hasCategory ? `<div class="q-cat">${category ? `<span class="q-cat-pill">${escapeHtml(category)}</span>` : ''}</div>` : ''}
-          <div class="q-text">${hasCategory ? questionWithoutCategory(q) : q.q}${
+          <div class="q-text">${q.q}${
             q.companies && q.companies.length
               ? `<span class="lc-companies">${q.companies.map(c => `<span class="lc-company-pill" data-company="${escapeHtml(c).toLowerCase()}">${escapeHtml(c)}</span>`).join('')}</span>`
               : ''
@@ -1918,10 +1900,10 @@
         <div class="section-num">${num}</div>
         <h2 class="section-title">${t.name}</h2>
         <p class="section-desc">${t.desc}. ${t.questions.length} questions, ${
-          t.id === 'extras' ? 'grouped by category with setup first, then easy → hard' : 'ordered roughly easy → hard'
+          t.questions.some(q => q.setup) ? 'setup first, then easy → hard' : 'ordered roughly easy → hard'
         }.</p>
       </div>
-      <div class="q-table${hasCategory ? ' has-category' : ''}">${rowsHTML}</div>
+      <div class="q-table">${rowsHTML}</div>
     `;
 
     content.appendChild(section);
