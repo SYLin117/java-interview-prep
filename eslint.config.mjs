@@ -13,7 +13,7 @@ import globals from 'globals';
 // Top-level `const X = ...` in our data files (content.js, leetcode.js, etc.)
 // is read across script tags via the shared classic-script global scope —
 // ESLint can't see that, so don't flag these "unused" const names.
-const dataFileGlobalsPattern = '^(topics|extras|leetcode|leetcodeUserOverrides|leetcodeDescriptions|namedAlgorithms|problemAlgorithms|behavioral|systemDesignThemes|systemDesignCases)$';
+const dataFileGlobalsPattern = '^(topics|extras|leetcode|leetcodeUserOverrides|leetcodeDescriptions|namedAlgorithms|problemAlgorithms|behavioral|supermicro|systemDesignThemes|systemDesignCases)$';
 
 export default [
   {

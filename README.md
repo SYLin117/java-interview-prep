@@ -6,11 +6,12 @@ Live site: https://java-interview-prep-blush.vercel.app
 
 ## What's inside
 
-Four views, toggled from the header:
+Five views, toggled from the header:
 
 - **Topics** — 262 interview Q&As across 13 Java/Spring topics (collections, concurrency, JVM, Spring Boot, JPA, testing, …), each expandable with a suggested answer.
 - **LeetCode** — 200 popular problems grouped into 16 buckets (Arrays & Hashing → Math & Bit Manipulation), each with a paraphrased statement (upgraded to the official one on demand), approach, complexity, named-algorithm explainers, an editable Java solution, and a server-synced reviewed checkbox.
 - **Garmin Behavioral** — 9 behavioral question chains with STAR answers and follow-ups.
+- **Supermicro** — 36 technical Q&As across 7 topics for the System Engineer track (server architecture, BMC/IPMI/Redfish, Linux, storage & RAID, networking, scripting), built from real interview reports and job postings.
 - **System Design** — 46 concept Q&As across 8 themes, plus 12 full case-study walkthroughs.
 
 Extras:
