@@ -329,6 +329,7 @@
   .q-diff.answer .pill { color: var(--accent); background: var(--accent-soft); }
   .q-diff.followup .pill { color: var(--text-dim); background: var(--bg-soft); }
   .behavioral-section.hidden { display: none; }
+  .smci-section.hidden { display: none; }
   .q-text {
     font-size: 0.97rem;
     color: var(--text);
@@ -1464,6 +1465,7 @@
       <button class="view-btn active" data-view="topics" role="tab" aria-selected="true">Topics</button>
       <button class="view-btn" data-view="leetcode" role="tab" aria-selected="false">LeetCode<span class="view-btn-extra"> 200</span></button>
       <button class="view-btn" data-view="behavioral" role="tab" aria-selected="false"><span class="view-btn-extra">Garmin </span>Behavioral</button>
+      <button class="view-btn" data-view="supermicro" role="tab" aria-selected="false">Supermicro</button>
       <button class="view-btn" data-view="systemdesign" role="tab" aria-selected="false">System Design</button>
     </div>
     <div class="search-box">
@@ -1589,6 +1591,47 @@
 
 </div><!-- /#behavioral-view -->
 
+<div id="supermicro-view" hidden>
+
+  <section class="hero">
+    <div class="hero-label">Supermicro · System Engineer Prep</div>
+    <h1 class="hero-title">Supermicro Interview Questions</h1>
+    <p class="hero-subtitle">
+      Technical prep for Supermicro's System Engineer track, built from real interview
+      reports and their job postings: server architecture, BMC/IPMI/Redfish, Linux,
+      storage &amp; RAID, networking, and scripting — plus the process and behavioral
+      questions candidates report. Click any question to reveal the answer.
+    </p>
+    <div class="hero-meta">
+      <div class="meta-cell">
+        <div class="label">Topics</div>
+        <div class="value" id="stat-smci-topics">&mdash;</div>
+      </div>
+      <div class="meta-cell">
+        <div class="label">Questions</div>
+        <div class="value" id="stat-smci-questions">&mdash;</div>
+      </div>
+      <div class="meta-cell">
+        <div class="label">Focus</div>
+        <div class="value">Server · Hardware</div>
+      </div>
+      <div class="meta-cell">
+        <div class="label">Style</div>
+        <div class="value">Practical, not LeetCode</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="filter-bar">
+    <div class="filter-bar-inner">
+      <div class="lc-filters" id="supermicro-filters" aria-label="Filter Supermicro topics"></div>
+    </div>
+  </div>
+
+  <main id="supermicro-content"></main>
+
+</div><!-- /#supermicro-view -->
+
 <div id="system-design-view" hidden>
 
   <section class="hero">
@@ -1677,6 +1720,7 @@
 <script src="algorithms.js"></script>
 <script src="user-overrides.js"></script>
 <script src="behavioral.js"></script>
+<script src="supermicro.js"></script>
 <script src="systemdesign.js"></script>
 <script>
   // ─────── Bonus sections ───────
@@ -1807,6 +1851,10 @@
   const behavioralQATotal = behavioral.reduce((a, c) => a + 1 + (c.followups || []).length, 0);
   setStat('stat-bhv-chains', behavioral.length);
   setStat('stat-bhv-total', behavioralQATotal, 'Main questions plus follow-ups');
+
+  // Supermicro view.
+  setStat('stat-smci-topics', supermicro.length);
+  setStat('stat-smci-questions', supermicro.reduce((a, t) => a + t.questions.length, 0));
 
   // System Design view.
   setStat('stat-sd-questions', systemDesignThemes.reduce((a, t) => a + t.questions.length, 0));
@@ -3049,6 +3097,82 @@
     });
   }
 
+  // ─────── Supermicro view: technical topic sections + topic filter ───────
+  let smciSearchTerm = '';
+  let activeSmciTopic = null;
+  (function renderSupermicro() {
+    if (typeof supermicro === 'undefined') return;
+    const sContent = document.getElementById('supermicro-content');
+    const sFilters = document.getElementById('supermicro-filters');
+    if (!sContent) return;
+    const stripTags = h => h.replace(/<[^>]*>/g, ' ');
+
+    supermicro.forEach((topic, i) => {
+      const section = document.createElement('section');
+      section.className = 'section smci-section';
+      section.id = topic.id;
+      section.dataset.topic = topic.title.toLowerCase();
+      // Whole topic is searchable: title + every Q&A (answers with the HTML stripped).
+      section.dataset.search = (topic.title + ' ' + topic.desc + ' ' +
+        topic.questions.map(q => q.q + ' ' + stripTags(q.a)).join(' ')).toLowerCase();
+
+      let rowsHTML = `
+        <div class="q-row q-head"><div>#</div><div>Level</div><div>Question</div><div></div></div>`;
+      topic.questions.forEach((q, qi) => {
+        rowsHTML += `
+          <div class="q-row q-data">
+            <div class="q-num">${String(qi + 1).padStart(2, '0')}</div>
+            <div class="q-diff ${q.d}"><span class="pill">${q.d}</span></div>
+            <div class="q-text">${escapeHtml(q.q)}</div>
+            <div class="q-toggle">+</div>
+            <div class="q-answer">${q.a}</div>
+          </div>`;
+      });
+
+      section.innerHTML = `
+        <div class="section-header">
+          <div class="section-num">Topic ${String(i + 1).padStart(2, '0')} · Supermicro</div>
+          <h2 class="section-title">${escapeHtml(topic.title)}</h2>
+          <p class="section-desc">${escapeHtml(topic.desc)}</p>
+        </div>
+        <div class="q-table">${rowsHTML}</div>`;
+      sContent.appendChild(section);
+    });
+
+    // Expand/collapse — same rule as Topics (clicks inside the answer don't collapse).
+    sContent.querySelectorAll('.q-row.q-data').forEach(row => {
+      row.addEventListener('click', (e) => {
+        if (e.target.closest('.q-answer')) return;
+        row.classList.toggle('expanded');
+      });
+    });
+
+    // Topic filter dropdown
+    if (sFilters) {
+      let chipsHTML = `<div class="lc-filter-row"><label class="lc-filter-label" for="supermicro-select">Topic</label>` +
+        `<select id="supermicro-select" class="lc-select" aria-label="Filter by topic"><option value="">All</option>`;
+      supermicro.forEach(t => {
+        chipsHTML += `<option value="${escapeHtml(t.title).toLowerCase()}">${escapeHtml(t.title)}</option>`;
+      });
+      sFilters.innerHTML = chipsHTML + `</select></div>`;
+      sFilters.addEventListener('change', (e) => {
+        const sel = e.target.closest('#supermicro-select');
+        if (!sel) return;
+        activeSmciTopic = sel.value || null;
+        applySupermicroFilters();
+      });
+    }
+  })();
+
+  /** Show/hide Supermicro topic sections by the active topic chip + search term. */
+  function applySupermicroFilters() {
+    document.querySelectorAll('.smci-section').forEach(section => {
+      const matchTopic = !activeSmciTopic || section.dataset.topic === activeSmciTopic;
+      const matchSearch = !smciSearchTerm || (section.dataset.search || '').includes(smciSearchTerm);
+      section.classList.toggle('hidden', !(matchTopic && matchSearch));
+    });
+  }
+
   // ─────── System Design view: Concept Q&A + Case Studies, with a sub-tab toggle ───────
   let sdSearchTerm = '';
   let activeSdCategory = null;   // active concept-theme chip (null = all)
@@ -3210,14 +3334,16 @@
   const topicsView = document.getElementById('topics-view');
   const leetView   = document.getElementById('leetcode-view');
   const behavioralView = document.getElementById('behavioral-view');
+  const smciView   = document.getElementById('supermicro-view');
   const sdView     = document.getElementById('system-design-view');
   const searchInput = document.getElementById('search');
-  const VIEW_EL = { topics: topicsView, leetcode: leetView, behavioral: behavioralView, systemdesign: sdView };
-  const VIEW_HASH = { topics: '', leetcode: '#leetcode', behavioral: '#behavioral', systemdesign: '#systemdesign' };
+  const VIEW_EL = { topics: topicsView, leetcode: leetView, behavioral: behavioralView, supermicro: smciView, systemdesign: sdView };
+  const VIEW_HASH = { topics: '', leetcode: '#leetcode', behavioral: '#behavioral', supermicro: '#supermicro', systemdesign: '#systemdesign' };
   const VIEW_PLACEHOLDER = {
     topics: 'Search questions...',
     leetcode: 'Search problems...',
     behavioral: 'Search behavioral questions...',
+    supermicro: 'Search Supermicro prep...',
     systemdesign: 'Search system design...',
   };
 
@@ -3263,6 +3389,8 @@
     setView('leetcode', { pushHash: false });
   } else if (location.hash === '#behavioral') {
     setView('behavioral', { pushHash: false });
+  } else if (location.hash === '#supermicro' || location.hash === '#smci') {
+    setView('supermicro', { pushHash: false });
   } else if (location.hash === '#systemdesign' || location.hash === '#sd') {
     setView('systemdesign', { pushHash: false });
   }
@@ -3272,6 +3400,8 @@
       setView('leetcode', { pushHash: false });
     } else if (location.hash === '#behavioral') {
       setView('behavioral', { pushHash: false });
+    } else if (location.hash === '#supermicro' || location.hash === '#smci') {
+      setView('supermicro', { pushHash: false });
     } else if (location.hash === '#systemdesign' || location.hash === '#sd') {
       setView('systemdesign', { pushHash: false });
     } else if (location.hash) {
@@ -3294,6 +3424,10 @@
       // Behavioral view: filter chains by search + category chip
       behavioralSearchTerm = term;
       applyBehavioralFilters();
+    } else if (!smciView.hidden) {
+      // Supermicro view: filter topic sections by search + topic chip
+      smciSearchTerm = term;
+      applySupermicroFilters();
     } else if (!sdView.hidden) {
       // System Design view: filter the active sub-tab (concepts rows or case cards)
       sdSearchTerm = term;
