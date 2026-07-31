@@ -899,7 +899,10 @@
   .lc-company-pill[data-company="lowe's"] { background: #004990; }
   .lc-company-pill[data-company="doordash"] { background: #ff3008; }
 
-  /* ─── System Design view ─── */
+  /* ─── System Design view ───
+     (.company-subtabs in the Companies view shares these rules; it keeps its
+     own class because the SD click handler binds to every .sd-subtab) */
+  .company-subtabs,
   .sd-subtabs {
     display: inline-flex;
     gap: 0.25rem;
@@ -909,6 +912,7 @@
     border-radius: 8px;
     margin-right: 0.35rem;
   }
+  .company-subtab,
   .sd-subtab {
     border: none;
     background: transparent;
@@ -921,7 +925,9 @@
     cursor: pointer;
     white-space: nowrap;
   }
+  .company-subtab:hover,
   .sd-subtab:hover { color: var(--text); }
+  .company-subtab.active,
   .sd-subtab.active { background: var(--bg-card); color: var(--accent); box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
   /* Case-study cards */
   .sd-case { padding: 0; overflow: hidden; }
@@ -1450,9 +1456,9 @@
     .lc-detail { padding: 0 1rem 1.2rem 1rem; font-size: 0.88rem; }
   }
   @media (max-width: 480px) {
-    /* "Garmin Behavioral" alone is 125px of the strip. Dropping the qualifiers
-       keeps all four tabs on screen without a swipe; the visible label stays
-       the accessible name, so nothing is hidden from a screen reader. */
+    /* Dropping the qualifiers (e.g. the "200" on LeetCode) keeps all four tabs
+       on screen without a swipe; the visible label stays the accessible name,
+       so nothing is hidden from a screen reader. */
     .view-btn-extra { display: none; }
     .view-btn { padding: 0.35rem 0.5rem; }
     .lc-row { grid-template-columns: 34px 32px 65px 1fr 40px 32px; }
@@ -1472,10 +1478,8 @@
     <div class="view-toggle" role="tablist" aria-label="Section">
       <button class="view-btn active" data-view="topics" role="tab" aria-selected="true">Topics</button>
       <button class="view-btn" data-view="leetcode" role="tab" aria-selected="false">LeetCode<span class="view-btn-extra"> 200</span></button>
-      <button class="view-btn" data-view="behavioral" role="tab" aria-selected="false"><span class="view-btn-extra">Garmin </span>Behavioral</button>
-      <button class="view-btn" data-view="supermicro" role="tab" aria-selected="false">Supermicro</button>
+      <button class="view-btn" data-view="companies" role="tab" aria-selected="false">Companies</button>
       <button class="view-btn" data-view="systemdesign" role="tab" aria-selected="false">System Design</button>
-      <button class="view-btn" data-view="msi" role="tab" aria-selected="false">MSI</button>
     </div>
     <div class="search-box">
       <input type="text" id="search" placeholder="Search questions..." autocomplete="off">
@@ -1559,7 +1563,19 @@
   </main>
 </div><!-- /#leetcode-view -->
 
-<div id="behavioral-view" hidden>
+<div id="companies-view" hidden>
+
+  <div class="filter-bar">
+    <div class="filter-bar-inner">
+      <div class="company-subtabs" role="tablist" aria-label="Company">
+        <button class="company-subtab active" data-company="garmin" role="tab" aria-selected="true">Garmin</button>
+        <button class="company-subtab" data-company="supermicro" role="tab" aria-selected="false">Supermicro</button>
+        <button class="company-subtab" data-company="msi" role="tab" aria-selected="false">MSI</button>
+      </div>
+    </div>
+  </div>
+
+<div id="behavioral-view">
 
   <section class="hero">
     <div class="hero-label">Garmin · Behavioral Prep</div>
@@ -1641,6 +1657,45 @@
 
 </div><!-- /#supermicro-view -->
 
+<div id="msi-view" hidden>
+
+  <section class="hero">
+    <div class="hero-label">MSI Surfaces · Software Programmer II/III</div>
+    <h1 class="hero-title">MSI Interview Prep</h1>
+    <p class="hero-subtitle">
+      Targeted prep for M S International (MSI Surfaces, Orange CA) software
+      programmer interviews. Their published stack is <strong>C# / ASP.NET Core,
+      Angular, and SQL Server</strong> — each section covers one pillar, framed
+      for a Java developer wherever a translation helps. The process card is
+      built from Glassdoor interview reports and MSI's own job postings; for the
+      DS&amp;A side of their skills test, use the <a href="#leetcode">LeetCode</a> view.
+    </p>
+    <div class="hero-meta">
+      <div class="meta-cell">
+        <div class="label">Prep Sections</div>
+        <div class="value" id="stat-msi-sections">&mdash;</div>
+      </div>
+      <div class="meta-cell">
+        <div class="label">Questions</div>
+        <div class="value" id="stat-msi-questions">&mdash;</div>
+      </div>
+      <div class="meta-cell">
+        <div class="label">Difficulty (Glassdoor)</div>
+        <div class="value">3.5<small>/ 5</small></div>
+      </div>
+      <div class="meta-cell">
+        <div class="label">Typical Timeline</div>
+        <div class="value">~14<small>days</small></div>
+      </div>
+    </div>
+  </section>
+
+  <main id="msi-content"></main>
+
+</div><!-- /#msi-view -->
+
+</div><!-- /#companies-view -->
+
 <div id="system-design-view" hidden>
 
   <section class="hero">
@@ -1689,42 +1744,6 @@
 
 </div><!-- /#system-design-view -->
 
-<div id="msi-view" hidden>
-
-  <section class="hero">
-    <div class="hero-label">MSI Surfaces · Software Programmer II/III</div>
-    <h1 class="hero-title">MSI Interview Prep</h1>
-    <p class="hero-subtitle">
-      Targeted prep for M S International (MSI Surfaces, Orange CA) software
-      programmer interviews. Their published stack is <strong>C# / ASP.NET Core,
-      Angular, and SQL Server</strong> — each section covers one pillar, framed
-      for a Java developer wherever a translation helps. The process card is
-      built from Glassdoor interview reports and MSI's own job postings; for the
-      DS&amp;A side of their skills test, use the <a href="#leetcode">LeetCode</a> view.
-    </p>
-    <div class="hero-meta">
-      <div class="meta-cell">
-        <div class="label">Prep Sections</div>
-        <div class="value" id="stat-msi-sections">&mdash;</div>
-      </div>
-      <div class="meta-cell">
-        <div class="label">Questions</div>
-        <div class="value" id="stat-msi-questions">&mdash;</div>
-      </div>
-      <div class="meta-cell">
-        <div class="label">Difficulty (Glassdoor)</div>
-        <div class="value">3.5<small>/ 5</small></div>
-      </div>
-      <div class="meta-cell">
-        <div class="label">Typical Timeline</div>
-        <div class="value">~14<small>days</small></div>
-      </div>
-    </div>
-  </section>
-
-  <main id="msi-content"></main>
-
-</div><!-- /#msi-view -->
 
 <footer>
   Built for senior-track interview prep · Java 17+ · Spring Boot 3.x<br>
@@ -3462,7 +3481,7 @@
     if (proc) proc.classList.toggle('hidden', !!msiSearchTerm);
   }
 
-  // ─────── View toggle (Topics ↔ LeetCode ↔ Behavioral) with URL-hash routing ───────
+  // ─────── View toggle (Topics ↔ LeetCode ↔ Companies ↔ System Design) with URL-hash routing ───────
   const viewBtns  = document.querySelectorAll('.view-btn');
   const topicsView = document.getElementById('topics-view');
   const leetView   = document.getElementById('leetcode-view');
@@ -3470,17 +3489,63 @@
   const smciView   = document.getElementById('supermicro-view');
   const sdView     = document.getElementById('system-design-view');
   const msiView    = document.getElementById('msi-view');
+  const companiesView = document.getElementById('companies-view');
   const searchInput = document.getElementById('search');
-  const VIEW_EL = { topics: topicsView, leetcode: leetView, behavioral: behavioralView, supermicro: smciView, systemdesign: sdView, msi: msiView };
-  const VIEW_HASH = { topics: '', leetcode: '#leetcode', behavioral: '#behavioral', supermicro: '#supermicro', systemdesign: '#systemdesign', msi: '#msi' };
+  const VIEW_EL = { topics: topicsView, leetcode: leetView, companies: companiesView, systemdesign: sdView };
+  const VIEW_HASH = { topics: '', leetcode: '#leetcode', companies: '#companies', systemdesign: '#systemdesign' };
   const VIEW_PLACEHOLDER = {
     topics: 'Search questions...',
     leetcode: 'Search problems...',
-    behavioral: 'Search behavioral questions...',
-    supermicro: 'Search Supermicro prep...',
+    companies: 'Search company prep...',
     systemdesign: 'Search system design...',
+  };
+
+  // ─────── Companies view: one sub-tab per company track ───────
+  // The three company views keep their ids, render logic, and filters; only
+  // their visibility is managed here. Legacy hashes stay the shareable links.
+  const COMPANY_EL = { garmin: behavioralView, supermicro: smciView, msi: msiView };
+  const COMPANY_HASH = { garmin: '#behavioral', supermicro: '#supermicro', msi: '#msi' };
+  const COMPANY_PLACEHOLDER = {
+    garmin: 'Search behavioral questions...',
+    supermicro: 'Search Supermicro prep...',
     msi: 'Search MSI prep...',
   };
+  let companySubtab = 'garmin';
+
+  /**
+   * Select which company's prep is shown inside the Companies view.
+   *
+   * Toggles the nested company views, updates the sub-tab buttons (visually +
+   * ARIA), swaps the search placeholder, and re-applies the current search term
+   * against the newly shown company so the box and the rows never disagree.
+   * The URL hash is rewritten to the company's legacy hash (`#behavioral`,
+   * `#supermicro`, `#msi`) via replaceState — pass `pushHash: false` to skip
+   * (used on initial load / hashchange to avoid loops).
+   *
+   * @param {'garmin'|'supermicro'|'msi'} company - Which company to show.
+   * @param {{pushHash?: boolean}} [opts] - Optional flags. pushHash defaults to true.
+   */
+  function setCompany(company, opts = {}) {
+    if (!COMPANY_EL[company]) company = 'garmin';
+    companySubtab = company;
+    Object.keys(COMPANY_EL).forEach(k => { COMPANY_EL[k].hidden = k !== company; });
+    document.querySelectorAll('.company-subtab').forEach(b => {
+      const active = b.dataset.company === company;
+      b.classList.toggle('active', active);
+      b.setAttribute('aria-selected', String(active));
+    });
+    searchInput.placeholder = COMPANY_PLACEHOLDER[company];
+    if (opts.pushHash !== false && location.hash !== COMPANY_HASH[company]) {
+      history.replaceState(null, '', COMPANY_HASH[company]);
+    }
+    searchInput.dispatchEvent(new Event('input'));
+  }
+  document.querySelectorAll('.company-subtab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      setCompany(btn.dataset.company);
+      window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+    });
+  });
 
   /**
    * Switch between the Topics and LeetCode views.
@@ -3494,7 +3559,7 @@
    * LeetCode view, no hash for the Topics view. Pass `pushHash: false` to skip
    * this (used on initial load + on hashchange to avoid loops).
    *
-   * @param {'topics'|'leetcode'|'behavioral'|'supermicro'|'systemdesign'|'msi'} view - Which view to show.
+   * @param {'topics'|'leetcode'|'companies'|'systemdesign'} view - Which view to show.
    * @param {{pushHash?: boolean}} [opts] - Optional flags. pushHash defaults to true.
    */
   function setView(view, opts = {}) {
@@ -3515,6 +3580,9 @@
       searchInput.value = '';
       searchInput.dispatchEvent(new Event('input'));
     }
+    // Entering the Companies view: sync the sub-tab state (placeholder, nested
+    // visibility) without touching the '#companies' hash just written above.
+    if (view === 'companies') setCompany(companySubtab, { pushHash: false });
     window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
   }
   viewBtns.forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
@@ -3522,27 +3590,37 @@
   // Initial view from URL hash
   if (location.hash === '#leetcode' || location.hash === '#lc') {
     setView('leetcode', { pushHash: false });
+  } else if (location.hash === '#companies') {
+    setView('companies', { pushHash: false });
   } else if (location.hash === '#behavioral') {
-    setView('behavioral', { pushHash: false });
+    setView('companies', { pushHash: false });
+    setCompany('garmin', { pushHash: false });
   } else if (location.hash === '#supermicro' || location.hash === '#smci') {
-    setView('supermicro', { pushHash: false });
+    setView('companies', { pushHash: false });
+    setCompany('supermicro', { pushHash: false });
   } else if (location.hash === '#systemdesign' || location.hash === '#sd') {
     setView('systemdesign', { pushHash: false });
   } else if (location.hash === '#msi') {
-    setView('msi', { pushHash: false });
+    setView('companies', { pushHash: false });
+    setCompany('msi', { pushHash: false });
   }
   // Hashchange — handle direct links to any view, and activate the right chip
   window.addEventListener('hashchange', () => {
     if (location.hash === '#leetcode' || location.hash === '#lc') {
       setView('leetcode', { pushHash: false });
+    } else if (location.hash === '#companies') {
+      setView('companies', { pushHash: false });
     } else if (location.hash === '#behavioral') {
-      setView('behavioral', { pushHash: false });
+      setView('companies', { pushHash: false });
+      setCompany('garmin', { pushHash: false });
     } else if (location.hash === '#supermicro' || location.hash === '#smci') {
-      setView('supermicro', { pushHash: false });
+      setView('companies', { pushHash: false });
+      setCompany('supermicro', { pushHash: false });
     } else if (location.hash === '#systemdesign' || location.hash === '#sd') {
       setView('systemdesign', { pushHash: false });
     } else if (location.hash === '#msi') {
-      setView('msi', { pushHash: false });
+      setView('companies', { pushHash: false });
+      setCompany('msi', { pushHash: false });
     } else if (location.hash) {
       const target = document.getElementById(location.hash.slice(1));
       if (target && target.closest('#topics-view')) {
@@ -3559,22 +3637,22 @@
       // LeetCode view: update the shared search term and re-apply all filters together
       lcSearchTerm = term;
       applyLcFilters();
-    } else if (!behavioralView.hidden) {
-      // Behavioral view: filter chains by search + category chip
-      behavioralSearchTerm = term;
-      applyBehavioralFilters();
-    } else if (!smciView.hidden) {
-      // Supermicro view: filter topic sections by search + topic chip
-      smciSearchTerm = term;
-      applySupermicroFilters();
+    } else if (!companiesView.hidden) {
+      // Companies view: route the term to the active company sub-tab's filter
+      if (companySubtab === 'supermicro') {
+        smciSearchTerm = term;
+        applySupermicroFilters();
+      } else if (companySubtab === 'msi') {
+        msiSearchTerm = term;
+        applyMsiFilters();
+      } else {
+        behavioralSearchTerm = term;
+        applyBehavioralFilters();
+      }
     } else if (!sdView.hidden) {
       // System Design view: filter the active sub-tab (concepts rows or case cards)
       sdSearchTerm = term;
       applySystemDesignFilters();
-    } else if (!msiView.hidden) {
-      // MSI view: filter prep rows by search term (process card hides while searching)
-      msiSearchTerm = term;
-      applyMsiFilters();
     } else {
       // Topics view: update search term and re-apply the combined filter (search + chip)
       topicsSearchTerm = term;
