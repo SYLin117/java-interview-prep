@@ -8875,8 +8875,15 @@ public String addBinary(String a, String b) {
 //   interviewsolver.com/interview-questions/the-home-depot
 //   interviewsolver.com/interview-questions/lowes
 //   interviewsolver.com/interview-questions/doordash
+//
+// CATL (宁德时代) entries reviewed 2026-08-01, from Chinese campus-hiring
+// reports: a Nowcoder software-engineer report (LC 25 asked as second-round
+// live coding) and a CSDN 数智化开发工程师 written-test report dated 2022-08-01
+// (LC 70 跳台阶 and LC 64 最小路径和 among its three programming problems) —
+// blog.csdn.net/qq_42386788/article/details/126110003
 {
   const companyProblemNums = {
+    CATL: [95, 153, 182],
     CoStar: [15, 25, 39, 56, 71, 85, 97, 150, 177],
     Walmart: [5, 7, 45, 47, 56, 66, 84, 85, 88, 104, 134, 148, 155, 166],
     Amazon: [
