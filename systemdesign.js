@@ -369,6 +369,7 @@ Update flow (offline):
       `<strong>Channel fallback:</strong> Push failed? Try email? Adds complexity but improves reach.`,
     ],
     tags: ["Kafka","Idempotency","APNs/FCM","Priority Queues","Retry"],
+    companies: ["ByteDance"],
   },
   {
     id: 7, icon: "📁", title: "File Storage Service (Dropbox, Google Drive, S3)",
@@ -411,6 +412,7 @@ Sync flow:
       `<strong>Encryption:</strong> Server-side (simpler) vs client-side (more secure but you can't preview).`,
     ],
     tags: ["Object Storage","Chunking","Deduplication","CDN","Erasure Coding"],
+    companies: ["ByteDance"],
   },
   {
     id: 8, icon: "🎬", title: "Video Streaming Service (YouTube, Netflix)",
@@ -455,6 +457,7 @@ Watch flow:
       `<strong>DRM:</strong> Premium content (Netflix) needs encryption + key servers.`,
     ],
     tags: ["CDN","HLS/DASH","Transcoding","Adaptive Bitrate","Object Storage"],
+    companies: ["ByteDance"],
   },
   {
     id: 9, icon: "⚡", title: "Distributed Cache (Redis Cluster, Memcached)",
@@ -640,5 +643,356 @@ During trip:
       `<strong>Geographic partitioning:</strong> Different cities are independent — partition data by city for scaling.`,
     ],
     tags: ["Geo-indexing","Redis Geo","WebSocket","State Machine","Cassandra"],
+  },
+  {
+    id: 13, icon: "🎯", title: "Short-Form Video Recommendation Feed (TikTok, Reels)",
+    tagline: "Pick the next video for a user out of a billion-item catalogue, in under 100 ms",
+    companies: ["ByteDance"],
+    problem: `A user opens the app and swipes. Every swipe must serve a video they are likely to watch to completion — chosen from a catalogue of hundreds of millions, personalised to that specific person, and delivered fast enough that the next clip is already buffered before they finish the current one. Unlike a follow-based timeline, most of what a user sees comes from creators they have never heard of, so the system cannot simply read a social graph.`,
+    requirements: [
+      `<strong>Functional:</strong> Return a ranked batch of videos per request. Learn from watch time, likes, shares, skips, and rewatches. Give brand-new videos a chance to be discovered (cold start). Never repeat a video the user has already seen.`,
+      `<strong>Non-functional:</strong> p99 under 100 ms for a feed request. Fresh signals reflected within minutes, not days. Available across regions. Handles heavy skew — a viral video may be requested by tens of millions of people at once.`,
+    ],
+    estimation: `<strong>Back-of-envelope:</strong><br>• 500M daily active users × 200 videos viewed = 100 billion impressions/day ≈ 1.2M impressions/second<br>• Feed requests batch ~10 videos → ~120K QPS at the ranking layer<br>• Candidate pool per request: ~500M videos → must be cut to ~1,000 before any model runs<br>• Interaction events: 100B/day × 200 bytes = ~20 TB/day into the event pipeline`,
+    components: [
+      `<strong>Candidate generation:</strong> Cheap retrieval that narrows hundreds of millions of videos to ~1,000. Several sources run in parallel — an approximate-nearest-neighbour index over embeddings (FAISS, ScaNN), trending-by-region lists, followed creators, and an exploration pool of fresh uploads.`,
+      `<strong>Ranking model:</strong> A heavier model that scores those ~1,000 candidates on predicted watch time, completion rate, and engagement probability. Runs on GPU inference servers.`,
+      `<strong>Feature store:</strong> Serves user features (recent watch history, topic affinities) and video features (age, engagement rates, embeddings) to the ranker with single-digit-millisecond reads. Redis or a purpose-built store.`,
+      `<strong>Event pipeline:</strong> Kafka ingesting every impression, watch-time tick, like and skip; Flink jobs aggregating them into near-real-time counters that feed straight back into the feature store.`,
+      `<strong>Seen-set store:</strong> Per-user record of already-served video IDs, used to filter candidates. Bloom filters keep this small.`,
+    ],
+    deepDive: `<strong>Why two stages instead of one model?</strong><ul><li>Scoring 500M videos with a deep model per request is impossible at 100 ms. The funnel — millions → thousands → tens — is the core architectural idea: each stage is cheaper per item but sees more items.</li><li>Candidate generation optimises <em>recall</em> (don't miss anything good). Ranking optimises <em>precision</em> (order what survived). Conflating them makes both worse.</li></ul><strong>The cold-start problem.</strong> A brand-new video has no engagement history, so a purely engagement-driven ranker would never show it and it would never get history — a self-fulfilling prophecy. The standard fix is a forced exploration budget: a fixed slice of every feed (say 1 in 10 slots) is reserved for under-exposed videos, whose performance on that small traffic sample then decides whether they graduate to wider distribution.<br><br><strong>Why not precompute feeds?</strong> A news feed can be fanned out on write because the audience for a post is bounded by the follower list. Here every video is a candidate for every user, so the write-side fanout is N×M — precomputation is hopeless and the feed must be built on read.`,
+    flow: `Feed request:
+1. Client requests next batch (user_id, session context)
+2. Candidate generation — parallel retrieval from ANN index,
+   trending list, follow graph, exploration pool  -> ~1,000 videos
+3. Filter: remove already-seen (Bloom filter), blocked creators,
+   region-restricted and moderation-flagged content
+4. Feature store lookup: user features + per-candidate video features
+5. Ranking model scores candidates -> take top ~10
+6. Diversity pass: cap videos per creator/topic so the batch isn't monotonous
+7. Return batch; client prefetches the first 2-3 videos
+
+Feedback loop:
+1. Client emits impression + watch-time + engagement events
+2. Kafka -> Flink aggregates counters in ~1 minute windows
+3. Counters written to feature store, immediately visible to the ranker
+4. Raw events land in the data lake for nightly model retraining`,
+    tradeoffs: [
+      `<strong>Exploration vs exploitation:</strong> Every exploration slot is a slot not spent on the highest-predicted-value video, so short-term engagement dips. Without it the catalogue ossifies around already-popular content and new creators never break through. The budget is a tuned product decision, not a technical one.`,
+      `<strong>Freshness vs cost:</strong> Streaming aggregation (minutes) costs far more than batch (hours) but is what makes a video's early performance steer its distribution while it is still new. Most systems run both: streaming for volatile counters, batch for stable embeddings.`,
+      `<strong>Bloom filter for seen-sets:</strong> Tiny and fast, but false positives mean a small fraction of unseen videos get wrongly filtered out. That is an acceptable loss — showing a duplicate is far more noticeable to the user than silently skipping one candidate out of thousands.`,
+      `<strong>Filter bubbles:</strong> Pure engagement optimisation narrows what a user sees over time. Explicit diversity constraints in the final pass trade measured engagement for long-term retention.`,
+    ],
+    tags: ["Two-Stage Ranking", "ANN / Embeddings", "Kafka", "Flink", "Feature Store", "Bloom Filter"],
+  },
+  {
+    id: 14, icon: "🛡️", title: "Content Moderation at Scale",
+    tagline: "Catch policy-violating uploads across millions of videos a day, without blocking every upload on a human",
+    companies: ["ByteDance"],
+    problem: `Users upload millions of videos daily. Some contain violence, nudity, self-harm, copyrighted audio, or coordinated misinformation. The platform must find and act on those before they reach a meaningful audience — while not making every ordinary creator wait hours for a human to approve their clip, and while giving anyone wrongly blocked a route to appeal.`,
+    requirements: [
+      `<strong>Functional:</strong> Screen every upload automatically. Escalate uncertain cases to human reviewers. Support takedown, age-gating, and distribution limits as distinct actions. Handle user reports on already-published content. Provide an appeals path.`,
+      `<strong>Non-functional:</strong> Automated verdict within seconds of upload. High recall on severe categories (missing one is far worse than a false alarm). Auditable — every decision must be explainable after the fact. Reviewer wellbeing: limit exposure to graphic material.`,
+    ],
+    estimation: `<strong>Back-of-envelope:</strong><br>• 10M uploads/day ≈ 120 uploads/second, bursting to ~500/s at peak hours<br>• ML screening at ~1 second GPU time per video → ~500 concurrent GPU slots at peak<br>• If 2% escalate to humans → 200K reviews/day; at 30 s per review that is ~70 reviewer-hours/hour, i.e. a large global review workforce<br>• Storage for decision audit log: 10M/day × 2 KB × 3 years ≈ 22 TB`,
+    components: [
+      `<strong>Ingest hook:</strong> Fires as soon as the upload lands in object storage, before the video is eligible for distribution.`,
+      `<strong>Hash matching:</strong> Perceptual hashes (PhotoDNA-style) checked against known-violating content. Catches re-uploads instantly and cheaply, before any model runs.`,
+      `<strong>ML classifiers:</strong> Per-category models over sampled video frames, the audio track, and any on-screen text (OCR). Each returns a confidence score.`,
+      `<strong>Policy engine:</strong> Maps (category, confidence, creator history, audience size) to an action — publish, limit distribution, age-gate, block, or escalate. Rules live here, not in the models.`,
+      `<strong>Review queue:</strong> Priority queue for human reviewers, ordered by potential harm × current reach so the most dangerous items are seen first.`,
+      `<strong>Audit log:</strong> Append-only record of every decision, the model version behind it, and the reviewer who confirmed it.`,
+    ],
+    deepDive: `<strong>The tiered-response idea.</strong> Moderation is usually taught as "block or allow", but the useful design has more gears. A high-confidence severe violation is blocked outright. A medium-confidence hit is <em>published but not recommended</em> — friends can see it, the recommendation feed will not carry it — which caps the blast radius while a human looks. A low-confidence hit publishes normally but joins a sampling queue. Most of the safety value comes from that middle tier, because it makes false positives cheap: a wrongly limited video loses reach for twenty minutes rather than being deleted.<br><br><strong>Why thresholds are per-category.</strong> A single confidence cutoff across all policies is wrong, because the cost matrix differs wildly. For child-safety categories, recall dominates — a false positive costs a creator some reach, a false negative is catastrophic, so the threshold is set aggressively low. For spam, precision dominates. Encoding that as one number per category is what lets policy people tune the system without retraining models.<br><br><strong>Reach-aware prioritisation.</strong> A violating video with 12 views and one with 2M views are not equally urgent. Ordering the human queue by <code>severity × current_view_velocity</code> means the review workforce is always spent where harm is actually accumulating.`,
+    flow: `Upload path:
+1. Video lands in object storage; moderation hook fires
+2. Perceptual hash checked against known-violation database
+   -> exact match: block immediately, no model needed
+3. Frames sampled, audio extracted, on-screen text OCR'd
+4. Category classifiers score each signal in parallel
+5. Policy engine combines scores + creator history -> action
+      high confidence severe   -> block, notify creator, offer appeal
+      medium confidence        -> publish but exclude from recommendations,
+                                  enqueue for human review
+      low confidence           -> publish normally, sample into audit queue
+6. Decision written to the audit log with model versions attached
+
+Reported content path:
+1. User report -> priority computed from severity x current views
+2. Enters same human review queue
+3. Reviewer verdict -> action applied, and the case is fed back
+   as labelled training data`,
+    tradeoffs: [
+      `<strong>Precision vs recall, per category:</strong> There is no global right answer. Severe-harm categories accept many false positives to avoid one false negative; spam categories do the opposite. This is the single most consequential tuning decision in the system.`,
+      `<strong>Pre-publish vs post-publish screening:</strong> Blocking every upload until screened adds latency to every creator and would need enormous headroom for peak bursts. Publishing immediately and screening in parallel means a violating video is briefly live — mitigated by withholding it from recommendations until it clears.`,
+      `<strong>Human review cost:</strong> Humans are accurate and expensive, and the work causes real psychological harm. Every automation improvement is measured in reviewer-hours saved, and queues are usually capped per reviewer per shift for graphic categories.`,
+      `<strong>Model drift:</strong> Bad actors adapt continuously — new slang, altered visuals, audio overlays. A moderation model degrades from the day it ships, so the retraining loop from reviewer verdicts is part of the architecture, not an afterthought.`,
+    ],
+    tags: ["ML Inference", "Perceptual Hashing", "Priority Queue", "Policy Engine", "Audit Log", "Human-in-the-Loop"],
+  },
+  {
+    id: 15, icon: "📟", title: "Real-Time Monitoring & Alerting",
+    tagline: "Ingest millions of metrics a second, evaluate alert rules continuously, page the right person once",
+    companies: ["ByteDance"],
+    problem: `Thousands of services emit metrics — request rates, error rates, latencies, queue depths, GPU utilisation. Engineers need dashboards that load instantly over the last hour and still work over the last year, plus alerts that fire within a minute of something breaking and reach exactly one on-call human, not fifty.`,
+    requirements: [
+      `<strong>Functional:</strong> Ingest time-series metrics with arbitrary label sets. Query and aggregate over arbitrary time ranges. Evaluate alert rules continuously. Route, deduplicate, group, and silence notifications. Support escalation when the first responder does not acknowledge.`,
+      `<strong>Non-functional:</strong> Alert latency under 60 s from symptom to page. Dashboard queries under 1 s for recent windows. Ingest must not lose data during a spike — a monitoring system failing exactly when the platform is on fire is the worst possible failure mode.`,
+    ],
+    estimation: `<strong>Back-of-envelope:</strong><br>• 50,000 hosts × 200 metrics each × 1 sample every 10 s = 1M data points/second<br>• Raw at 16 bytes/point = 16 MB/s ≈ 1.4 TB/day; after delta-of-delta + XOR compression, roughly 1-2 bytes/point → ~150 GB/day<br>• Rolled up to 5-minute resolution after 30 days, the long-term tier shrinks by ~30×<br>• ~10,000 alert rules evaluated every 30 s`,
+    components: [
+      `<strong>Collection agents:</strong> Per-host agents scraping or receiving metrics, batching and shipping them onward. Local buffering so a network blip does not lose data.`,
+      `<strong>Ingest layer:</strong> Kafka as the write buffer. This is what absorbs a 10× metric spike during an incident instead of dropping it.`,
+      `<strong>Time-series database:</strong> Purpose-built columnar store (Prometheus/Thanos, VictoriaMetrics, InfluxDB) with heavy compression and a hot/warm/cold tier split.`,
+      `<strong>Rule evaluator:</strong> Runs alert expressions on a fixed interval against recent data, emitting firing/resolved state transitions.`,
+      `<strong>Alert manager:</strong> Deduplicates, groups related alerts, applies silences and inhibition rules, then routes to PagerDuty/Slack/email with escalation timers.`,
+      `<strong>Query layer:</strong> Serves dashboards, transparently fanning a long range across the hot and rolled-up tiers.`,
+    ],
+    deepDive: `<strong>Why a general-purpose database will not do.</strong> Time-series data has properties a relational store cannot exploit: writes are almost always append-only and roughly time-ordered, values in a series change slowly, and timestamps arrive at near-fixed intervals. Delta-of-delta encoding on timestamps plus XOR encoding on float values (the Gorilla scheme) routinely gets to 1-2 bytes per point against 16 raw — a 10× storage difference that decides whether the system is affordable.<br><br><strong>Cardinality is the thing that kills these systems.</strong> Each unique combination of label values is a separate stored series. Adding a <code>user_id</code> label to a metric turns one series into millions and can take down the whole cluster. The discipline is that labels must be bounded-cardinality dimensions — service, region, endpoint, status code — and anything unbounded belongs in logs or traces, not metrics.<br><br><strong>Alert grouping is what makes paging usable.</strong> A single failed database causes every dependent service to breach its error-rate alert at once. Naive routing sends fifty pages for one incident. The alert manager groups by a common label set, waits a short window for related alerts to arrive, then sends one notification listing them — and inhibition rules let a high-level alert ("database down") suppress the downstream noise entirely.<br><br><strong>Rollups.</strong> Nobody needs 10-second resolution from six months ago. Downsampling old data to 5-minute and then 1-hour aggregates keeps long-range dashboards fast and cuts the cold tier by well over an order of magnitude.`,
+    flow: `Ingest:
+1. Agent scrapes/receives metrics, batches locally
+2. Ships to ingest gateway -> Kafka (buffer absorbs incident-time spikes)
+3. Writer consumes Kafka, compresses, appends to the hot TSDB tier
+4. Compaction job rolls 30-day-old data down to 5-minute resolution
+
+Alerting:
+1. Rule evaluator runs every 30 s over recent windows
+2. Expression breaches threshold -> alert enters "pending"
+3. Still breaching after the "for" duration -> transitions to "firing"
+   (this delay is what suppresses one-off blips)
+4. Alert manager groups related firing alerts, applies silences
+   and inhibition rules
+5. Routes one notification to the on-call rotation
+6. No acknowledgement within N minutes -> escalate to the next tier`,
+    tradeoffs: [
+      `<strong>Resolution vs retention cost:</strong> Keeping everything at full resolution forever is simple and ruinously expensive. Tiered rollups are near-free in practice because nobody queries year-old data at second granularity — but the downsampling is lossy and irreversible.`,
+      `<strong>Push vs pull collection:</strong> Pull (Prometheus-style) gives the server control over rate and makes a dead target obvious. Push works better for short-lived jobs and across network boundaries where the server cannot reach the target. Large deployments end up running both.`,
+      `<strong>Alert sensitivity:</strong> Tight thresholds catch problems early and burn out the on-call with false pages; loose thresholds mean real incidents are found by users first. The <code>for</code> duration is the cheapest lever — most transient blips resolve inside a minute.`,
+      `<strong>Monitoring the monitoring:</strong> The system cannot be its own safety net. A separate, deliberately simple watchdog (often a third-party service) must alert when the main pipeline stops ingesting, or an outage becomes invisible precisely when it matters.`,
+    ],
+    tags: ["Time-Series DB", "Kafka", "Gorilla Compression", "Cardinality", "PagerDuty", "Downsampling"],
+  },
+  {
+    id: 16, icon: "🪵", title: "Real-Time Log Aggregation & Search",
+    tagline: "Collect terabytes of logs a day from thousands of services and make them searchable in seconds",
+    companies: ["ByteDance"],
+    problem: `When something breaks, an engineer needs to find the relevant log lines across thousands of machines — filtered by service, time window, trace ID, and a text pattern — within seconds. Logs are high-volume, mostly write-once-read-never, and the reads that do happen are urgent and unpredictable.`,
+    requirements: [
+      `<strong>Functional:</strong> Collect structured and unstructured logs from every host and container. Parse and index them. Full-text and field search over arbitrary time ranges. Correlate with distributed traces via a shared trace ID. Tail live logs.`,
+      `<strong>Non-functional:</strong> Under 30 s from a line being written to it being searchable. Ingest survives a 10× burst without loss. Retention tiers with automatic expiry. Cost per GB must stay low — this is one of the largest data volumes an infra team owns.`,
+    ],
+    estimation: `<strong>Back-of-envelope:</strong><br>• 50,000 hosts × 100 log lines/second × 500 bytes = 2.5 GB/second ≈ 200 TB/day raw<br>• Compressed at ~10:1 → ~20 TB/day stored<br>• Full inverted indexing adds 30-100% on top of stored size, which is why index-light designs win at this scale<br>• Hot tier 7 days ≈ 140 TB; warm 30 days in object storage; cold archived or dropped`,
+    components: [
+      `<strong>Log agents:</strong> Per-node collectors (Fluent Bit, Vector) tailing files and container stdout, applying parsing and sampling at the edge before anything is shipped.`,
+      `<strong>Kafka buffer:</strong> Decouples producers from the indexing tier. Absorbs bursts and lets the indexer be restarted or fall behind without losing data.`,
+      `<strong>Processing pipeline:</strong> Parses formats, extracts fields, enriches with Kubernetes metadata (pod, namespace, deployment), redacts PII.`,
+      `<strong>Storage + index:</strong> Either an inverted-index store (Elasticsearch/OpenSearch) or a label-index store (Loki) that indexes only metadata and brute-force greps compressed chunks.`,
+      `<strong>Query API + UI:</strong> Time-bounded search, live tail, saved queries, and links from a trace ID straight into the matching log lines.`,
+      `<strong>Lifecycle manager:</strong> Moves indices between hot/warm/cold tiers and enforces retention.`,
+    ],
+    deepDive: `<strong>The central decision: how much to index.</strong> Elasticsearch builds a full inverted index over every field, which makes arbitrary text search fast but costs enormous CPU at write time and often doubles storage. Loki indexes only a small set of labels (service, pod, level) and stores the log bodies as compressed chunks, then decompresses and greps them at query time. Loki is dramatically cheaper to run and slower for needle-in-haystack text searches. The right pick follows the access pattern: if engineers almost always narrow by service and time first — which they do — the label-index approach wins decisively.<br><br><strong>Sample at the edge, not the centre.</strong> The cheapest log line is the one never shipped. Dropping 90% of successful health-check lines at the agent removes most of the volume before it touches the network, while keeping 100% of anything at ERROR level or carrying a sampled trace ID. Centralised filtering saves storage but has already paid the bandwidth and ingest cost.<br><br><strong>Why Kafka is not optional here.</strong> Log volume spikes hardest exactly when the system is unhealthy — retries, stack traces, debug logging switched on mid-incident. Writing agents straight to the index means the index falls over during the incident it is needed for. The buffer converts an availability problem into a latency problem: search goes stale by a few minutes instead of losing the data.<br><br><strong>Trace correlation.</strong> Logs answer "what happened on this machine" and traces answer "where did this request spend its time". Injecting the trace ID into every log line is a tiny change that turns two disconnected tools into one workflow: click a slow span, land on the exact log lines it emitted.`,
+    flow: `Ingest:
+1. Agent tails files/stdout, parses, drops noisy lines, adds
+   pod + service labels
+2. Ships batches to Kafka (partitioned by service)
+3. Processor consumes: field extraction, PII redaction, enrichment
+4. Writer compresses into chunks and updates the label index
+5. Chunks land in object storage; hot chunks stay cached locally
+
+Query:
+1. Engineer searches: service=checkout, level=ERROR, last 1 hour,
+   text "timeout"
+2. Label index narrows to the matching chunk set (the cheap step)
+3. Matching chunks are fetched and decompressed in parallel
+4. Regex applied across the decompressed bodies
+5. Results streamed back as they are found, newest first`,
+    tradeoffs: [
+      `<strong>Full index vs label index:</strong> The defining cost decision. Full inverted indexing gives fast arbitrary text search at multiples of the storage and CPU; label indexing plus brute-force grep is far cheaper and perfectly adequate when queries are always bounded by service and time.`,
+      `<strong>Sampling vs completeness:</strong> Dropping routine lines is the single biggest cost lever, and it is irreversible — the one time the discarded line mattered, it is gone. Keep everything at ERROR and above, sample aggressively below.`,
+      `<strong>Retention:</strong> Long retention is expensive and occasionally mandated by compliance. Tiering to object storage keeps old logs available at higher query latency rather than forcing a delete-or-pay-full-price choice.`,
+      `<strong>Structured vs free-text logging:</strong> Structured JSON is vastly easier to query and slightly more expensive to emit and store. The migration cost is in the application code, which is why most estates carry both formats indefinitely.`,
+    ],
+    tags: ["Kafka", "Elasticsearch", "Loki", "Object Storage", "Sampling", "Trace Correlation"],
+  },
+  {
+    id: 17, icon: "❤️", title: "Likes & Comments on Videos",
+    tagline: "Counters that survive a viral spike, and threaded comments that stay ordered",
+    companies: ["ByteDance"],
+    problem: `Every video shows a like count and a comment list. Likes are extremely write-heavy and extremely read-heavy — a viral video can take hundreds of thousands of likes per minute while its count is displayed to millions. Comments need threading, pagination, ranking, and moderation. Both must feel instant to the person acting.`,
+    requirements: [
+      `<strong>Functional:</strong> Like and unlike, idempotently. Show the current count and whether <em>this</em> user has liked. Post, reply to, delete, and paginate comments. Rank top comments while still offering newest-first. Notify the creator.`,
+      `<strong>Non-functional:</strong> Write acknowledged in under 100 ms. Counts may lag by a few seconds but must never go backwards or drift permanently. A single viral video must not degrade the service for everyone else.`,
+    ],
+    estimation: `<strong>Back-of-envelope:</strong><br>• 100B video views/day, ~5% like rate = 5B likes/day ≈ 60K writes/second average<br>• A single viral video: 500K likes/minute ≈ 8K writes/second on one row — far beyond what one database row can take<br>• Comments: ~1B/day ≈ 12K writes/second<br>• Like relation storage: 5B/day × 30 bytes ≈ 150 GB/day`,
+    components: [
+      `<strong>Like service:</strong> Writes the (user, video) relation and enqueues a counter increment. Keeps the two concerns separate.`,
+      `<strong>Relation store:</strong> Wide-column store (Cassandra/HBase) keyed by <code>(video_id, user_id)</code> for "did this user like it", plus an inverted <code>(user_id, video_id)</code> table for the user's own liked list.`,
+      `<strong>Counter service:</strong> Redis counters as the read path, backed by a durable store. Sharded so hot videos spread across keys.`,
+      `<strong>Comment store:</strong> Keyed by <code>(video_id, comment_id)</code> with a parent pointer for one level of threading.`,
+      `<strong>Comment ranker:</strong> Scores comments by likes, replies, recency, and author signals to build the "top comments" ordering.`,
+      `<strong>Event stream:</strong> Kafka carrying like/comment events onward to notifications, the recommendation feature store, and analytics.`,
+    ],
+    deepDive: `<strong>Why the counter cannot just be a column.</strong> <code>UPDATE videos SET likes = likes + 1 WHERE id = ?</code> serialises every like for a video onto one row lock. At 8,000 writes per second on a viral clip, that row becomes a hotspot that stalls the whole shard. Two techniques fix it. <em>Sharded counters</em> split the count across N sub-keys (<code>likes:{video}:{0..N}</code>); a write picks a shard at random, a read sums all N. Writes spread across N keys, reads cost N lookups instead of one — a good trade when reads are cached anyway. <em>Write batching</em> goes further: increments accumulate in memory and flush every second or so, turning 8,000 database writes into one.<br><br><strong>Separating the relation from the count.</strong> The relation (who liked what) must be exact and durable — it drives the "you liked this" state and unlike idempotency. The count is a derived, approximate view. Keeping them apart means the expensive-but-exact write path and the cheap-but-eventually-consistent read path can scale independently, and it makes idempotency simple: writing the same <code>(user, video)</code> row twice is naturally a no-op.<br><br><strong>Optimistic UI is doing real work here.</strong> The client renders the heart filled the instant it is tapped, before any server response. That is why a few seconds of counter lag is invisible to the person acting — they see their own action reflected immediately, and the global count is someone else's problem.<br><br><strong>Comment pagination.</strong> Offset pagination breaks badly here: new comments arrive constantly, so <code>OFFSET 20</code> returns items the user already saw. Cursor pagination on <code>(score, comment_id)</code> or <code>(created_at, comment_id)</code> is stable under concurrent inserts.`,
+    flow: `Like:
+1. Client optimistically fills the heart
+2. POST /videos/{id}/like
+3. Write (video_id, user_id) to the relation store — idempotent,
+   a repeat write is a no-op
+4. If newly inserted, INCR a randomly chosen counter shard in Redis
+5. Emit a like event to Kafka (notifications, ranking features)
+6. Async: flush aggregated counter deltas to durable storage
+
+Read a video page:
+1. Fetch video metadata
+2. Sum the N counter shards from Redis (cached per video)
+3. Point lookup (video_id, user_id) -> has this user liked it
+4. Fetch first page of comments by cursor, ordered by rank score`,
+    tradeoffs: [
+      `<strong>Exact vs approximate counts:</strong> Nobody can distinguish 1,204,881 from 1,204,900, so counts are cached and eventually consistent. The <em>relation</em> stays exact because "did I like this" being wrong is immediately visible to the user.`,
+      `<strong>Counter shards:</strong> More shards absorb more write throughput but make every read an N-key sum. Since reads are cached and writes are the bottleneck on exactly the videos that matter, the trade favours sharding.`,
+      `<strong>Top comments vs newest:</strong> Ranking buries new comments, which discourages late commenters; pure recency lets low-effort replies dominate. Most products default to ranked and offer newest as an explicit toggle.`,
+      `<strong>Denormalising the count onto the video row:</strong> Makes the feed render in one read, at the cost of a second write path to keep in sync. Worth it because feed reads outnumber like writes by orders of magnitude.`,
+    ],
+    tags: ["Sharded Counters", "Redis", "Cassandra", "Cursor Pagination", "Kafka", "Optimistic UI"],
+  },
+  {
+    id: 18, icon: "🖥️", title: "GPU Cluster Scheduler",
+    tagline: "Place thousands of training and inference jobs onto a finite, very expensive GPU fleet",
+    companies: ["ByteDance"],
+    problem: `An organisation owns tens of thousands of GPUs shared by many teams. Some jobs are long multi-node training runs needing 64 GPUs with fast interconnect for days; others are short interactive notebooks; others are latency-sensitive inference services that must never be evicted. The scheduler decides who gets what, when — and idle GPUs are money burning.`,
+    requirements: [
+      `<strong>Functional:</strong> Queue and place jobs by resource shape (GPU count, memory, topology). Enforce per-team quotas and priorities. Support gang scheduling for distributed training. Preempt low-priority work. Checkpoint and resume. Report utilisation per team.`,
+      `<strong>Non-functional:</strong> Keep fleet utilisation high (target 70%+ — every idle percentage point is significant money). Scheduling decisions in seconds, not minutes. Fair across teams without leaving hardware stranded. Survive node failures mid-run.`,
+    ],
+    estimation: `<strong>Back-of-envelope:</strong><br>• 20,000 GPUs at roughly $2/GPU-hour equivalent ≈ $40K/hour ≈ $350M/year — a 10% utilisation improvement is worth ~$35M/year<br>• ~5,000 job submissions/day, from 1-GPU notebooks to 512-GPU training runs<br>• Scheduler must evaluate placements across ~2,500 nodes (8 GPUs each) per decision<br>• Checkpoint sizes for large models: 100 GB - 1 TB, written every ~30 minutes`,
+    components: [
+      `<strong>Job submission API:</strong> Accepts a spec — GPU count, memory, topology hint, priority, max runtime, container image.`,
+      `<strong>Queue manager:</strong> Per-team queues with quotas, priority tiers, and ageing so low-priority jobs are not starved forever.`,
+      `<strong>Scheduler core:</strong> Matches pending jobs to free resources, handling gang constraints, topology awareness, and preemption decisions.`,
+      `<strong>Node agents:</strong> Report GPU health, memory, temperature and topology; launch and monitor containers.`,
+      `<strong>Checkpoint service:</strong> Coordinates periodic state snapshots to object storage so preempted or failed jobs resume rather than restart.`,
+      `<strong>Utilisation telemetry:</strong> Per-GPU utilisation, memory and power feeding both capacity planning and a "you asked for 8 GPUs and used 1" feedback loop.`,
+    ],
+    deepDive: `<strong>Gang scheduling is the constraint that makes this hard.</strong> A 64-GPU training job needs all 64 simultaneously — 63 GPUs is worth exactly zero. A naive scheduler that grants resources incrementally deadlocks: two large jobs each grab half the fleet and both wait forever for the rest. The fix is all-or-nothing placement plus <em>reservation</em>: the scheduler holds freed GPUs idle, accumulating them for a large pending job rather than handing them to small jobs that keep jumping the queue. That deliberately wastes capacity in the short term to make large jobs schedulable at all — and backfilling short jobs into the reservation window, if they provably finish before the reservation completes, recovers most of the loss.<br><br><strong>Topology matters enormously.</strong> Eight GPUs on one node connected by NVLink communicate at hundreds of GB/s; eight GPUs spread across eight nodes talk over the network at a fraction of that. For communication-heavy training, a topology-blind placement can halve throughput. The scheduler must prefer same-node, then same-rack, then same-cluster placements — and this is why fragmentation is so damaging: a fleet with 30% free GPUs scattered one-per-node cannot run a single 8-GPU job.<br><br><strong>Preemption needs checkpoints to be humane.</strong> Killing a job that has run for 20 hours without a checkpoint destroys 20 hours of work. Preemption is only viable when the platform guarantees frequent checkpointing, which is why the checkpoint service is core infrastructure rather than a per-team concern.<br><br><strong>Quota vs utilisation.</strong> Hard per-team quotas guarantee fairness and strand capacity whenever a team is idle. The standard resolution is a two-tier model: a guaranteed quota that cannot be preempted, plus opportunistic access to unused capacity that can be reclaimed the moment the owning team wants it back.`,
+    flow: `Submission:
+1. User submits: 64 GPUs, 8 per node, priority=normal, max 48 h
+2. Job enters the team queue; quota check
+3. Scheduler evaluates every cycle:
+      enough free GPUs with the right topology?  -> place all 64 at once
+      not enough?                                -> can preemption of
+                                                    lower-priority jobs free them?
+      still not?                                 -> reserve GPUs as they free up,
+                                                    backfill only jobs that finish
+                                                    before the reservation completes
+4. Placed: containers launched on the chosen nodes, gang barrier released
+5. Node agents stream health and utilisation telemetry
+
+Preemption:
+1. High-priority job needs capacity
+2. Scheduler picks victims: lowest priority, most recently checkpointed
+3. Signals victims to checkpoint now; grace period
+4. Victims terminated, resources reallocated
+5. Victims re-queued and resume from their checkpoint`,
+    tradeoffs: [
+      `<strong>Utilisation vs fairness:</strong> Packing the fleet tightest means always running whatever fits, which starves large jobs indefinitely. Reservations for large jobs sacrifice measured utilisation to keep the cluster usable for the workloads it was bought for.`,
+      `<strong>Preemption vs stability:</strong> Preemption keeps expensive hardware busy but makes job runtimes unpredictable, which teams hate. A protected non-preemptible tier for production inference is usually the compromise.`,
+      `<strong>Bin-packing vs fragmentation:</strong> Filling partially used nodes maximises short-term utilisation and scatters free GPUs across the fleet, eventually making multi-GPU placement impossible. Periodic defragmentation — draining and consolidating — costs throughput now to preserve schedulability later.`,
+      `<strong>Requested vs used resources:</strong> Users habitually over-request. Charging teams for what they reserve rather than what they consume is what actually changes the behaviour; telemetry alone rarely does.`,
+    ],
+    tags: ["Gang Scheduling", "Kubernetes", "Preemption", "NVLink Topology", "Checkpointing", "Quotas"],
+  },
+  {
+    id: 19, icon: "🎟️", title: "High-Concurrency Ticketing / Flash Sale",
+    tagline: "Sell 10,000 seats to 2 million people hitting Buy in the same second, without overselling one",
+    companies: ["TikTok"],
+    problem: `Tickets for a popular event go on sale at exactly 10:00. Two million people are already waiting with the page open. There are ten thousand seats. The system must sell every seat, sell no seat twice, keep the site responsive for everyone who will not get one, and resist bots buying the inventory in bulk.`,
+    requirements: [
+      `<strong>Functional:</strong> Show live availability. Hold a seat while the buyer completes payment, and release it if they abandon. Confirm orders exactly once. Support specific seat selection and general admission. Refunds and cancellations return inventory.`,
+      `<strong>Non-functional:</strong> Absolutely no overselling — this is the hard correctness requirement. Survive a 1000× traffic spike concentrated in one second. Users who fail should fail fast and clearly rather than hanging. Fair ordering, and defensible against automated buying.`,
+    ],
+    estimation: `<strong>Back-of-envelope:</strong><br>• 2M users hitting Buy within ~1 second — the burst is the entire problem<br>• Only 10K can succeed, so ~99.5% of that traffic must be rejected as cheaply as possible<br>• Payment flow takes 30-90 s, so seat holds must last ~10 minutes with automatic expiry<br>• Read traffic (availability polling) dwarfs writes by 100:1 and must never touch the inventory database`,
+    components: [
+      `<strong>Virtual waiting room:</strong> Admits users into the purchase flow at a controlled rate. The single most important component — it converts a spike into a manageable stream.`,
+      `<strong>Inventory service:</strong> Redis holding the authoritative available-seat count and hold state, with atomic decrement. Backed by the durable database.`,
+      `<strong>Hold manager:</strong> Creates time-limited seat holds with TTL-based automatic release.`,
+      `<strong>Order service:</strong> Converts a valid hold into a paid order, idempotently.`,
+      `<strong>Payment integration:</strong> External provider with webhook confirmation and reconciliation.`,
+      `<strong>Bot defence:</strong> Rate limiting per account, device fingerprinting, purchase caps, queue-token signing.`,
+    ],
+    deepDive: `<strong>The waiting room is the architecture.</strong> Everything else follows from admitting users at a rate the purchase path can actually serve. Users get a signed queue token on arrival; the room admits, say, 500 per second into the real flow. Behind it, load is flat and boring — the inventory service never sees two million concurrent requests, it sees five hundred per second. Without this, no amount of database tuning saves you: the spike is 1000× the steady state and lasts one second.<br><br><strong>Why the count lives in Redis, not the database.</strong> A relational <code>UPDATE inventory SET available = available - 1 WHERE available > 0</code> is correct — row locks genuinely prevent overselling — but every buyer serialises on one row, giving maybe a few thousand operations per second and a lock-contention collapse under burst. Redis <code>DECR</code> is a single-threaded atomic operation at 100K+ ops/second. The check-and-decrement must be one atomic step (a Lua script, or <code>DECR</code> followed by re-incrementing on a negative result); doing <code>GET</code> then <code>DECR</code> as two calls is a textbook race that oversells.<br><br><strong>Holds with TTL rather than immediate sale.</strong> Payment takes tens of seconds and often fails. Decrementing inventory at payment time means concurrent buyers can both pass the availability check; decrementing at <em>hold</em> time and letting the hold expire returns the seat automatically without a cleanup job. Redis key expiry does the work for free.<br><br><strong>Idempotency at the order boundary.</strong> Payment webhooks retry, users double-click, networks partition. Every order carries a client-supplied idempotency key, and the order table has a unique constraint on it — so a duplicate submission returns the original order instead of charging twice. This is the one place where the durable database's constraints, not Redis, are the safety net.`,
+    flow: `Sale opens:
+1. Inventory preloaded into Redis: seats:{event} = 10000
+2. Users hit the waiting room, receive signed queue tokens
+3. Room admits ~500 users/second into the purchase flow
+
+Purchase:
+1. Admitted user requests a seat (token verified)
+2. Atomic Lua script in Redis: if available > 0, decrement and
+   create hold:{user}:{event} with a 10-minute TTL
+      -> returns 0: sold out, fail fast with a clear message
+3. Client redirected to payment with the hold ID
+4. Payment succeeds -> order service verifies the hold is still valid,
+   writes the order with a unique idempotency key, marks the hold consumed
+5. Order event -> confirmation email, ticket issuance
+
+Abandonment:
+1. Hold TTL expires in Redis
+2. Expiry listener re-increments the available count
+3. Seat is purchasable again — no cleanup job required`,
+    tradeoffs: [
+      `<strong>Redis as source of truth during the sale:</strong> Gives the throughput that makes the sale possible, at the cost of a window where a Redis failure loses hold state. Mitigated by AOF persistence plus replicas, and by reconciling against the durable order table after the sale.`,
+      `<strong>Waiting room fairness:</strong> Strict FIFO is what users consider fair and requires holding ordered state for millions of people. Random admission is far cheaper and reads as arbitrary. Most systems run FIFO with a randomised tie-break inside each arrival second.`,
+      `<strong>Hold duration:</strong> Long holds are kind to slow payers and let a small number of abandoners sit on scarce inventory. Short holds recycle inventory fast and strand buyers mid-checkout. Ten minutes is the usual compromise.`,
+      `<strong>Bot defence vs friction:</strong> CAPTCHAs and strict device checks suppress bulk buying and also block legitimate users on shared networks. Purchase caps per account plus signed queue tokens catch most abuse with far less user-visible friction.`,
+    ],
+    tags: ["Virtual Waiting Room", "Redis Atomic Ops", "TTL Holds", "Idempotency", "Rate Limiting", "Flash Sale"],
+  },
+  {
+    id: 20, icon: "🏨", title: "Low-Latency Hotel Booking",
+    tagline: "Search millions of properties by date and location in under 200 ms, and never double-book a room",
+    companies: ["TikTok"],
+    problem: `A user searches for hotels in a city for specific dates, filters by price and rating, browses results, then books. Search is enormously read-heavy and must feel instant. Booking is comparatively rare but has to be strictly correct — the same room cannot go to two people for overlapping nights.`,
+    requirements: [
+      `<strong>Functional:</strong> Geospatial and text search with date-range availability. Filter and sort by price, rating, amenities. Show accurate per-night pricing. Hold a room during checkout. Book, modify, and cancel. Handle multi-night stays.`,
+      `<strong>Non-functional:</strong> Search under 200 ms at p99. No double-booking, ever. Availability accurate enough that a user rarely reaches checkout on a sold-out room. Regional availability and correct handling of time zones and local dates.`,
+    ],
+    estimation: `<strong>Back-of-envelope:</strong><br>• 5M properties × ~50 room-types × 500 bookable days = ~125B availability records if stored per-day — this is why availability is stored as ranges, not per-night rows<br>• 50K search QPS at peak, 500 bookings/second — a 100:1 read/write ratio<br>• Search index: 5M properties × 2 KB ≈ 10 GB, comfortably held in memory<br>• Booking records: 500/s × 86,400 ≈ 43M/day`,
+    components: [
+      `<strong>Search service:</strong> Elasticsearch with geo-indexing over property metadata, plus a coarse availability bitmap for fast pre-filtering.`,
+      `<strong>Availability service:</strong> Authoritative per-room-type inventory, stored as date ranges with counts rather than one row per night.`,
+      `<strong>Pricing service:</strong> Dynamic rates by date, occupancy, and demand. Deliberately separate from availability because rates change far more often than inventory.`,
+      `<strong>Booking service:</strong> Transactional reservation writes against a relational store — this is where strict correctness lives.`,
+      `<strong>Hold manager:</strong> Short-lived checkout holds with TTL, same pattern as ticketing.`,
+      `<strong>Cache layer:</strong> Redis for hot search results, property details, and popular date-range availability.`,
+    ],
+    deepDive: `<strong>Splitting the read path from the write path.</strong> Search wants denormalised, cached, approximate data across millions of properties; booking wants strongly consistent transactional data on one room type. Trying to serve both from one store means either slow search or a booking path that cannot be trusted. The resolution is to let search be <em>optimistic</em> — the index carries availability that may be seconds stale — and to make the authoritative check happen once, at booking time, inside a transaction. A user occasionally sees a room in results that is gone by checkout; that is a far better outcome than making every search hit the transactional database.<br><br><strong>Why availability is stored as ranges.</strong> One row per room-type per night gives ~125 billion rows and makes a 7-night query into 7 lookups per room type. Storing <code>(room_type, start_date, end_date, count)</code> intervals collapses that enormously, and a booking splits an interval rather than updating seven rows. The cost is more complex merge and split logic — worth it at this scale.<br><br><strong>Preventing double-booking.</strong> The decrement must be atomic and conditional, in a single statement: <code>UPDATE availability SET count = count - 1 WHERE room_type = ? AND date_range covers ? AND count > 0</code>, then check the affected row count. Reading availability and then writing in a separate statement is the race that oversells. For multi-night stays, every night must be decremented in one transaction — partial success would leave a guest with a room for three of five nights.<br><br><strong>Bitmap pre-filtering.</strong> Checking exact availability for every candidate property during search is far too slow. A per-property bitmap with one bit per day for the next ~500 days is tiny (about 64 bytes) and lives in the search index, so a date-range filter becomes a bitwise AND. It is approximate — bit set means "some room was available at last index refresh" — but it removes the vast majority of non-matching properties before the expensive exact check.`,
+    flow: `Search:
+1. Query: city, check-in, check-out, guests, filters
+2. Elasticsearch geo + text query -> candidate properties
+3. Availability bitmap AND over the requested date range
+   (approximate, refreshed every few minutes)
+4. Pricing service prices the surviving candidates for those dates
+5. Rank by relevance/price/rating, cache the result set
+6. Return under 200 ms
+
+Booking:
+1. User picks a property; exact availability checked against the
+   authoritative service
+2. Hold created with a 15-minute TTL
+3. Payment collected
+4. Transaction: conditional decrement across every night of the stay,
+   insert the booking row, mark the hold consumed
+      -> any night unavailable: whole transaction rolls back,
+         user told immediately
+5. Availability change published; search index updated asynchronously
+6. Confirmation sent`,
+    tradeoffs: [
+      `<strong>Stale search availability:</strong> Accepting a few seconds of staleness is what makes 50K QPS search affordable. The price is an occasional "just sold out" at checkout — annoying, but far cheaper than serialising search through the transactional store.`,
+      `<strong>Range storage vs per-night rows:</strong> Ranges cut storage by orders of magnitude and complicate every mutation with split/merge logic. Per-night rows are trivially simple and do not fit.`,
+      `<strong>Hold duration:</strong> Longer holds reduce checkout failures and take real inventory off the market during peak demand. Shorter holds keep inventory liquid and strand slow payers.`,
+      `<strong>Cache invalidation on booking:</strong> Invalidating every cached search touching a booked property is expensive and mostly wasted work; short TTLs are simpler and let results go briefly stale. Most systems use short TTLs plus targeted invalidation for high-demand properties only.`,
+    ],
+    tags: ["Elasticsearch", "Geo-indexing", "Bitmap Filtering", "ACID Transactions", "TTL Holds", "Read/Write Split"],
   },
 ];

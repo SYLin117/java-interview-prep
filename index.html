@@ -330,6 +330,11 @@
   .q-diff.followup .pill { color: var(--text-dim); background: var(--bg-soft); }
   .behavioral-section.hidden { display: none; }
   .smci-section.hidden { display: none; }
+  /* System Design filtering: applySystemDesignFilters() toggles .hidden on whole
+     theme sections and case cards, so both need a rule or the filter silently
+     does nothing (the theme dropdown was inert before this was added). */
+  .sd-concept-section.hidden { display: none; }
+  .sd-case.hidden { display: none; }
 
   /* MSI view — process-overview card + prep sections */
   .msi-section.hidden, .msi-process.hidden { display: none; }
@@ -1028,6 +1033,9 @@
     align-items: center;
     gap: 0.35rem;
   }
+  /* An explicit display always beats the UA [hidden] rule, so the System Design
+     sub-tab swap (topic row ↔ company row) needs this to actually hide one. */
+  .lc-filter-row[hidden] { display: none; }
   .lc-filter-label {
     font-size: 0.7rem;
     font-weight: 700;
@@ -1458,7 +1466,7 @@
     .lc-detail { padding: 0 1rem 1.2rem 1rem; font-size: 0.88rem; }
   }
   @media (max-width: 480px) {
-    /* Dropping the qualifiers (e.g. the "200" on LeetCode) keeps all four tabs
+    /* Dropping the qualifiers (e.g. the "225" on LeetCode) keeps all four tabs
        on screen without a swipe; the visible label stays the accessible name,
        so nothing is hidden from a screen reader. */
     .view-btn-extra { display: none; }
@@ -1479,7 +1487,7 @@
     </div>
     <div class="view-toggle" role="tablist" aria-label="Section">
       <button class="view-btn active" data-view="topics" role="tab" aria-selected="true">Topics</button>
-      <button class="view-btn" data-view="leetcode" role="tab" aria-selected="false">LeetCode<span class="view-btn-extra"> 200</span></button>
+      <button class="view-btn" data-view="leetcode" role="tab" aria-selected="false">LeetCode<span class="view-btn-extra"> 225</span></button>
       <button class="view-btn" data-view="companies" role="tab" aria-selected="false">Companies</button>
       <button class="view-btn" data-view="systemdesign" role="tab" aria-selected="false">System Design</button>
     </div>
@@ -1536,10 +1544,10 @@
 
 <div id="leetcode-view" hidden>
   <section class="hero">
-    <div class="hero-label lc-hero-label">LeetCode · Top 200 Most-Asked</div>
+    <div class="hero-label lc-hero-label">LeetCode · Top 225 Most-Asked</div>
     <h1 class="hero-title">Popular LeetCode Problems</h1>
     <p class="hero-subtitle">
-      Curated set of 200 most-asked problems grouped by pattern — arrays &amp;
+      Curated set of 225 most-asked problems grouped by pattern — arrays &amp;
       hashing, two pointers, sliding window, stack, binary search, linked lists,
       trees, tries, heap, backtracking, graphs, dynamic programming, greedy, and
       math &amp; bit manipulation. Each problem links to LeetCode and ships with
@@ -1706,10 +1714,12 @@
     <p class="hero-subtitle">
       Two ways to prep: <strong>Concepts</strong> — 46 rapid-fire Q&amp;A across the
       building blocks (scalability, availability, consistency, caching, databases,
-      and more), ordered easy → hard; and <strong>Case Studies</strong> — 12 full
-      design walkthroughs (URL shortener, chat, news feed, payments…) covering
-      requirements, capacity estimation, components, deep dives, request flow, and
-      trade-offs. Click any question or case to expand it.
+      and more), ordered easy → hard; and <strong>Case Studies</strong> — 20 full
+      design walkthroughs (URL shortener, chat, news feed, payments, recommendation
+      feeds, content moderation, GPU scheduling…) covering requirements, capacity
+      estimation, components, deep dives, request flow, and trade-offs. Cases
+      reported in a company's interviews carry a tag you can filter by. Click any
+      question or case to expand it.
     </p>
     <div class="hero-meta">
       <div class="meta-cell">
@@ -3244,6 +3254,7 @@
   // ─────── System Design view: Concept Q&A + Case Studies, with a sub-tab toggle ───────
   let sdSearchTerm = '';
   let activeSdCategory = null;   // active concept-theme chip (null = all)
+  let activeSdCompany = null;    // active case-study company tag, lowercased (null = all)
   let sdSubtab = 'concepts';     // 'concepts' | 'cases'
   (function renderSystemDesign() {
     if (typeof systemDesignThemes === 'undefined') return;
@@ -3294,9 +3305,17 @@
       const section = document.createElement('section');
       section.className = 'section sd-case';
       section.dataset.search = (c.title + ' ' + c.tagline + ' ' + c.tags.join(' ') + ' ' +
+        (c.companies || []).join(' ') + ' ' +
         stripTags(c.problem + ' ' + c.requirements.join(' ') + ' ' + c.deepDive + ' ' +
         c.components.join(' ') + ' ' + c.tradeoffs.join(' '))).toLowerCase();
+      // Same lowercase, comma-joined shape the LeetCode and Topics rows use, so
+      // the company filter below can do a plain includes() test.
+      section.dataset.companies = (c.companies || []).map(x => x.toLowerCase()).join(',');
 
+      const companiesHTML = (c.companies || []).length
+        ? `<span class="lc-companies">${c.companies.map(x =>
+            `<span class="lc-company-pill" data-company="${escapeHtml(x).toLowerCase()}">${escapeHtml(x)}</span>`).join('')}</span>`
+        : '';
       const tagsHTML = c.tags.map(t => `<span class="sd-tag">${escapeHtml(t)}</span>`).join('');
       const bodyHTML =
         block('Problem', c.problem) +
@@ -3312,7 +3331,7 @@
           <div class="sd-case-icon">${c.icon}</div>
           <div class="sd-case-meta">
             <div class="section-num">Case Study ${String(c.id).padStart(2, '0')}</div>
-            <h2 class="section-title">${escapeHtml(c.title)}</h2>
+            <h2 class="section-title">${escapeHtml(c.title)}${companiesHTML}</h2>
             <p class="section-desc">${escapeHtml(c.tagline)}</p>
             <div class="sd-tags">${tagsHTML}</div>
           </div>
@@ -3334,18 +3353,40 @@
       card.querySelector('.sd-case-head').addEventListener('click', () => card.classList.toggle('expanded'));
     });
 
-    // Concept-theme filter chips
+    // Filter controls — the theme dropdown belongs to Concepts, the company
+    // dropdown to Case Studies. Both are rendered once and swapped by the
+    // sub-tab handler, so neither is rebuilt on every toggle.
     if (sdFilters) {
-      let chipsHTML = `<div class="lc-filter-row"><label class="lc-filter-label" for="sd-select">Topic</label>` +
+      let topicHTML = `<div class="lc-filter-row" id="sd-topic-row"><label class="lc-filter-label" for="sd-select">Topic</label>` +
         `<select id="sd-select" class="lc-select" aria-label="Filter by topic"><option value="">All (${systemDesignThemes.length})</option>`;
       systemDesignThemes.forEach(t => {
-        chipsHTML += `<option value="${escapeHtml(t.id)}">${t.icon} ${escapeHtml(t.title)} (${t.questions.length})</option>`;
+        topicHTML += `<option value="${escapeHtml(t.id)}">${t.icon} ${escapeHtml(t.title)} (${t.questions.length})</option>`;
       });
-      sdFilters.innerHTML = chipsHTML + `</select></div>`;
+      topicHTML += `</select></div>`;
+
+      // Company options come from whatever appears in the data, so tagging a new
+      // case is enough to make it filterable — no list to keep in sync here.
+      const caseCompanyTotals = {};
+      systemDesignCases.forEach(c => {
+        (c.companies || []).forEach(x => { caseCompanyTotals[x] = (caseCompanyTotals[x] || 0) + 1; });
+      });
+      let companyHTML = `<div class="lc-filter-row" id="sd-company-row" hidden><label class="lc-filter-label" for="sd-company-select">Tag</label>` +
+        `<select id="sd-company-select" class="lc-select" aria-label="Filter case studies by company">` +
+        `<option value="">All companies (${systemDesignCases.length})</option>`;
+      Object.keys(caseCompanyTotals).sort().forEach(name => {
+        companyHTML += `<option value="${escapeHtml(name.toLowerCase())}">${escapeHtml(name)} (${caseCompanyTotals[name]})</option>`;
+      });
+      companyHTML += `</select></div>`;
+
+      sdFilters.innerHTML = topicHTML + companyHTML;
       sdFilters.addEventListener('change', (e) => {
-        const sel = e.target.closest('#sd-select');
-        if (!sel) return;
-        activeSdCategory = sel.value || null;
+        if (e.target.closest('#sd-select')) {
+          activeSdCategory = e.target.value || null;
+        } else if (e.target.closest('#sd-company-select')) {
+          activeSdCompany = e.target.value || null;
+        } else {
+          return;
+        }
         applySystemDesignFilters();
       });
     }
@@ -3362,7 +3403,12 @@
         const concepts = sdSubtab === 'concepts';
         conceptsEl.hidden = !concepts;
         casesEl.hidden = concepts;
-        if (sdFilters) sdFilters.hidden = !concepts;   // theme chips only apply to concepts
+        // Each sub-tab gets its own filter control: theme for Concepts, company
+        // for Case Studies. The bar itself stays visible in both modes now.
+        const topicRow = document.getElementById('sd-topic-row');
+        const companyRow = document.getElementById('sd-company-row');
+        if (topicRow) topicRow.hidden = !concepts;
+        if (companyRow) companyRow.hidden = concepts;
         applySystemDesignFilters();
         window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
       });
@@ -3373,7 +3419,7 @@
    * Filter the active System Design sub-tab.
    * Concepts: chip picks a theme; search narrows individual question rows and
    * hides a theme section only when search yields zero rows in it.
-   * Cases: search filters whole case cards (chips don't apply here).
+   * Cases: the company dropdown and search both filter whole case cards.
    */
   function applySystemDesignFilters() {
     if (sdSubtab === 'concepts') {
@@ -3392,7 +3438,10 @@
       });
     } else {
       document.querySelectorAll('.sd-case').forEach(card => {
-        card.classList.toggle('hidden', !!sdSearchTerm && !(card.dataset.search || '').includes(sdSearchTerm));
+        const companies = (card.dataset.companies || '').split(',').filter(Boolean);
+        const companyMatch = !activeSdCompany || companies.includes(activeSdCompany);
+        const searchMatch = !sdSearchTerm || (card.dataset.search || '').includes(sdSearchTerm);
+        card.classList.toggle('hidden', !(companyMatch && searchMatch));
       });
     }
   }
