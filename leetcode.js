@@ -8865,8 +8865,13 @@ public String addBinary(String a, String b) {
 ];
 
 // Publicly reported/company-tagged interview-question snapshot reviewed
-// 2026-07-17. These are matches against this site's existing 200 problems, not
-// official guarantees about any company's current interview loop.
+// 2026-07-17; TikTok and ByteDance added 2026-08-06. These are matches against
+// this site's existing 200 problems, not official guarantees about any
+// company's current interview loop.
+//
+// TikTok and ByteDance are tagged separately rather than merged: the two
+// reported lists overlap on almost nothing, so collapsing them would hide
+// which product's loop a problem actually came from.
 //
 // Sources:
 //   interviewsolver.com/interview-questions/costar-group
@@ -8875,6 +8880,8 @@ public String addBinary(String a, String b) {
 //   interviewsolver.com/interview-questions/the-home-depot
 //   interviewsolver.com/interview-questions/lowes
 //   interviewsolver.com/interview-questions/doordash
+//   interviewsolver.com/interview-questions/tiktok
+//   interviewsolver.com/interview-questions/bytedance
 //
 // CATL (宁德时代) entries reviewed 2026-08-01, from Chinese campus-hiring
 // reports: a Nowcoder software-engineer report (LC 25 asked as second-round
@@ -8899,6 +8906,8 @@ public String addBinary(String a, String b) {
       131, 141, 146, 148, 155, 159, 192, 193,
     ],
     DoorDash: [4, 9, 26, 57, 102, 111, 126, 142, 144, 192],
+    TikTok: [26, 31, 35, 98, 102, 110, 111, 121, 126, 141, 148],
+    ByteDance: [11, 13, 14, 18, 83, 99, 123, 127, 131, 135, 142, 145],
   };
   const problemsByNum = new Map(leetcode.map(problem => [problem.num, problem]));
 
