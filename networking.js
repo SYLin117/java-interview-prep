@@ -25,6 +25,7 @@ const networkingGuide = [
     layer: 'Foundations',
     title: 'Scope & Priority Block',
     tagline: 'The six topics the hiring manager named, and how to handle a group interview.',
+    explain: `The hiring manager told you the scope, which is a gift — you don't have to guess what to study. Six topics, all at layers 1 to 3, and he already knows networking isn't your background. Your job is to be crisp on the fundamentals, not encyclopedic.`,
     tags: ['scope', 'strategy'],
     blocks: [
       { t: 'What was actually asked for', h: `<p>Scope confirmed by the hiring manager: <strong>OSI layers 1, 2 and 3</strong>. He named six topics explicitly:</p>
@@ -71,11 +72,113 @@ const networkingGuide = [
     ]
   },
   {
+    id: 'net-glossary',
+    icon: '📖',
+    layer: 'Foundations',
+    title: 'Glossary — every abbreviation on this page',
+    tagline: 'Networking is dense with three-letter acronyms. Here is what each one stands for and what it actually means.',
+    explain: `Networking people abbreviate everything, and a lot of interview anxiety is really just not knowing what a word stands for. Read this card once before anything else; then any acronym you meet later is a thing you half-recognise rather than a wall.`,
+    tags: ['glossary', 'acronyms'],
+    blocks: [
+      { t: 'The models and the basics', h: `<table class="net-table"><thead><tr><th>Short</th><th>Stands for</th><th>In plain English</th></tr></thead><tbody>
+<tr><td><strong>OSI</strong></td><td>Open Systems Interconnection</td><td>The 7-layer model everyone teaches. A way of splitting "get this data over there" into seven separate jobs</td></tr>
+<tr><td><strong>PDU</strong></td><td>Protocol Data Unit</td><td>The generic word for "the chunk of data at this layer". At L2 it's a frame, at L3 a packet, at L4 a segment</td></tr>
+<tr><td><strong>LAN / WAN</strong></td><td>Local / Wide Area Network</td><td>Your building versus the links between buildings and cities</td></tr>
+<tr><td><strong>NIC</strong></td><td>Network Interface Card</td><td>The network port on a machine — physical or virtual</td></tr>
+<tr><td><strong>RFC</strong></td><td>Request For Comments</td><td>The numbered documents that <em>are</em> the internet standards. "RFC 1918 addresses" just means "the private address ranges"</td></tr>
+<tr><td><strong>IEEE</strong></td><td>Institute of Electrical and Electronics Engineers</td><td>The body that standardises the 802.x things: 802.3 is Ethernet, 802.1Q is VLAN tagging, 802.11 is Wi-Fi</td></tr>
+<tr><td><strong>ASIC / NPU</strong></td><td>Application-Specific Integrated Circuit / Network Processing Unit</td><td>Purpose-built chips. "It's done in ASIC" means "in hardware, at full speed" as opposed to in software on a CPU</td></tr>
+<tr><td><strong>QoS</strong></td><td>Quality of Service</td><td>Deliberately treating some traffic better than other traffic — voice before file transfers</td></tr>
+<tr><td><strong>RTT</strong></td><td>Round-Trip Time</td><td>How long a packet takes to get there and back. What ping prints</td></tr>
+</tbody></table>` },
+      { t: 'Layer 1 — physical', h: `<table class="net-table"><thead><tr><th>Short</th><th>Stands for</th><th>In plain English</th></tr></thead><tbody>
+<tr><td><strong>SFP / SFP+ / QSFP</strong></td><td>Small Form-factor Pluggable (+ = enhanced, Q = Quad)</td><td>The little plug-in modules a fiber cable connects to. SFP is 1 gig, SFP+ 10 gig, QSFP28 100 gig</td></tr>
+<tr><td><strong>MMF / SMF</strong></td><td>Multi-Mode Fiber / Single-Mode Fiber</td><td>Fat-core fiber for short runs inside a building vs thin-core fiber with a laser for long distances</td></tr>
+<tr><td><strong>PoE</strong></td><td>Power over Ethernet</td><td>Sending electrical power down the same network cable, so a phone or camera needs only one cable</td></tr>
+<tr><td><strong>EMI</strong></td><td>Electromagnetic Interference</td><td>Electrical noise from motors, welders, fluorescent lights. It corrupts copper signals; fiber is immune, which is why factories use fiber</td></tr>
+<tr><td><strong>CSMA/CD</strong></td><td>Carrier Sense Multiple Access with Collision Detection</td><td>The old "listen before you talk, and back off if two of us talk at once" scheme. Only relevant to half duplex, which is history</td></tr>
+<tr><td><strong>Auto-MDIX</strong></td><td>Automatic Medium-Dependent Interface Crossover</td><td>The switch works out for itself whether the cable is wired straight-through or crossover. It's why nobody carries crossover cables anymore</td></tr>
+</tbody></table>` },
+      { t: 'Layer 2 — switching', h: `<table class="net-table"><thead><tr><th>Short</th><th>Stands for</th><th>In plain English</th></tr></thead><tbody>
+<tr><td><strong>MAC</strong></td><td>Media Access Control (address)</td><td>The 48-bit hardware address burned into a network card. Only meaningful on the local network</td></tr>
+<tr><td><strong>OUI</strong></td><td>Organizationally Unique Identifier</td><td>The first half of a MAC address, which identifies the manufacturer</td></tr>
+<tr><td><strong>FCS / CRC</strong></td><td>Frame Check Sequence / Cyclic Redundancy Check</td><td>The checksum at the end of a frame, and the maths used to compute it. Mismatch means the frame got corrupted, so it's silently dropped</td></tr>
+<tr><td><strong>CAM table</strong></td><td>Content-Addressable Memory table</td><td>The switch's list of "which MAC address is out of which port". Also just called the MAC address table</td></tr>
+<tr><td><strong>VLAN</strong></td><td>Virtual LAN</td><td>A separate network drawn in software on top of shared switches</td></tr>
+<tr><td><strong>802.1Q</strong></td><td>(IEEE standard number)</td><td>The 4-byte tag added to a frame that says which VLAN it belongs to. "Dot1Q" in speech</td></tr>
+<tr><td><strong>SVI</strong></td><td>Switched Virtual Interface</td><td>A virtual router interface inside a switch, acting as the gateway for one VLAN</td></tr>
+<tr><td><strong>STP / RSTP / MST</strong></td><td>Spanning Tree Protocol / Rapid STP / Multiple Spanning Tree</td><td>Loop prevention; the fast version; and the version that handles many VLANs efficiently</td></tr>
+<tr><td><strong>BPDU</strong></td><td>Bridge Protocol Data Unit</td><td>The little message switches send each other to build the spanning tree — "here is my ID and my cost to the root"</td></tr>
+<tr><td><strong>TCN</strong></td><td>Topology Change Notification</td><td>The BPDU a switch sends when a link changed, so everyone clears stale address entries</td></tr>
+<tr><td><strong>LACP / PAgP</strong></td><td>Link Aggregation Control Protocol / Port Aggregation Protocol</td><td>Bundling several cables into one logical link. LACP is the open standard, PAgP is Cisco's</td></tr>
+<tr><td><strong>LLDP / CDP</strong></td><td>Link Layer Discovery Protocol / Cisco Discovery Protocol</td><td>Switches announcing "this is who I am and which port you're on", so you can see what's plugged in where</td></tr>
+<tr><td><strong>DTP</strong></td><td>Dynamic Trunking Protocol</td><td>Cisco ports negotiating whether the link becomes a trunk. Turn it off — it's a security hole</td></tr>
+<tr><td><strong>VTP</strong></td><td>VLAN Trunking Protocol</td><td>Cisco's way of syncing the VLAN list between switches. Famous for wiping every VLAN when it goes wrong</td></tr>
+<tr><td><strong>UDLD</strong></td><td>UniDirectional Link Detection</td><td>Catches a fiber that works in only one direction — a failure that would otherwise defeat STP and cause a loop</td></tr>
+<tr><td><strong>DAI</strong></td><td>Dynamic ARP Inspection</td><td>Checking ARP replies against a trusted table so nobody can impersonate the gateway</td></tr>
+<tr><td><strong>802.1X / RADIUS</strong></td><td>(IEEE standard) / Remote Authentication Dial-In User Service</td><td>The port stays dead until the device logs in; RADIUS is the server that checks the login</td></tr>
+<tr><td><strong>ARP</strong></td><td>Address Resolution Protocol</td><td>"Who has this IP address? Tell me your MAC." The bridge between layer 3 and layer 2</td></tr>
+<tr><td><strong>MITM</strong></td><td>Man In The Middle</td><td>An attacker who has tricked traffic into flowing through them</td></tr>
+</tbody></table>` },
+      { t: 'Layer 3 — addressing and routing', h: `<table class="net-table"><thead><tr><th>Short</th><th>Stands for</th><th>In plain English</th></tr></thead><tbody>
+<tr><td><strong>TTL</strong></td><td>Time To Live</td><td>A counter in every packet, decremented by each router. At zero the packet is dropped — the safety net against endless loops</td></tr>
+<tr><td><strong>IHL</strong></td><td>Internet Header Length</td><td>How long the IP header is. Almost always 20 bytes</td></tr>
+<tr><td><strong>DSCP / ECN</strong></td><td>Differentiated Services Code Point / Explicit Congestion Notification</td><td>The QoS priority marking, and a flag routers set to say "I'm getting congested, slow down"</td></tr>
+<tr><td><strong>DF / MF</strong></td><td>Don't Fragment / More Fragments</td><td>Two flag bits controlling whether a router may split a large packet, and whether more pieces follow</td></tr>
+<tr><td><strong>ICMP</strong></td><td>Internet Control Message Protocol</td><td>The network's error channel. Ping and traceroute are both just ICMP</td></tr>
+<tr><td><strong>CIDR</strong></td><td>Classless Inter-Domain Routing</td><td>Writing a network as <code>10.1.1.0/24</code> — the number after the slash is how many bits identify the network</td></tr>
+<tr><td><strong>VLSM</strong></td><td>Variable Length Subnet Masking</td><td>Carving one address block into differently-sized pieces instead of equal ones</td></tr>
+<tr><td><strong>NAT / PAT</strong></td><td>Network Address Translation / Port Address Translation</td><td>Rewriting addresses as traffic leaves. PAT is the many-devices-share-one-public-address version every home uses</td></tr>
+<tr><td><strong>CGNAT</strong></td><td>Carrier-Grade NAT</td><td>Your ISP doing NAT too, so even your "public" address is shared</td></tr>
+<tr><td><strong>APIPA</strong></td><td>Automatic Private IP Addressing</td><td>The 169.254.x.x address a machine gives itself when no DHCP server answered</td></tr>
+<tr><td><strong>AD</strong></td><td>Administrative Distance</td><td>How much a router trusts each source of routing information. Lower = more trusted</td></tr>
+<tr><td><strong>RIB / FIB / CEF</strong></td><td>Routing / Forwarding Information Base, Cisco Express Forwarding</td><td>The full routing table in software; the trimmed copy in hardware; Cisco's name for the latter</td></tr>
+<tr><td><strong>IGP / EGP</strong></td><td>Interior / Exterior Gateway Protocol</td><td>Routing protocols used inside one organisation vs between organisations</td></tr>
+<tr><td><strong>RIP</strong></td><td>Routing Information Protocol</td><td>The oldest, simplest routing protocol. Counts hops, ignores speed. Know it as the contrast to OSPF</td></tr>
+<tr><td><strong>OSPF</strong></td><td>Open Shortest Path First</td><td>The main open-standard routing protocol inside a company. Every router builds a full map and computes its own shortest paths</td></tr>
+<tr><td><strong>LSA / LSDB / SPF</strong></td><td>Link State Advertisement / Link State Database / Shortest Path First</td><td>The messages OSPF floods, the map they build, and the algorithm (Dijkstra) run over it</td></tr>
+<tr><td><strong>ABR / ASBR</strong></td><td>Area Border Router / Autonomous System Boundary Router</td><td>The router joining two OSPF areas, and the one importing routes from outside</td></tr>
+<tr><td><strong>DR / BDR</strong></td><td>Designated Router / Backup Designated Router</td><td>On a shared segment, one elected router everyone talks to instead of everyone talking to everyone</td></tr>
+<tr><td><strong>EIGRP / DUAL</strong></td><td>Enhanced Interior Gateway Routing Protocol / Diffusing Update Algorithm</td><td>Cisco's routing protocol and the algorithm that gives it a pre-validated backup route</td></tr>
+<tr><td><strong>BGP / AS</strong></td><td>Border Gateway Protocol / Autonomous System</td><td>The protocol that runs the internet between organisations; an AS is one organisation's network with its own number</td></tr>
+<tr><td><strong>MED</strong></td><td>Multi-Exit Discriminator</td><td>A BGP hint to a neighbour about which of your links they should prefer</td></tr>
+<tr><td><strong>ECMP</strong></td><td>Equal-Cost Multi-Path</td><td>Two equally good routes, so traffic is spread over both</td></tr>
+<tr><td><strong>FHRP / HSRP / VRRP / GLBP</strong></td><td>First Hop Redundancy Protocol, Hot Standby / Virtual Router Redundancy / Gateway Load Balancing</td><td>Two routers sharing one gateway address so hosts don't lose their way out if one dies. VRRP is the open standard</td></tr>
+<tr><td><strong>NDP / SLAAC</strong></td><td>Neighbor Discovery Protocol / Stateless Address Autoconfiguration</td><td>IPv6's replacement for ARP, and IPv6 hosts building their own address without DHCP</td></tr>
+</tbody></table>` },
+      { t: 'Layer 4 and above — transport, names, security', h: `<table class="net-table"><thead><tr><th>Short</th><th>Stands for</th><th>In plain English</th></tr></thead><tbody>
+<tr><td><strong>TCP / UDP</strong></td><td>Transmission Control Protocol / User Datagram Protocol</td><td>Reliable, ordered, connection-based vs fire-and-forget</td></tr>
+<tr><td><strong>SYN / ACK / FIN / RST</strong></td><td>Synchronize / Acknowledge / Finish / Reset</td><td>TCP flags: start a connection, confirm receipt, close politely, and slam the door ("connection refused")</td></tr>
+<tr><td><strong>MTU / MSS</strong></td><td>Maximum Transmission Unit / Maximum Segment Size</td><td>The largest packet a link can carry (1500 bytes normally), and the largest chunk of actual data inside it (1460)</td></tr>
+<tr><td><strong>PMTUD</strong></td><td>Path MTU Discovery</td><td>The sender working out the smallest MTU anywhere along the path. Breaks silently when firewalls block ICMP</td></tr>
+<tr><td><strong>MSL</strong></td><td>Maximum Segment Lifetime</td><td>How long a stray packet could still be wandering the network. TIME_WAIT lasts twice this</td></tr>
+<tr><td><strong>DNS</strong></td><td>Domain Name System</td><td>Turning names into addresses</td></tr>
+<tr><td><strong>A / AAAA / CNAME / MX / NS / PTR / SOA / SRV / TXT</strong></td><td>(DNS record types)</td><td>Name→IPv4, name→IPv6, alias, mail server, nameserver, reverse lookup, zone info, service location, free text</td></tr>
+<tr><td><strong>SPF / DKIM</strong></td><td>Sender Policy Framework / DomainKeys Identified Mail</td><td>TXT records proving an email really came from your domain (unrelated to OSPF's SPF algorithm — same letters, different thing)</td></tr>
+<tr><td><strong>DHCP / DORA</strong></td><td>Dynamic Host Configuration Protocol / Discover-Offer-Request-Ack</td><td>How a device is handed an address, and the four messages it takes</td></tr>
+<tr><td><strong>TLS / SSL</strong></td><td>Transport Layer Security / Secure Sockets Layer</td><td>The encryption under HTTPS. SSL is the obsolete name people still use out of habit</td></tr>
+<tr><td><strong>SNI</strong></td><td>Server Name Indication</td><td>The client saying which hostname it wants <em>before</em> encryption starts, so a server hosting many sites on one IP knows which certificate to present</td></tr>
+<tr><td><strong>CN / SAN</strong></td><td>Common Name / Subject Alternative Name</td><td>The hostname(s) a certificate is valid for. Modern clients only look at SAN</td></tr>
+<tr><td><strong>CA / mTLS</strong></td><td>Certificate Authority / mutual TLS</td><td>Who vouches for a certificate; and TLS where the <em>client</em> also proves its identity</td></tr>
+<tr><td><strong>ECDHE / AES-GCM</strong></td><td>Elliptic Curve Diffie-Hellman Ephemeral / Advanced Encryption Standard - Galois Counter Mode</td><td>How the two sides agree a secret key without transmitting it; and the cipher that then encrypts the data</td></tr>
+<tr><td><strong>ACL / NACL / SG</strong></td><td>Access Control List / Network ACL / Security Group</td><td>Firewall rule lists — on a router, on an AWS subnet, and on an AWS instance</td></tr>
+<tr><td><strong>NGFW / IPS</strong></td><td>Next-Generation Firewall / Intrusion Prevention System</td><td>Firewalls that inspect application content, not just addresses and ports</td></tr>
+<tr><td><strong>XFF</strong></td><td>X-Forwarded-For</td><td>The HTTP header a proxy adds to preserve the original client's IP address</td></tr>
+<tr><td><strong>VIP</strong></td><td>Virtual IP</td><td>One address shared by a cluster, which moves to whichever node is alive</td></tr>
+<tr><td><strong>IPsec / IKE / SA</strong></td><td>Internet Protocol Security / Internet Key Exchange / Security Association</td><td>Site-to-site VPN encryption, the negotiation that sets it up, and the agreed settings it produces</td></tr>
+<tr><td><strong>ALG</strong></td><td>Application Layer Gateway</td><td>A firewall feature that peeks inside protocols which embed IP addresses in their payload (FTP, SIP) and fixes them up through NAT</td></tr>
+<tr><td><strong>SNMP / IPFIX / SPAN</strong></td><td>Simple Network Management Protocol / IP Flow Information Export / Switched Port Analyzer</td><td>Polling devices for stats; exporting who-talked-to-whom records; and mirroring traffic to an analyzer</td></tr>
+<tr><td><strong>OT</strong></td><td>Operational Technology</td><td>Factory and industrial equipment, as opposed to office IT. Usually old, unpatchable, and kept on its own tightly-restricted VLAN</td></tr>
+</tbody></table>` }
+    ]
+  },
+  {
     id: 'net-l1',
     icon: '🔌',
     layer: 'L1 Physical',
     title: 'Layer 1 — Physical',
     tagline: 'Bits on the wire: copper, fiber, transceivers, duplex, and the failures you can see.',
+    explain: `Layer 1 is just "how do we physically move a 1 or a 0 from here to there" — copper, light, connectors, voltage. It has no idea what a message is. It moves signals, and that's all.`,
     tags: ['cabling', 'fiber', 'duplex', 'PoE'],
     blocks: [
       { t: 'What L1 does', h: `<p>L1 moves <strong>bits</strong>. It defines connectors, voltages, light, encoding and timing. No addressing, and no idea what a frame is.</p>` },
@@ -112,6 +215,7 @@ const networkingGuide = [
     layer: 'L2 Data Link',
     title: 'The Ethernet Frame — field by field',
     tagline: 'A topic he named explicitly. Be able to draw it from memory.',
+    explain: `A frame is the envelope Ethernet puts around your data for <em>one hop across one local network</em>. This card is what's printed on that envelope: who it's for, who sent it, what kind of thing is inside, and a checksum proving it didn't get scrambled on the way.`,
     tags: ['frame', 'MAC', '802.1Q', 'EtherType'],
     blocks: [
       { t: 'The frame', h: `<pre class="net-pre">+----------+-----+---------+---------+----------+-----------+-------------+-----+
@@ -121,16 +225,16 @@ const networkingGuide = [
                  |&lt;--------------- frame: 64 to 1518 bytes ------------------&gt;|</pre>` },
       { t: 'Fields', h: `<table class="net-table"><thead><tr><th>Field</th><th>Size</th><th>Purpose</th></tr></thead><tbody>
 <tr><td>Preamble</td><td>7 B</td><td>Alternating 1010… so the receiver's clock synchronizes</td></tr>
-<tr><td>SFD</td><td>1 B</td><td>10101011 — the last bit pair flips to say "frame starts now"</td></tr>
+<tr><td>SFD<span class="net-expand">Start Frame Delimiter</span></td><td>1 B</td><td>10101011 — the last bit pair flips to say "frame starts now"</td></tr>
 <tr><td>Destination MAC</td><td>6 B</td><td>Who it's for. Read first so a switch can forward before the frame finishes arriving</td></tr>
 <tr><td>Source MAC</td><td>6 B</td><td>Who sent it. <strong>This is the field a switch learns from</strong></td></tr>
-<tr><td>802.1Q tag</td><td>4 B</td><td>Optional. TPID 0x8100 + priority (PCP, 3 bits) + DEI + <strong>VLAN ID (12 bits)</strong></td></tr>
+<tr><td>802.1Q tag</td><td>4 B</td><td>Optional. TPID (<em>Tag Protocol Identifier</em>) 0x8100, which is what marks the frame as tagged, + PCP (<em>Priority Code Point</em>, 3 bits of QoS priority) + DEI (<em>Drop Eligible Indicator</em>) + <strong>VLAN ID (12 bits)</strong> — the only field you really need to remember</td></tr>
 <tr><td>EtherType / Length</td><td>2 B</td><td>≥ 0x0600 means EtherType (what's inside); below that means length (old 802.3)</td></tr>
 <tr><td>Payload</td><td>46–1500 B</td><td>The L3 packet. Padded to 46 if shorter</td></tr>
-<tr><td>FCS</td><td>4 B</td><td>CRC32 over the frame. Mismatch = frame silently discarded, counter increments</td></tr>
+<tr><td>FCS<span class="net-expand">Frame Check Sequence</span></td><td>4 B</td><td>A CRC32 checksum (<em>Cyclic Redundancy Check</em>) over the frame. Mismatch = the frame got corrupted in transit, so it is silently discarded and an error counter increments. Nothing asks for a retransmit at this layer — that is TCP's job, higher up</td></tr>
 </tbody></table>
 <p>Then a <strong>12-byte interframe gap</strong> before the next frame.</p>` },
-      { t: 'EtherTypes to know', h: `<p><code>0x0800</code> IPv4 · <code>0x0806</code> ARP · <code>0x86DD</code> IPv6 · <code>0x8100</code> 802.1Q tagged · <code>0x8863/0x8864</code> PPPoE · <code>0x88CC</code> LLDP</p>` },
+      { t: 'EtherTypes to know', h: `<p><code>0x0800</code> IPv4 · <code>0x0806</code> ARP · <code>0x86DD</code> IPv6 · <code>0x8100</code> 802.1Q tagged · <code>0x8863/0x8864</code> PPPoE (<em>Point-to-Point Protocol over Ethernet</em>, used by some ISPs) · <code>0x88CC</code> LLDP</p>` },
       { t: 'Frame sizes', h: `<p>Minimum <strong>64 bytes</strong> (a leftover from collision-detection timing in half duplex), maximum <strong>1518</strong> (1522 with a VLAN tag).</p>
 <ul>
 <li>Undersized → <strong>runt</strong></li>
@@ -143,8 +247,8 @@ const networkingGuide = [
 (vendor)   (serial)</pre>
 <ul>
 <li>48 bits, written as 6 hex octets. First 24 bits = <strong>OUI</strong>, assigned to the manufacturer by the IEEE — you can identify vendors from it</li>
-<li>Bit 0 of the first octet = <strong>I/G bit</strong>. 0 = unicast, 1 = multicast. That's why broadcast is <code>FF:FF:FF:FF:FF:FF</code> and multicast MACs start <code>01:00:5E</code></li>
-<li>Bit 1 = <strong>U/L bit</strong>. 0 = globally unique (burned in), 1 = locally administered (set in software — VMs and containers)</li>
+<li>Bit 0 of the first octet = the <strong>I/G bit</strong> (<em>Individual / Group</em>). 0 = unicast (one specific device), 1 = multicast (a group of devices). That's why broadcast is <code>FF:FF:FF:FF:FF:FF</code> and multicast MACs start <code>01:00:5E</code></li>
+<li>Bit 1 = the <strong>U/L bit</strong> (<em>Universal / Local</em>). 0 = globally unique, burned in at the factory; 1 = locally administered, meaning set by software — this is what you see on virtual machines and containers</li>
 <li><strong>Flat address space, no hierarchy.</strong> That is exactly why MAC addresses can't be summarized, can't scale beyond a LAN, and why IP exists</li>
 </ul>` }
     ]
@@ -155,6 +259,7 @@ const networkingGuide = [
     layer: 'L3 Network',
     title: 'The IPv4 Packet — field by field',
     tagline: 'The other format he named. 20 bytes minimum, up to 60 with options.',
+    explain: `If the frame is the envelope for one hop, the IP packet is the envelope for the whole journey — it carries the real source and destination from end to end. One field, TTL, counts down at every router so a packet that gets lost in a loop eventually dies instead of circling forever.`,
     tags: ['IPv4', 'TTL', 'checksum', 'fragmentation'],
     blocks: [
       { t: 'The header', h: `<pre class="net-pre"> 0                   1                   2                   3
@@ -174,13 +279,13 @@ const networkingGuide = [
 +---------------------------------------------------------------+</pre>` },
       { t: 'Fields', h: `<table class="net-table"><thead><tr><th>Field</th><th>Size</th><th>What it does</th></tr></thead><tbody>
 <tr><td>Version</td><td>4 bits</td><td>4 for IPv4, 6 for IPv6</td></tr>
-<tr><td>IHL</td><td>4 bits</td><td>Header length in 32-bit words. Normally 5, meaning 20 bytes</td></tr>
-<tr><td>DSCP / ECN</td><td>8 bits</td><td>QoS marking (DSCP 6 bits) + explicit congestion notification (2 bits)</td></tr>
+<tr><td>IHL<span class="net-expand">Internet Header Length</span></td><td>4 bits</td><td>Header length, counted in 32-bit words. Normally 5, which means 20 bytes — it is only larger if optional fields are present</td></tr>
+<tr><td>DSCP / ECN<span class="net-expand">Differentiated Services Code Point / Explicit Congestion Notification</span></td><td>8 bits</td><td>The traffic-priority marking (6 bits) — this is how voice gets treated better than a file download — plus 2 bits routers use to signal "I am getting congested" without dropping anything</td></tr>
 <tr><td>Total Length</td><td>16 bits</td><td>Header + payload, so max packet is 65,535 bytes</td></tr>
 <tr><td>Identification</td><td>16 bits</td><td>Groups fragments belonging to the same original packet</td></tr>
 <tr><td>Flags</td><td>3 bits</td><td>Bit 1 = <strong>DF</strong> (Don't Fragment), bit 2 = <strong>MF</strong> (More Fragments)</td></tr>
 <tr><td>Fragment Offset</td><td>13 bits</td><td>Where this fragment sits in the original, in 8-byte units</td></tr>
-<tr><td><strong>TTL</strong></td><td>8 bits</td><td><strong>Decremented by every router. At 0 the packet is dropped and ICMP Time Exceeded is returned.</strong> Loop protection, and the mechanism traceroute exploits</td></tr>
+<tr><td><strong>TTL</strong><span class="net-expand">Time To Live</span></td><td>8 bits</td><td>Despite the name it is a <em>hop</em> count, not a timer. <strong>Decremented by every router. At 0 the packet is dropped and ICMP Time Exceeded is returned.</strong> Loop protection, and the mechanism traceroute exploits</td></tr>
 <tr><td>Protocol</td><td>8 bits</td><td>What's in the payload: 1 ICMP, 6 TCP, 17 UDP, 47 GRE, 50 ESP, 89 OSPF</td></tr>
 <tr><td>Header Checksum</td><td>16 bits</td><td>Covers the header only, not the data. <strong>Recomputed at every hop because TTL changed</strong></td></tr>
 <tr><td>Source IP</td><td>32 bits</td><td>Stays the same end to end, unless NAT rewrites it</td></tr>
@@ -199,9 +304,10 @@ const networkingGuide = [
     layer: 'L2 Data Link',
     title: 'How a Layer 2 Switch Learns and Forwards',
     tagline: 'Four verbs — learn, flood, forward, filter — plus aging. With a worked example to narrate out loud.',
+    explain: `A switch starts out knowing nothing. It learns purely by eavesdropping: every frame that arrives tells it "whoever sent this is reachable out of this port." Once it has learned an address it sends frames to that one port instead of shouting to everybody — and that is the entire difference between a switch and the hub it replaced.`,
     tags: ['CAM table', 'flooding', 'aging'],
     blocks: [
-      { t: 'The four verbs', h: `<p><strong>Learning</strong> — for every frame that arrives, the switch reads the <strong>source MAC</strong> and records <code>MAC → ingress port → VLAN</code> in the CAM table. It <em>never</em> learns from the destination field.</p>
+      { t: 'The four verbs', h: `<p><strong>Learning</strong> — for every frame that arrives, the switch reads the <strong>source MAC</strong> and records <code>MAC → ingress port → VLAN</code> in its <strong>CAM table</strong> (<em>Content-Addressable Memory</em> — this is just the hardware name for what everyone calls the MAC address table). It <em>never</em> learns from the destination field.</p>
 <p><strong>Forwarding decision</strong> — look up the <strong>destination MAC</strong>:</p>
 <ul>
 <li>Found in the table for this VLAN → send out that single port (<strong>forward</strong>)</li>
@@ -237,11 +343,12 @@ B (bb:bb) -- Fa0/2                Fa0/4 -- D (dd:dd)</pre>
     layer: 'L2 Data Link',
     title: 'Spanning Tree Protocol',
     tagline: 'He named STP as the example of "L2 control protocols." Expect it.',
+    explain: `Two switches joined by two cables is a loop, and a loop on Ethernet is fatal — one broadcast circles forever and multiplies at every switch until the network is dead. STP's job is to spot the loop and deliberately switch one link off, holding it in reserve until the main one fails.`,
     tags: ['STP', 'RSTP', 'BPDU', 'broadcast storm'],
     blocks: [
       { t: 'Why it exists', h: `<p>Ethernet frames have <strong>no TTL field</strong>. Put two switches together with two cables and one broadcast frame circulates forever, gets duplicated at every switch, and multiplies exponentially. Within seconds the links saturate, CPUs peg, and MAC tables thrash because the same source MAC keeps arriving on different ports. That's a <strong>broadcast storm</strong>, and it takes down the entire L2 domain, not just the looped link.</p>
 <p>You still want the second cable for redundancy. STP (802.1D) lets you have it by putting the redundant path in a blocking state and activating it only when the primary fails.</p>` },
-      { t: 'How the tree gets built', h: `<p><strong>1. Elect the root bridge.</strong> Every switch sends <strong>BPDUs</strong> (to multicast <code>01:80:C2:00:00:00</code>, every 2 seconds) claiming to be root. Lowest <strong>Bridge ID</strong> wins.</p>
+      { t: 'How the tree gets built', h: `<p><strong>1. Elect the root bridge.</strong> Every switch sends <strong>BPDUs</strong> — <em>Bridge Protocol Data Units</em>, small messages that say "here is my ID and my cost to reach the root" — to the reserved multicast address <code>01:80:C2:00:00:00</code>, every 2 seconds, each one initially claiming to be the root itself. Lowest <strong>Bridge ID</strong> wins.</p>
 <pre class="net-pre">Bridge ID = [ Priority 4 bits ][ Extended System ID 12 bits ][ MAC 48 bits ]
               default 32768        = VLAN number             switch's own</pre>
 <p>Priority is configured in increments of 4096. If priorities tie, the <strong>lowest MAC address</strong> wins — which means <strong>the oldest switch in the building becomes root by default</strong>. That's usually your slowest access switch sitting under someone's desk. Always set the root manually to your core:</p>
@@ -271,14 +378,63 @@ spanning-tree vlan 10 priority 4096</pre>
 <li>Port states collapse to three: <strong>Discarding, Learning, Forwarding</strong></li>
 <li>Uses proposal/agreement handshakes between switches instead of waiting out timers</li>
 <li>Every switch originates BPDUs rather than only relaying root BPDUs, so failure detection is fast (3 missed hellos)</li>
-<li><strong>MST (802.1s)</strong> maps many VLANs onto a few STP instances, because one instance per VLAN doesn't scale. <strong>PVST+ / Rapid-PVST+</strong> are Cisco's per-VLAN versions</li>
+<li><strong>MST</strong> (<em>Multiple Spanning Tree</em>, 802.1s) maps many VLANs onto a few spanning-tree instances, because running a separate one per VLAN doesn't scale past a few hundred. <strong>PVST+</strong> (<em>Per-VLAN Spanning Tree Plus</em>) and Rapid-PVST+ are Cisco's per-VLAN versions</li>
 </ul>` },
       { t: 'Protection features', h: `<pre class="net-pre">spanning-tree portfast          # access ports skip listening/learning, go straight to forwarding
 spanning-tree bpduguard enable  # if a BPDU arrives on a PortFast port, err-disable it
 spanning-tree guard root        # refuse to accept a superior BPDU on this port
 spanning-tree loopguard         # if BPDUs stop arriving on a blocking port, keep it blocked</pre>
 <p>PortFast exists because a server that boots in 8 seconds shouldn't wait 30 for its port. PortFast on a port that leads to another switch <em>creates</em> a loop, which is exactly why you pair it with BPDU Guard. Root Guard stops a rogue switch in a conference room from becoming root and pulling all traffic through a 100 Mbps link.</p>` },
-      { t: 'Topology change', h: `<p>When a link fails, the switch sends a <strong>TCN BPDU</strong> toward the root. The root sets the topology-change flag, and every switch temporarily reduces its MAC aging timer from 300 seconds to the forward delay (15 s) so stale entries clear quickly. That's why you see a brief burst of flooding after any topology change.</p>` }
+      { t: 'Topology change', h: `<p>When a link fails, the switch sends a <strong>TCN</strong> (<em>Topology Change Notification</em>) BPDU toward the root. The root sets the topology-change flag, and every switch temporarily reduces its MAC aging timer from 300 seconds to the forward delay (15 s) so stale entries clear quickly. That's why you see a brief burst of flooding after any topology change.</p>` }
+    ]
+  },
+  {
+    id: 'net-l2-control',
+    icon: '🚦',
+    layer: 'L2 Data Link',
+    title: 'Layer 2 Control & Protection Protocols',
+    tagline: 'STP is the famous one. Here is the rest of the family, and what each one is protecting you from.',
+    explain: `A switch on its own can't tell that someone plugged both ends of a cable into it, that a fiber broke in one direction, or that the laptop on port 12 is pretending to be the DHCP server. Every protocol on this card bolts one of those safety checks onto the switch.`,
+    tags: ['LLDP', 'DTP', 'VTP', 'UDLD', 'port security'],
+    blocks: [
+      { t: 'Why Layer 2 needs a "control plane" at all', h: `<p>A switch by itself is dumb in a very specific way: it forwards frames and that's it. It has no way to notice that someone plugged both ends of a cable into the same switch, that a fiber is broken in one direction, or that the laptop on port 12 is pretending to be the DHCP server. Every protocol on this card exists to bolt one of those checks onto the switch.</p>
+<p>If it helps, the software analogy is exact: the <strong>data plane</strong> is your request handler — it just serves traffic as fast as it can. The <strong>control plane</strong> is service discovery, health checks and config distribution — the background conversations that decide <em>what the data plane is allowed to do</em>.</p>` },
+      { t: 'Discovery — LLDP and CDP: "what is on the other end of this cable?"', h: `<ul>
+<li><strong>LLDP</strong> — <em>Link Layer Discovery Protocol</em>, the IEEE open standard (802.1AB). Every switch periodically announces itself out of every port: "I am switch <code>core-sw-01</code>, this is port <code>Gi1/0/12</code>, here's my model and my management IP." Neighbors record what they hear. That's how a network diagram gets built without anyone walking to the rack</li>
+<li><strong>CDP</strong> — <em>Cisco Discovery Protocol</em>. Same idea, older, Cisco-only. In a mixed-vendor network you use LLDP</li>
+<li><strong>LLDP-MED</strong> — <em>Media Endpoint Discovery</em>, the extension for phones and cameras. It's how an IP phone is told which VLAN to put voice traffic on and how much Power over Ethernet it's allowed to draw, without anyone configuring the phone</li>
+</ul>
+<p>Why you'd reach for it: <code>show lldp neighbors</code> answers "what's plugged into this port" in one command. Without it, that question means a flashlight and a trip to the data center.</p>` },
+      { t: 'Trunk negotiation — DTP, and why the answer is "turn it off"', h: `<p><strong>DTP</strong> — <em>Dynamic Trunking Protocol</em>, Cisco. Two switch ports talk to each other and negotiate what the link should become: an <strong>access port</strong> (carries one VLAN, faces a PC) or a <strong>trunk</strong> (carries many VLANs, faces another switch).</p>
+<p>Convenient, and a security hole. A laptop running software that speaks DTP can talk a switch port into becoming a trunk — and a trunk carries <em>every</em> VLAN. The attacker now sees traffic from the server VLAN, the management VLAN, everything. That attack is called <strong>VLAN hopping</strong>.</p>
+<p>So the best-practice answer is: decide what the port is yourself and refuse to negotiate.</p>
+<pre class="net-pre">switchport mode access        # this port is an access port, permanently
+switchport nonegotiate        # and stop sending DTP frames</pre>` },
+      { t: 'VLAN database sync — VTP, and the story everyone tells about it', h: `<p><strong>VTP</strong> — <em>VLAN Trunking Protocol</em>, Cisco. The idea is reasonable: designate one switch as the server, create VLAN 30 there once, and it propagates to all the others automatically instead of you typing it on forty switches.</p>
+<p>The failure mode is what makes it famous. Each copy of the VLAN database carries a <strong>revision number</strong>, and higher always wins — with no check on whether the sender is important. Plug an old lab switch into the network, one that happens to carry a higher revision number and an <em>empty</em> VLAN list, and it will confidently overwrite every switch in the domain. Every VLAN in the building disappears at once.</p>
+<p>Best practice: run <strong>VTP transparent mode</strong> (each switch keeps its own VLAN list and just passes messages through), or VTPv3, which requires one explicitly designated primary server before anything can be overwritten.</p>` },
+      { t: 'Broken-in-one-direction links — UDLD', h: `<p><strong>UDLD</strong> — <em>UniDirectional Link Detection</em>, Cisco (the standards-based equivalent is 802.3ah link OAM, <em>Operations, Administration and Maintenance</em>).</p>
+<p>Fiber is two strands, one for each direction. If one strand breaks or one transceiver goes bad, the link still reports <strong>up</strong> — but traffic only flows one way.</p>
+<p>Here's why that is worse than a clean failure. STP works by <em>hearing</em> BPDUs (<em>Bridge Protocol Data Units</em> — the little "I am the root, here's my cost" messages switches exchange). A port that STP put in blocking state keeps listening. If BPDUs stop arriving because the receive strand died, that port concludes "nobody is out there anymore, the redundant path must be gone" and promotes itself to forwarding — and now you have exactly the loop STP existed to prevent, with traffic still flowing the other direction.</p>
+<p>Two defenses, from opposite ends:</p>
+<ul>
+<li><strong>UDLD</strong> sends a hello containing its own identity and expects the neighbor to echo it back. No echo means the link is one-way, so it shuts the port down</li>
+<li><strong>Loop Guard</strong> attacks it from the STP side: if BPDUs stop arriving on a port that was blocking, keep it blocked rather than promoting it. "Silence is not permission"</li>
+</ul>` },
+      { t: 'Access-edge protection — stopping an untrusted port from lying', h: `<p>Everything above assumes the other end of the cable is a switch you own. These features assume the opposite — that the thing on port 12 might be hostile or just misconfigured.</p>
+<table class="net-table"><thead><tr><th>Feature</th><th>Full name</th><th>What it stops</th></tr></thead><tbody>
+<tr><td><strong>Port security</strong></td><td>—</td><td>Limits how many MAC addresses a port may learn. Stops <strong>CAM table overflow</strong>: an attacker floods thousands of fake source MACs until the switch's address table is full, at which point it can't look anything up and floods every frame out every port — so the attacker sees traffic that was never meant for them</td></tr>
+<tr><td><strong>BPDU Guard</strong></td><td>Bridge Protocol Data Unit Guard</td><td>Shuts down a port if a <em>switch</em> shows up on it. A port configured for a PC should never receive a BPDU; if it does, someone plugged a desk switch in and is about to change your spanning tree</td></tr>
+<tr><td><strong>Root Guard</strong></td><td>—</td><td>Refuses to accept a "better" BPDU on this port. Stops a switch in a conference room from winning the root-bridge election and pulling the whole network's traffic through a 100 Mbps link</td></tr>
+<tr><td><strong>Loop Guard</strong></td><td>—</td><td>Keeps a blocking port blocked when BPDUs go silent — the one-way-link problem above</td></tr>
+<tr><td><strong>DHCP snooping</strong></td><td>Dynamic Host Configuration Protocol snooping</td><td>Only ports you mark as trusted (your uplinks) are allowed to send DHCP <em>offers</em>. Stops a rogue DHCP server — usually someone's home router plugged in backwards — from handing out wrong IP addresses and pointing users at the wrong gateway. As a side effect it builds a <strong>binding table</strong> of IP ↔ MAC ↔ port ↔ VLAN, which the next two features depend on</td></tr>
+<tr><td><strong>DAI</strong></td><td>Dynamic ARP Inspection</td><td>Checks every ARP reply against that binding table and drops the ones that lie. Stops <strong>ARP spoofing</strong>, where an attacker claims to be the gateway and becomes a man in the middle</td></tr>
+<tr><td><strong>IP Source Guard</strong></td><td>—</td><td>Drops frames whose source IP doesn't match the binding for that port. Stops IP address spoofing</td></tr>
+<tr><td><strong>Storm control</strong></td><td>—</td><td>Rate-limits broadcast, multicast and unknown-unicast on a port, so one broken NIC or one looped desk hub can't saturate the whole VLAN</td></tr>
+<tr><td><strong>802.1X</strong></td><td>IEEE 802.1X port-based Network Access Control</td><td>The port carries no traffic until the device authenticates against a <strong>RADIUS</strong> server (<em>Remote Authentication Dial-In User Service</em> — the standard "check this login for me" protocol). Physical access to a wall jack stops being the same thing as network access</td></tr>
+</tbody></table>` },
+      { t: 'The one-sentence version — say this if they ask "what else besides STP?"', h: `<p><em>"STP keeps the topology loop-free, LACP bundles several physical links into one logical one, LLDP tells you what's plugged in where — and then there's a family of protection features at the access edge, things like port security, BPDU guard, DHCP snooping and dynamic ARP inspection, whose whole job is to stop an untrusted port from lying to the network."</em></p>
+<p>Then stop. If they want one of those expanded, they'll ask — and each row of the table above is a complete answer on its own.</p>` }
     ]
   },
   {
@@ -287,6 +443,7 @@ spanning-tree loopguard         # if BPDUs stop arriving on a blocking port, kee
     layer: 'L3 Network',
     title: 'How a Router Forwards an IP Packet',
     tagline: 'Seven steps — and the MAC rewrite is the point of the whole answer.',
+    explain: `A router's job at each hop: check the packet is still alive, look up where the destination lives, put a <em>fresh</em> local envelope on it addressed to the next router, and send it on. The outer envelope is replaced at every hop; the packet inside is never touched. Say that sentence and you've shown you understand layer 2 versus layer 3.`,
     tags: ['forwarding', 'longest prefix match', 'TTL', 'ARP'],
     blocks: [
       { t: 'The seven steps', h: `<ol>
@@ -327,7 +484,32 @@ O     10.3.3.0/24 [110/20] via 172.16.1.2, 00:14:22, GigabitEthernet0/1
 <tr><td>10.1.2.0/24</td><td>no</td><td>—</td></tr>
 </tbody></table>
 <p>The /24 wins even if it was learned by RIP (AD 120) and the /8 came from a static route (AD 1). <strong>Specificity beats trust.</strong> AD is only consulted when two sources offer the <em>same</em> prefix.</p>` },
-      { t: 'Control plane vs data plane', h: `<p>Worth one sentence, and it impresses: the <strong>control plane</strong> builds the routing table (RIB) by running protocols; the <strong>data plane</strong> forwards packets using a hardware-optimized copy (FIB/CEF). That separation is why a router can push millions of packets per second while OSPF recalculates in the background.</p>` }
+      { t: 'ICMP — the protocol routers use to tell you why something failed', h: `<p><strong>ICMP</strong> — <em>Internet Control Message Protocol</em>, IP protocol number 1. It carries no user data. It exists so a router or host can send back an error or a diagnostic: "I couldn't deliver this, and here's why." Almost every troubleshooting tool you'll use is really just ICMP with a nice wrapper.</p>
+<table class="net-table"><thead><tr><th>Type</th><th>Name</th><th>When you see it</th></tr></thead><tbody>
+<tr><td><strong>8 / 0</strong></td><td>Echo Request / Echo Reply</td><td>This pair <em>is</em> ping. Type 8 goes out, type 0 comes back. Nothing more to it</td></tr>
+<tr><td><strong>3</strong></td><td>Destination Unreachable</td><td>The router had nowhere to send it. The <em>code</em> says which flavor: 0 network unreachable, 1 host unreachable, 3 port unreachable (nothing listening on that UDP port), and <strong>4 = fragmentation needed but the Don't Fragment bit was set</strong></td></tr>
+<tr><td><strong>5</strong></td><td>Redirect</td><td>"There's a better gateway on this subnet — send it to that one instead"</td></tr>
+<tr><td><strong>11</strong></td><td>Time Exceeded</td><td>TTL hit zero and the packet was dropped. This is the one that makes traceroute possible</td></tr>
+</tbody></table>` },
+      { t: 'How traceroute actually works (a nice thing to be able to explain)', h: `<p>It's a trick built entirely on TTL and ICMP Time Exceeded:</p>
+<ol>
+<li>Send a packet toward the destination with <strong>TTL = 1</strong>. The first router decrements it to 0, drops it, and returns ICMP Time Exceeded — <em>and that reply reveals the first router's IP address</em></li>
+<li>Send another with <strong>TTL = 2</strong>. It survives the first router, dies at the second, which identifies itself the same way</li>
+<li>Keep incrementing. Each round reveals one more hop, in order</li>
+<li>When the packet finally reaches the destination, the answer is different — a port-unreachable or an echo reply rather than a time-exceeded — which is how traceroute knows to stop counting</li>
+</ol>
+<p>Two consequences worth knowing, because they're the source of most misread traceroutes:</p>
+<ul>
+<li>A router that is configured not to reply to ICMP just shows as <code>* * *</code>. That means "this hop declined to answer the probe", <strong>not</strong> "traffic stopped here" — packets are still passing through fine</li>
+<li>Firewalls that block ICMP entirely also block <strong>Type 3 Code 4</strong>, which is what Path MTU Discovery depends on. That's the cause of the classic "small requests work, large ones hang" symptom</li>
+</ul>` },
+      { t: 'Control plane vs data plane', h: `<p>Worth one sentence, and it impresses. Two acronyms first, because they're both just "the routing table" seen from different angles:</p>
+<ul>
+<li><strong>RIB</strong> — <em>Routing Information Base</em>. The full routing table as the protocols built it, living in software. This is what <code>show ip route</code> prints</li>
+<li><strong>FIB</strong> — <em>Forwarding Information Base</em>. A stripped-down copy of the winning routes, pushed into dedicated hardware so lookups happen at wire speed. Cisco's implementation is called <strong>CEF</strong> (<em>Cisco Express Forwarding</em>)</li>
+</ul>
+<p>So: the <strong>control plane</strong> runs the protocols and builds the RIB; the <strong>data plane</strong> forwards actual packets using the FIB. That separation is why a router can push millions of packets per second while OSPF is busy recalculating in the background — the recalculation happens off to the side and only the result gets pushed down.</p>
+<p>The software analogy: the control plane is your config/service-discovery layer, the data plane is the hot path. You don't want the hot path blocking on a config reload.</p>` }
     ]
   },
   {
@@ -336,6 +518,7 @@ O     10.3.3.0/24 [110/20] via 172.16.1.2, 00:14:22, GigabitEthernet0/1
     layer: 'L3 Network',
     title: 'Routing Concepts and Protocols',
     tagline: 'Distance vector vs link state vs path vector — and the OSPF detail that actually gets asked.',
+    explain: `Routers need to learn where every network in the company lives without a human typing it in. The protocol families differ in <em>what they tell each other</em>: "here's my whole list of destinations, trust me" (distance vector) versus "here's what I'm directly plugged into, work out the map yourself" (link state).`,
     tags: ['OSPF', 'BGP', 'RIP', 'EIGRP', 'AD'],
     blocks: [
       { t: 'The three families', h: `<table class="net-table"><thead><tr><th>Family</th><th>How it works</th><th>Knows</th><th>Examples</th><th>Convergence</th></tr></thead><tbody>
@@ -359,15 +542,15 @@ O     10.3.3.0/24 [110/20] via 172.16.1.2, 00:14:22, GigabitEthernet0/1
       { t: "RIP (know it, don't use it)", h: `<p>Hop-count metric, max 15 hops (16 = unreachable), 30-second updates, AD 120. Loop prevention via split horizon, route poisoning and hold-down timers. Its only real value in an interview is as the contrast to OSPF: it picks a 15-hop gigabit path over a 2-hop path because it can't see bandwidth.</p>` },
       { t: 'OSPF (the one to actually know)', h: `<ul>
 <li>Link-state, open standard, AD <strong>110</strong>, IP protocol number 89, metric is <strong>cost = reference bandwidth / interface bandwidth</strong> (default reference 100 Mbps, so anything above 100 Mbps ties at cost 1 unless you raise the reference)</li>
-<li>Every router floods <strong>LSAs</strong> describing its links. All routers in an area build an identical <strong>LSDB</strong>, then each runs <strong>Dijkstra's SPF</strong> to compute its own shortest-path tree</li>
-<li><strong>Areas</strong> limit flooding and SPF scope. <strong>Area 0 is the backbone</strong> and every other area must touch it, through an <strong>ABR</strong>. An <strong>ASBR</strong> injects external routes</li>
+<li>Every router floods <strong>LSAs</strong> (<em>Link State Advertisements</em> — "here is what I am directly connected to") out to every other router. All routers in an area therefore end up holding an identical <strong>LSDB</strong> (<em>Link State Database</em>), which is a complete map of the topology. Each then runs <strong>Dijkstra's SPF</strong> algorithm (<em>Shortest Path First</em>) over that map to work out its own best path to everywhere. Same Dijkstra you'd recognise from a graph problem</li>
+<li><strong>Areas</strong> limit how far LSAs flood and how much has to be recalculated when something changes — without them, one flapping link in the basement would make every router in the company recompute. <strong>Area 0 is the backbone</strong>, and every other area must touch it through an <strong>ABR</strong> (<em>Area Border Router</em>, a router with a foot in both). An <strong>ASBR</strong> (<em>Autonomous System Boundary Router</em>) is the one that injects routes learned from outside OSPF entirely</li>
 <li>Neighbor states: Down → Init → <strong>2-Way</strong> → ExStart → Exchange → Loading → <strong>Full</strong></li>
-<li>On multi-access segments it elects a <strong>DR/BDR</strong> so routers form adjacencies with the DR instead of a full mesh (the n² problem). Highest OSPF priority wins, then highest router ID</li>
+<li>On a shared segment with several routers it elects a <strong>DR</strong> and <strong>BDR</strong> (<em>Designated Router</em> and <em>Backup Designated Router</em>). Everyone then talks to the DR instead of every router pairing up with every other — the same n² blow-up you'd avoid with a message broker instead of point-to-point connections. Highest OSPF priority wins, then highest router ID</li>
 <li><strong>Adjacency requires matching</strong>: area ID, hello and dead timers, subnet and mask, authentication, MTU, and stub flags. Mismatched MTU sticks the neighbor in <strong>EXSTART</strong>; mismatched timers or subnet means the neighbor never appears at all. These two are the most common real OSPF faults</li>
 <li>Hello 10 s / dead 40 s on broadcast links</li>
 </ul>` },
-      { t: 'EIGRP and BGP', h: `<p><strong>EIGRP</strong> — Cisco's, now published. Advanced distance vector, AD 90 internal, metric from bandwidth and delay. Uses <strong>DUAL</strong> with a <strong>feasible successor</strong>, a pre-validated loop-free backup route, giving sub-second failover without recomputation. Mention it only if the shop is Cisco.</p>
-<p><strong>BGP</strong> — path vector, runs over <strong>TCP port 179</strong>, AD 20 external / 200 internal. Carries the full internet table (~950,000 routes). eBGP runs between different AS, iBGP within one AS (and iBGP needs a full mesh or route reflectors). Selects on policy: weight → local preference → locally originated → shortest <strong>AS_PATH</strong> → origin → MED → eBGP over iBGP → lowest IGP metric to the next hop. You use it when you have two ISPs or you're peering. In this interview, one paragraph is enough.</p>` },
+      { t: 'EIGRP and BGP', h: `<p><strong>EIGRP</strong> — Cisco's, now published. Advanced distance vector, AD 90 internal, metric from bandwidth and delay. Uses <strong>DUAL</strong> (<em>Diffusing Update Algorithm</em>) with a <strong>feasible successor</strong> — a backup route that has already been proven loop-free ahead of time, so failover is sub-second with no recalculation needed. Mention it only if the shop is Cisco.</p>
+<p><strong>BGP</strong> — path vector, runs over <strong>TCP port 179</strong>, AD 20 external / 200 internal. Carries the full internet table (~950,000 routes). eBGP runs between different AS, iBGP within one AS (and iBGP needs a full mesh or route reflectors). Selects on business policy rather than speed: weight → local preference → locally originated → shortest <strong>AS_PATH</strong> (the list of networks the route crossed to get here) → origin → <strong>MED</strong> (<em>Multi-Exit Discriminator</em>, a hint to a neighbour about which of your links to prefer) → eBGP over iBGP → lowest IGP metric to the next hop. You use it when you have two ISPs or you're peering. In this interview, one paragraph is enough.</p>` },
       { t: 'Static routes and defaults', h: `<pre class="net-pre">ip route 0.0.0.0 0.0.0.0 203.0.113.1          # default: send anything unknown here
 ip route 10.5.0.0 255.255.0.0 172.16.1.2      # specific
 ip route 10.5.0.0 255.255.0.0 172.16.9.2 200  # floating static, AD 200, backup only</pre>
@@ -390,6 +573,7 @@ ip route 10.5.0.0 255.255.0.0 172.16.9.2 200  # floating static, AD 200, backup 
     layer: 'L2 Data Link',
     title: 'VLANs and Inter-VLAN Routing',
     tagline: 'Access vs trunk, 802.1Q tagging, native-VLAN mismatch, SVIs.',
+    explain: `One physical switch, but the finance PCs and the factory machines must not be able to see each other. A VLAN is that dividing line drawn in software — same hardware, separate networks, and traffic can only cross between them by going through a router.`,
     tags: ['VLAN', '802.1Q', 'trunk', 'SVI'],
     blocks: [
       { t: 'What a VLAN is', h: `<p>A VLAN is a logically separate L2 broadcast domain running on shared physical switches. VLAN 1 is the default — don't use it for user traffic.</p>
@@ -426,6 +610,7 @@ ip route 10.5.0.0 255.255.0.0 172.16.9.2 200  # floating static, AD 200, backup 
     layer: 'L2 Data Link',
     title: 'Link Aggregation',
     tagline: 'Four 1G links do not give one transfer 4G. Interviewers like this one.',
+    explain: `Bond several cables between two switches so they behave as one fat link, for bandwidth and for redundancy. The catch worth volunteering: one conversation still only rides one cable, so four 1-gig links do not make a single file transfer four times faster.`,
     tags: ['LACP', '802.3ad', 'EtherChannel'],
     blocks: [
       { t: 'The protocols', h: `<p>Bundle multiple physical links into one logical link for bandwidth and redundancy.</p>
@@ -443,6 +628,7 @@ ip route 10.5.0.0 255.255.0.0 172.16.9.2 200  # floating static, AD 200, backup 
     layer: 'Foundations',
     title: 'The Layer Models and Encapsulation',
     tagline: 'OSI, TCP/IP, and the one encapsulation fact interviewers probe.',
+    explain: `Seven layers is just a way of saying "each level solves one problem and hands the rest down." Your HTTP call knows nothing about cables; the cable knows nothing about HTTP. Each layer wraps the one above it in its own envelope — which is exactly what you already do with a request body inside an HTTP request inside a TLS session.`,
     tags: ['OSI', 'encapsulation', 'PDU'],
     blocks: [
       { t: 'OSI', h: `<table class="net-table"><thead><tr><th>OSI</th><th>Name</th><th>PDU</th><th>Devices</th><th>Protocols</th></tr></thead><tbody>
@@ -469,6 +655,7 @@ ip route 10.5.0.0 255.255.0.0 172.16.9.2 200  # floating static, AD 200, backup 
     layer: 'L4 Transport',
     title: 'TCP vs UDP, Handshake and Socket States',
     tagline: 'CLOSE_WAIT vs TIME_WAIT is the question most candidates get backwards.',
+    explain: `TCP is a phone call: you connect, you confirm every sentence was heard, you hang up properly. UDP is a postcard: write it, send it, never find out if it arrived. The socket states are just the status line of that phone call, and knowing two of them tells you whether a bug is yours or the network's.`,
     tags: ['TCP', 'UDP', 'handshake', 'sockets'],
     blocks: [
       { t: 'The comparison', h: `<table class="net-table"><thead><tr><th></th><th>TCP</th><th>UDP</th></tr></thead><tbody>
@@ -514,6 +701,7 @@ ip route 10.5.0.0 255.255.0.0 172.16.9.2 200  # floating static, AD 200, backup 
     layer: 'L4 Transport',
     title: 'MTU, MSS and Path MTU Discovery',
     tagline: 'Small requests work, large ones hang — the signature of a PMTUD blackhole.',
+    explain: `Every link has a maximum packet size. If something along the path can't fit your packet, it's supposed to send back a "too big" message — but firewalls often block that message, so the sender never learns and just keeps retrying. That's why the symptom is so distinctive: small requests work, large ones hang forever.`,
     tags: ['MTU', 'MSS', 'PMTUD', 'VPN'],
     blocks: [
       { t: 'The numbers', h: `<ul>
@@ -534,6 +722,7 @@ ping -f -l 1472 8.8.8.8         # Windows</pre>
     layer: 'L2 Data Link',
     title: 'ARP',
     tagline: 'Resolves an IP to a MAC on the local segment only.',
+    explain: `IP addresses tell you where something lives across the whole internet; MAC addresses only mean anything on your local wire. ARP is the shout that translates one into the other: "who has 192.168.1.50? Tell me your hardware address so I can actually put a frame on the wire."`,
     tags: ['ARP', 'gratuitous ARP', 'spoofing'],
     blocks: [
       { t: 'How it works', h: `<pre class="net-pre">Host A wants 192.168.1.50
@@ -555,6 +744,7 @@ A caches it (default ~4 hours Linux, 2 min Windows)</pre>
     layer: 'Services & Apps',
     title: 'DNS',
     tagline: 'Record types, resolution flow, and the failures that look like "the network is down".',
+    explain: `DNS turns a name into an address. Nearly every DNS incident you'll ever see is really a <em>caching</em> incident — somebody changed a record and the old answer is still sitting in a cache somewhere with time left on its clock.`,
     tags: ['DNS', 'TTL', 'dig'],
     blocks: [
       { t: 'Record types', h: `<table class="net-table"><thead><tr><th>Type</th><th>Purpose</th></tr></thead><tbody>
@@ -598,6 +788,7 @@ ipconfig /flushdns                # Windows</pre>` },
     layer: 'Services & Apps',
     title: 'DHCP — DORA',
     tagline: '169.254.x.x means nobody answered. New VLAN, nobody gets an IP? Missing ip helper-address.',
+    explain: `How a device that knows nothing gets an IP address, a gateway and a DNS server — four broadcast messages and it's on the network. And if you ever see an address starting <code>169.254</code>, that is the device saying "I asked and nobody answered."`,
     tags: ['DHCP', 'DORA', 'relay', 'APIPA'],
     blocks: [
       { t: 'The exchange', h: `<pre class="net-pre">DISCOVER  client broadcast (0.0.0.0 -&gt; 255.255.255.255, UDP 67)
@@ -617,6 +808,7 @@ ACK       server confirms, sends lease + gateway + DNS + domain</pre>
     layer: 'Foundations',
     title: 'What Happens When You Type a URL',
     tagline: 'The most common opening question in the industry, and a free layup. Aim for 3 minutes.',
+    explain: `The classic opening question in this industry, and a free layup: it lets you walk the entire stack in three minutes. It's also the one place where your application-side experience is an advantage rather than a gap, because steps 4 through 8 are where you've actually lived.`,
     tags: ['end-to-end', 'DNS', 'TLS', 'HTTP'],
     blocks: [
       { t: 'The script', h: `<ol>
@@ -640,6 +832,7 @@ ACK       server confirms, sends lease + gateway + DNS + domain</pre>
     layer: 'L3 Network',
     title: 'Subnetting',
     tagline: 'This is the filter. Bad at subnetting = no offer, regardless of everything else.',
+    explain: `A subnet mask draws a line through an address: everything left of the line says <em>which network</em>, everything right says <em>which device on it</em>. All of subnetting is finding that line and counting. It's also the pass/fail part of a networking interview — being slow here undoes everything else.`,
     tags: ['CIDR', 'VLSM', 'RFC 1918'],
     blocks: [
       { t: 'Memorize this table', h: `<table class="net-table"><thead><tr><th>CIDR</th><th>Mask</th><th>Block size</th><th>Total IPs</th><th>Usable hosts</th><th>/24s</th></tr></thead><tbody>
@@ -706,6 +899,7 @@ ACK       server confirms, sends lease + gateway + DNS + domain</pre>
     layer: 'L3 Network',
     title: 'NAT and PAT',
     tagline: 'NAT is not a firewall. Say this if they ask whether NAT provides security.',
+    explain: `Your home has one public address and twenty devices. NAT is the router rewriting the return address on the way out and remembering the swap, so replies find their way back to the right device. It's the reason you can't just reach a machine sitting behind someone's home router.`,
     tags: ['NAT', 'PAT', 'port forwarding'],
     blocks: [
       { t: 'The four flavors', h: `<ul>
@@ -725,6 +919,7 @@ ACK       server confirms, sends lease + gateway + DNS + domain</pre>
     layer: 'L3 Network',
     title: 'IPv6 — concepts only',
     tagline: '/64 is always the subnet size. No broadcast, no NAT, NDP instead of ARP.',
+    explain: `IPv4 ran out of addresses; IPv6 has effectively unlimited ones. Concepts only for this interview: subnets are always /64, there is no broadcast at all, and ARP is replaced by a mechanism built on ICMP.`,
     tags: ['IPv6', 'SLAAC', 'NDP'],
     blocks: [
       { t: 'What to know', h: `<ul>
@@ -746,6 +941,7 @@ ACK       server confirms, sends lease + gateway + DNS + domain</pre>
     layer: 'Ops & Troubleshooting',
     title: 'Cisco Commands to Have Ready',
     tagline: 'Be able to say what each one shows — and how to read the output.',
+    explain: `You will not be asked to configure a switch. You may well be asked what a command shows and how to read its output — especially which half of "up/up" is broken and what that tells you.`,
     tags: ['CLI', 'Cisco', 'show commands'],
     blocks: [
       { t: 'The commands', h: `<pre class="net-pre">show ip interface brief          # every interface, IP, admin status, line protocol
@@ -777,6 +973,7 @@ show version                     # model, IOS version, uptime</pre>` },
     layer: 'Ops & Troubleshooting',
     title: 'Troubleshooting Methodology and Commands',
     tagline: 'State a method when asked. Interviewers care that you have one, not which one.',
+    explain: `The method matters more than the tool. Establish the scope first (one user, or everyone?), then ask what changed, then work up or down the stack from wherever the evidence points. Saying that out loud is worth more than naming ten commands.`,
     tags: ['methodology', 'ping', 'traceroute', 'tcpdump'],
     blocks: [
       { t: 'Methodology', h: `<ul>
@@ -832,6 +1029,7 @@ route print                    # Windows</pre>` }
     layer: 'Ops & Troubleshooting',
     title: 'Symptom → Cause Table',
     tagline: 'The lookup table for "here is what users are reporting — where do you start?"',
+    explain: `The pattern-matching half of the job in one table: here's what the user reported, here's the usual culprit, here's the first thing to check. Interviewers love these because a real answer takes ten seconds.`,
     tags: ['diagnosis', 'symptoms'],
     blocks: [
       { t: 'Symptom → likely cause → first check', h: `<table class="net-table"><thead><tr><th>Symptom</th><th>Likely cause</th><th>First check</th></tr></thead><tbody>
@@ -857,6 +1055,7 @@ route print                    # Windows</pre>` }
     layer: 'Ops & Troubleshooting',
     title: 'Ports Cheat Sheet',
     tagline: 'Know 1521 and 7001 cold — they are the ones your own background makes fair game.',
+    explain: `A port number is just "which application on that machine". These are the well-known ones — pay particular attention to 1521 and 7001, because your own background makes those completely fair game.`,
     tags: ['ports', 'well-known'],
     blocks: [
       { t: 'Well-known ports', h: `<table class="net-table"><thead><tr><th>Port</th><th>Service</th><th>Port</th><th>Service</th></tr></thead><tbody>
@@ -885,6 +1084,7 @@ route print                    # Windows</pre>` }
     layer: 'Ops & Troubleshooting',
     title: 'Firewalls, ACLs and Cloud Security Groups',
     tagline: 'Top-down, first match wins, implicit deny at the end.',
+    explain: `A firewall rule list is read top to bottom, first match wins, and anything not explicitly allowed is denied at the end. The stateful-versus-stateless distinction decides one practical thing: whether you have to write the return-traffic rule yourself.`,
     tags: ['ACL', 'firewall', 'security group', 'NACL'],
     blocks: [
       { t: 'Firewall types', h: `<ul>
@@ -905,6 +1105,7 @@ route print                    # Windows</pre>` }
     layer: 'Services & Apps',
     title: 'Load Balancing',
     tagline: 'Your WebLogic experience maps directly here — make it a talking point.',
+    explain: `A load balancer takes one address and spreads requests across many servers. This is the card where your WebLogic experience is genuinely relevant experience — sticky sessions and health checks are problems you have already solved in production.`,
     tags: ['L4', 'L7', 'sticky sessions', 'health checks'],
     blocks: [
       { t: 'L4 vs L7', h: `<table class="net-table"><thead><tr><th></th><th>L4</th><th>L7</th></tr></thead><tbody>
@@ -927,6 +1128,7 @@ route print                    # Windows</pre>` }
     layer: 'Services & Apps',
     title: 'TLS',
     tagline: "Keystore is my identity, truststore is who I trust. Reversing them is the classic WebLogic SSL mistake.",
+    explain: `The handshake that turns an ordinary TCP connection into an encrypted one, plus proof you're talking to who you think you are. Keystore is <em>my</em> identity; truststore is <em>who I trust</em> — and swapping those two is the single most common Java SSL mistake.`,
     tags: ['TLS', 'SNI', 'certificates', 'mTLS'],
     blocks: [
       { t: 'The handshake, short version', h: `<ol>
@@ -951,6 +1153,7 @@ route print                    # Windows</pre>` }
     layer: 'Services & Apps',
     title: 'VPN and Overlay Networks',
     tagline: 'IPsec overhead is why "slow only over the VPN" is almost always MTU.',
+    explain: `An encrypted tunnel that makes a remote network behave as if it were local. The one fact that pays off in an interview: a tunnel adds overhead to every single packet, which is why "slow only over the VPN" is nearly always a packet-size problem rather than a bandwidth one.`,
     tags: ['IPsec', 'WireGuard', 'split tunnel'],
     blocks: [
       { t: 'The options', h: `<ul>
@@ -968,6 +1171,7 @@ route print                    # Windows</pre>` }
     layer: 'Services & Apps',
     title: 'Docker and Container Networking',
     tagline: 'Worth ten minutes because it will come up and most network candidates cannot answer it.',
+    explain: `Container networking in one line: by default each container gets a private address and shares the host's address to get out, which is why you have to explicitly publish a port to reach it from outside. Most networking candidates can't answer this — you can.`,
     tags: ['Docker', 'bridge', 'Kubernetes'],
     blocks: [
       { t: 'Docker network modes', h: `<ul>
@@ -986,6 +1190,7 @@ route print                    # Windows</pre>` }
     layer: 'Ops & Troubleshooting',
     title: 'Monitoring and Wireless',
     tagline: 'Skim-level breadth — enough to answer, not enough to get cornered.',
+    explain: `Breadth, not depth. Enough vocabulary to hold a conversation about how a team finds out something broke, plus the two or three Wi-Fi facts that always come up.`,
     tags: ['SNMP', 'NetFlow', 'Wi-Fi'],
     blocks: [
       { t: 'Monitoring', h: `<p><strong>SNMP</strong> (v2c community strings in clear text, v3 has auth + encryption; polling), <strong>NetFlow/sFlow/IPFIX</strong> (who talked to whom and how much), <strong>syslog</strong> (UDP 514, centralized), <strong>SPAN / port mirroring</strong> (copy traffic to an analyzer). Tools by name: SolarWinds, PRTG, Zabbix, LibreNMS, Grafana + Prometheus.</p>` },
@@ -998,6 +1203,7 @@ route print                    # Windows</pre>` }
     layer: 'Interview Strategy',
     title: 'Framing Your Background, STAR Stories, Questions to Ask',
     tagline: "You're a software engineer applying for network work. Own it rather than apologizing for it.",
+    explain: `You're a software engineer applying for network work, and he already knows it — he said so in writing. Own the gap in one sentence, then redirect to the thing you genuinely have: the discipline of proving where a problem lives instead of handing it to the next team.`,
     tags: ['STAR', 'framing', 'closing'],
     blocks: [
       { t: 'The framing line', h: `<p><em>"I've spent six years on the application side of the network. That means I've debugged connectivity from the perspective of the thing everyone blames first, so I'm used to proving where a problem actually lives instead of handing it off. I've configured WebLogic clusters, TLS keystores, load balancer integration, and cross-site database connectivity. What I'm building now is the depth below layer 4, which is why I've been working through subnetting, switching, and routing systematically."</em></p>
@@ -1030,8 +1236,32 @@ const networkingQuestions = [
   {
     id: 'net-q-priority',
     title: 'Priority Q&A — L1 / L2 / L3',
-    desc: 'The twelve questions that map directly onto the six topics the hiring manager named. Cover the answer, say yours out loud, then compare.',
+    desc: 'The questions that map directly onto the six topics the hiring manager named. Cover the answer, say yours out loud, then compare.',
     questions: [
+      { d: 'medium', q: 'What Layer 2 control protocols do you know, besides spanning tree?',
+        a: `<p>The ones I'd name are:</p>
+<ul>
+<li><strong>LACP</strong> — <em>Link Aggregation Control Protocol</em>, 802.3ad. Bundles several physical cables into one logical link for bandwidth and redundancy</li>
+<li><strong>LLDP</strong> — <em>Link Layer Discovery Protocol</em>, 802.1AB. Switches announce who they are and which port you're connected to, so you can see what's plugged in where. <strong>CDP</strong> is Cisco's older equivalent</li>
+<li><strong>DTP</strong> — <em>Dynamic Trunking Protocol</em>, Cisco. Negotiates whether a link becomes a trunk. I'd disable it, because a host that speaks DTP can talk a port into becoming a trunk and then see every VLAN — that's VLAN hopping</li>
+<li><strong>VTP</strong> — <em>VLAN Trunking Protocol</em>, Cisco. Syncs the VLAN list between switches. It's risky because a switch with a higher revision number can overwrite every VLAN in the domain, so most people run it in transparent mode</li>
+<li><strong>UDLD</strong> — <em>UniDirectional Link Detection</em>. Catches a fiber that only works in one direction, which is dangerous because a blocked STP port stops hearing BPDUs, assumes the path is gone, and starts forwarding — creating the exact loop STP was preventing</li>
+</ul>
+<p>And then the protection family on access ports: <strong>port security</strong>, <strong>BPDU guard</strong>, <strong>root guard</strong>, <strong>DHCP snooping</strong> and <strong>dynamic ARP inspection</strong>. Their common purpose is stopping an untrusted port from lying to the network.</p>` },
+      { d: 'medium', q: 'How would you lock down a switchport that faces a user desk?',
+        a: `<p>Start from the assumption that whatever gets plugged in there might be hostile or just wrong:</p>
+<ul>
+<li><strong>Access mode, negotiation off</strong> — <code>switchport mode access</code> and <code>switchport nonegotiate</code>, so nobody can turn it into a trunk and reach other VLANs</li>
+<li><strong>PortFast + BPDU Guard</strong> — the port goes straight to forwarding for the user, but shuts itself down the moment a BPDU arrives, which means somebody plugged in a switch</li>
+<li><strong>Port security</strong> — cap how many MAC addresses the port may learn, so nobody can flood the address table and force the switch to broadcast everything</li>
+<li><strong>DHCP snooping</strong> — mark only the uplink as trusted, so a home router plugged in backwards can't start handing out addresses</li>
+<li><strong>Dynamic ARP Inspection</strong> — validate ARP replies against the DHCP snooping table, which kills ARP spoofing</li>
+<li><strong>802.1X</strong> if the organisation has RADIUS — then the port carries no traffic at all until the device authenticates</li>
+</ul>` },
+      { d: 'medium', q: 'What is ICMP, and how does traceroute use it?',
+        a: `<p><strong>ICMP</strong> is the <em>Internet Control Message Protocol</em>, IP protocol number 1. It carries no user data — it's the channel routers and hosts use to report problems. Ping is ICMP echo request and echo reply, types 8 and 0.</p>
+<p>Traceroute is a trick built on <strong>TTL</strong>. It sends a packet with TTL set to 1; the first router decrements it to zero, drops it, and returns <strong>ICMP Time Exceeded</strong> — and that reply reveals the router's address. Then it sends TTL 2, which dies at the second router, and so on. Each round exposes one more hop in order. When it finally reaches the destination the reply is a different type, which is how it knows to stop.</p>
+<p>Two things I'd add, because they're how traceroute gets misread: asterisks at a middle hop mean that router chose not to answer the probe, not that traffic stopped there. And blocking ICMP at a firewall also blocks Type 3 Code 4, "fragmentation needed", which is what Path MTU Discovery relies on — that's the cause of the classic "small requests work, large ones hang".</p>` },
       { d: 'medium', q: 'Draw an Ethernet frame and tell me what each field does.',
         a: `<p>Preamble and start frame delimiter for clock sync, then destination MAC, then source MAC. <strong>Destination comes first</strong> so a cut-through switch can start forwarding before the frame has finished arriving. Optionally a 4-byte 802.1Q tag carrying the VLAN ID and priority. Then EtherType, which says what protocol is in the payload — 0x0800 for IPv4, 0x0806 for ARP. Then the payload, 46 to 1500 bytes, padded if it's short. Then a 4-byte FCS, a CRC over the frame; if it doesn't match, the receiver silently drops the frame and increments an error counter.</p>
 <p>Frame size is <strong>64 to 1518 bytes</strong>, and there's a 12-byte interframe gap after it.</p>` },
@@ -1178,7 +1408,12 @@ const networkingDrill = [
       { p: 'Unknown destination MAC', a: 'Flood within the VLAN' },
       { p: '802.1Q is', a: 'VLAN tagging on trunks' },
       { p: 'LACP standard', a: '802.3ad' },
-      { p: 'ARP resolves', a: 'IP → MAC, local segment only' }
+      { p: 'ARP resolves', a: 'IP → MAC, local segment only' },
+      { p: 'LLDP is', a: 'Link Layer Discovery Protocol, 802.1AB — who is plugged in where (CDP is Cisco\'s)' },
+      { p: 'DTP risk', a: 'A host can talk a port into becoming a trunk — VLAN hopping. Turn it off' },
+      { p: 'VTP risk', a: 'A higher revision number overwrites every switch\'s VLAN list' },
+      { p: 'DHCP snooping stops', a: 'A rogue DHCP server, and builds the IP↔MAC↔port binding table' },
+      { p: 'Dynamic ARP Inspection stops', a: 'ARP spoofing, by checking replies against that binding table' }
     ]
   },
   {
@@ -1192,7 +1427,9 @@ const networkingDrill = [
       { p: '802.1D convergence', a: '30 to 50 seconds' },
       { p: 'RSTP standard', a: '802.1w' },
       { p: 'RSTP port states', a: 'Discarding, learning, forwarding' },
-      { p: 'STP path cost for 1 Gbps', a: '4' }
+      { p: 'STP path cost for 1 Gbps', a: '4' },
+      { p: 'UDLD catches', a: 'A fiber working one direction only — STP would unblock and loop' },
+      { p: 'BPDU Guard does', a: 'Err-disables a PortFast port that receives a BPDU (someone plugged in a switch)' }
     ]
   },
   {
@@ -1210,7 +1447,12 @@ const networkingDrill = [
       { p: 'OSPF metric', a: 'Cost = reference bandwidth / link bandwidth' },
       { p: 'OSPF full adjacency state', a: 'Full' },
       { p: 'Distance vector vs link state', a: "Neighbors' tables vs full topology map" },
-      { p: 'BGP port / transport', a: 'TCP 179' }
+      { p: 'BGP port / transport', a: 'TCP 179' },
+      { p: 'ICMP is', a: 'Internet Control Message Protocol — the error and diagnostics channel, IP protocol 1' },
+      { p: 'ICMP types 8 / 0', a: 'Echo request / echo reply — that pair is ping' },
+      { p: 'ICMP type 11', a: 'Time Exceeded — TTL hit 0. What traceroute reads' },
+      { p: 'ICMP type 3 code 4', a: 'Fragmentation needed but DF set — what PMTUD depends on' },
+      { p: 'RIB vs FIB', a: 'Routing table in software vs the hardware copy that forwards packets' }
     ]
   },
   {

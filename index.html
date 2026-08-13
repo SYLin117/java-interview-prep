@@ -1059,6 +1059,16 @@
     white-space: nowrap;
   }
   .net-table code { white-space: nowrap; }
+  /* What an abbreviation stands for, under the abbreviation itself in a table
+     cell — the guide is read by someone with no networking background. */
+  .net-expand {
+    display: block;
+    font-size: 0.82em;
+    font-weight: 400;
+    font-style: italic;
+    color: var(--text-dim);
+    margin-top: 0.1rem;
+  }
   /* ASCII diagrams and CLI transcripts — must NOT wrap, or the frame/header
      drawings lose their alignment and stop being readable. */
   .net-pre {
@@ -1075,6 +1085,32 @@
     -webkit-overflow-scrolling: touch;
   }
   .q-answer .net-pre { background: white; }
+  /* "In plain English" — the beginner-facing framing that leads every guide card */
+  .net-explain {
+    background: var(--accent-soft);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+    padding: 0.75rem 1rem;
+    margin-top: 0.9rem;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--text);
+  }
+  .net-explain-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.3rem;
+  }
+  .net-explain code {
+    background: var(--bg-card);
+    border: 1px solid var(--line-soft);
+    border-radius: 4px;
+    padding: 0.05rem 0.3rem;
+    font-size: 0.86em;
+  }
   .net-layer-pill {
     display: inline-block;
     font-size: 0.66rem;
@@ -3736,11 +3772,16 @@
       section.id = card.id;
       section.dataset.layer = card.layer.toLowerCase();
       section.dataset.search = (card.title + ' ' + card.tagline + ' ' + card.layer + ' ' +
-        card.tags.join(' ') + ' ' +
+        card.tags.join(' ') + ' ' + stripTags(card.explain || '') + ' ' +
         card.blocks.map(b => b.t + ' ' + stripTags(b.h)).join(' ')).toLowerCase();
 
       const tagsHTML = card.tags.map(t => `<span class="sd-tag">${escapeHtml(t)}</span>`).join('');
-      const bodyHTML = card.blocks.map(b => `
+      // The plain-English framing leads the card body, before the detail blocks —
+      // it's the sentence to reach for when asked to explain the topic cold.
+      const explainHTML = card.explain
+        ? `<div class="net-explain"><div class="net-explain-label">In plain English</div>${card.explain}</div>`
+        : '';
+      const bodyHTML = explainHTML + card.blocks.map(b => `
         <div class="sd-block"><div class="sd-block-title">${escapeHtml(b.t)}</div>
         <div class="sd-block-body">${b.h}</div></div>`).join('');
 
