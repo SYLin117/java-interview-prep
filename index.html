@@ -335,6 +335,10 @@
      does nothing (the theme dropdown was inert before this was added). */
   .sd-concept-section.hidden { display: none; }
   .sd-case.hidden { display: none; }
+  /* Networking filtering — same trap, same fix: applyNetworkingFilters() toggles
+     .hidden on guide cards, Q&A sections and drill sections. */
+  .net-card.hidden, .net-qa-section.hidden, .net-drill-section.hidden { display: none; }
+  .net-drill-row.hidden { display: none; }
 
   /* MSI view — process-overview card + prep sections */
   .msi-section.hidden, .msi-process.hidden { display: none; }
@@ -907,9 +911,11 @@
   .lc-company-pill[data-company="bytedance"] { background: #325ab4; }
 
   /* ─── System Design view ───
-     (.company-subtabs in the Companies view shares these rules; it keeps its
-     own class because the SD click handler binds to every .sd-subtab) */
+     (.company-subtabs in the Companies view and .net-subtabs in the Networking
+     view share these rules; they keep their own classes because the SD click
+     handler binds to every .sd-subtab on the page) */
   .company-subtabs,
+  .net-subtabs,
   .sd-subtabs {
     display: inline-flex;
     gap: 0.25rem;
@@ -920,6 +926,7 @@
     margin-right: 0.35rem;
   }
   .company-subtab,
+  .net-subtab,
   .sd-subtab {
     border: none;
     background: transparent;
@@ -933,12 +940,18 @@
     white-space: nowrap;
   }
   .company-subtab:hover,
+  .net-subtab:hover,
   .sd-subtab:hover { color: var(--text); }
   .company-subtab.active,
+  .net-subtab.active,
   .sd-subtab.active { background: var(--bg-card); color: var(--accent); box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
-  /* Case-study cards */
-  .sd-case { padding: 0; overflow: hidden; }
-  .sd-case-head {
+  /* Case-study cards (.net-card in the Networking view shares every rule; it
+     keeps its own class because applySystemDesignFilters() queries .sd-case
+     document-wide and would otherwise hide networking cards) */
+  .sd-case,
+  .net-card { padding: 0; overflow: hidden; }
+  .sd-case-head,
+  .net-card-head {
     display: grid;
     grid-template-columns: auto 1fr auto;
     gap: 0.9rem;
@@ -946,17 +959,22 @@
     padding: 1.1rem 1.3rem;
     cursor: pointer;
   }
-  .sd-case-head:hover { background: var(--bg-soft); }
-  .sd-case-icon { font-size: 1.6rem; line-height: 1.2; }
-  .sd-case-meta { min-width: 0; }
-  .sd-case-toggle {
+  .sd-case-head:hover,
+  .net-card-head:hover { background: var(--bg-soft); }
+  .sd-case-icon,
+  .net-card-icon { font-size: 1.6rem; line-height: 1.2; }
+  .sd-case-meta,
+  .net-card-meta { min-width: 0; }
+  .sd-case-toggle,
+  .net-card-toggle {
     font-size: 1.3rem;
     color: var(--text-faint);
     font-weight: 300;
     line-height: 1;
     transition: transform 0.15s;
   }
-  .sd-case.expanded .sd-case-toggle { transform: rotate(45deg); }
+  .sd-case.expanded .sd-case-toggle,
+  .net-card.expanded .net-card-toggle { transform: rotate(45deg); }
   .sd-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.5rem; }
   .sd-tag {
     font-size: 0.66rem;
@@ -968,8 +986,10 @@
     border-radius: 3px;
     padding: 0.1rem 0.4rem;
   }
-  .sd-case-body { display: none; padding: 0 1.3rem 1.2rem; }
-  .sd-case.expanded .sd-case-body { display: block; }
+  .sd-case-body,
+  .net-card-body { display: none; padding: 0 1.3rem 1.2rem; }
+  .sd-case.expanded .sd-case-body,
+  .net-card.expanded .net-card-body { display: block; }
   .sd-block { border-top: 1px solid var(--line-soft); padding-top: 0.9rem; margin-top: 0.9rem; }
   .sd-block-title {
     font-size: 0.72rem;
@@ -1002,6 +1022,144 @@
     white-space: pre-wrap;
     overflow-x: auto;
   }
+
+  /* ─── Networking view ───
+     The guide cards reuse the .sd-block* internals above (purely presentational
+     — no SD script queries them). What's new here is table styling, the ASCII
+     diagram <pre>, and the recall-drill cards. */
+  .sd-block-body p { margin: 0.55rem 0; line-height: 1.7; }
+  .sd-block-body ol { margin: 0.3rem 0 0.3rem 1.1rem; }
+  .sd-block-body ol li { margin: 0.35rem 0; }
+  /* Tables appear in guide cards and in Q&A answers, so this is deliberately
+     scoped to the class, not to a container. Long tables scroll inside their
+     own wrapper rather than pushing the page sideways on a phone. */
+  .net-table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-collapse: collapse;
+    margin: 0.6rem 0 0.9rem;
+    font-size: 0.88rem;
+    white-space: normal;
+  }
+  .net-table th, .net-table td {
+    border: 1px solid var(--line-soft);
+    padding: 0.42rem 0.6rem;
+    text-align: left;
+    vertical-align: top;
+    line-height: 1.5;
+  }
+  .net-table th {
+    background: var(--bg-soft);
+    font-weight: 600;
+    font-size: 0.8rem;
+    letter-spacing: 0.02em;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+  .net-table code { white-space: nowrap; }
+  /* What an abbreviation stands for, under the abbreviation itself in a table
+     cell — the guide is read by someone with no networking background. */
+  .net-expand {
+    display: block;
+    font-size: 0.82em;
+    font-weight: 400;
+    font-style: italic;
+    color: var(--text-dim);
+    margin-top: 0.1rem;
+  }
+  /* ASCII diagrams and CLI transcripts — must NOT wrap, or the frame/header
+     drawings lose their alignment and stop being readable. */
+  .net-pre {
+    background: var(--bg-soft);
+    border: 1px solid var(--line-soft);
+    border-radius: 6px;
+    padding: 0.8rem 1rem;
+    margin: 0.6rem 0 0.9rem;
+    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.78rem;
+    line-height: 1.55;
+    white-space: pre;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .q-answer .net-pre { background: white; }
+  /* "In plain English" — the beginner-facing framing that leads every guide card */
+  .net-explain {
+    background: var(--accent-soft);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+    padding: 0.75rem 1rem;
+    margin-top: 0.9rem;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--text);
+  }
+  .net-explain-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.3rem;
+  }
+  .net-explain code {
+    background: var(--bg-card);
+    border: 1px solid var(--line-soft);
+    border-radius: 4px;
+    padding: 0.05rem 0.3rem;
+    font-size: 0.86em;
+  }
+  .net-layer-pill {
+    display: inline-block;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 0.1rem 0.4rem;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+  }
+  /* Recall drill — prompt always visible, answer covered until clicked */
+  .net-drill-table { border-top: 1px solid var(--line-soft); }
+  .net-drill-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    align-items: center;
+    padding: 0.6rem 0.2rem;
+    border-bottom: 1px solid var(--line-soft);
+    cursor: pointer;
+  }
+  .net-drill-row:hover { background: var(--bg-soft); }
+  .net-drill-p { font-size: 0.93rem; color: var(--text); }
+  .net-drill-a {
+    font-size: 0.93rem;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--line);
+    border-radius: 5px;
+    padding: 0.15rem 0.5rem;
+    user-select: none;
+  }
+  /* Covered state: the text is still in the DOM (so search finds it) but
+     invisible — clicking the row reveals it. */
+  .net-drill-row:not(.revealed) .net-drill-a { color: transparent; }
+  .net-drill-row.revealed .net-drill-a { background: transparent; padding-left: 0; user-select: text; }
+  .net-drill-hint {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    margin: 0 0 1rem;
+  }
+  @media (max-width: 620px) {
+    .net-drill-row { grid-template-columns: 1fr; gap: 0.3rem; }
+  }
+
   /* ─── Sticky filter bar (wraps the chips on both Topics + LeetCode views) ─── */
   .filter-bar {
     position: sticky;
@@ -1490,6 +1648,7 @@
       <button class="view-btn" data-view="leetcode" role="tab" aria-selected="false">LeetCode<span class="view-btn-extra"> 225</span></button>
       <button class="view-btn" data-view="companies" role="tab" aria-selected="false">Companies</button>
       <button class="view-btn" data-view="systemdesign" role="tab" aria-selected="false">System Design</button>
+      <button class="view-btn" data-view="networking" role="tab" aria-selected="false">Networking</button>
     </div>
     <div class="search-box">
       <input type="text" id="search" placeholder="Search questions..." autocomplete="off">
@@ -1756,6 +1915,57 @@
 
 </div><!-- /#system-design-view -->
 
+<div id="networking-view" hidden>
+
+  <section class="hero">
+    <div class="hero-label">Networking · Network Engineer Prep</div>
+    <h1 class="hero-title">Networking Interview Prep</h1>
+    <p class="hero-subtitle">
+      Final-round prep for a network engineer loop whose scope the hiring manager
+      pinned to <strong>OSI layers 1, 2 and 3</strong>. Three ways to work through it:
+      <strong>Study Guide</strong> — reference cards covering the L2 frame format, the
+      IP packet, switch learning, STP, router forwarding, routing protocols, plus
+      subnetting, troubleshooting and the service layer; <strong>Q&amp;A Drills</strong>
+      — model answers to say out loud, including a timed subnetting practice set; and
+      <strong>Recall Cards</strong> — the 60-second drill with the answers covered.
+    </p>
+    <div class="hero-meta">
+      <div class="meta-cell">
+        <div class="label">Guide Cards</div>
+        <div class="value" id="stat-net-cards">&mdash;</div>
+      </div>
+      <div class="meta-cell">
+        <div class="label">Q&amp;A Drills</div>
+        <div class="value" id="stat-net-questions">&mdash;</div>
+      </div>
+      <div class="meta-cell">
+        <div class="label">Recall Cards</div>
+        <div class="value" id="stat-net-drill">&mdash;</div>
+      </div>
+      <div class="meta-cell">
+        <div class="label">Scope</div>
+        <div class="value">L1 · L2 · L3</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="filter-bar">
+    <div class="filter-bar-inner">
+      <div class="net-subtabs" role="tablist" aria-label="Networking mode">
+        <button class="net-subtab active" data-net="guide" role="tab" aria-selected="true">Study Guide</button>
+        <button class="net-subtab" data-net="qa" role="tab" aria-selected="false">Q&amp;A Drills</button>
+        <button class="net-subtab" data-net="drill" role="tab" aria-selected="false">Recall Cards</button>
+      </div>
+      <div class="lc-filters" id="net-filters" aria-label="Filter networking topics"></div>
+    </div>
+  </div>
+
+  <main id="net-guide-content"></main>
+  <main id="net-qa-content" hidden></main>
+  <main id="net-drill-content" hidden></main>
+
+</div><!-- /#networking-view -->
+
 
 <footer>
   Built for senior-track interview prep · Java 17+ · Spring Boot 3.x<br>
@@ -1800,6 +2010,7 @@
 <script src="supermicro.js"></script>
 <script src="systemdesign.js"></script>
 <script src="msi.js"></script>
+<script src="networking.js"></script>
 <script>
   // ─────── Bonus sections ───────
   // content.js keeps every bonus question in one `extras` object, each tagged
@@ -1938,6 +2149,14 @@
   setStat('stat-sd-questions', systemDesignThemes.reduce((a, t) => a + t.questions.length, 0));
   setStat('stat-sd-themes', systemDesignThemes.length);
   setStat('stat-sd-cases', systemDesignCases.length);
+
+  // Networking view.
+  setStat('stat-net-cards', networkingGuide.length,
+    `${[...new Set(networkingGuide.map(c => c.layer))].join(' · ')}`);
+  setStat('stat-net-questions', networkingQuestions.reduce((a, g) => a + g.questions.length, 0),
+    `${networkingQuestions.length} sets`);
+  setStat('stat-net-drill', networkingDrill.reduce((a, g) => a + g.items.length, 0),
+    '60-second recall drill');
 
   const topicSortFieldByKey = {
     number: { key: 'number', label: 'No.', value: (_question, index) => index + 1, compare: (a, b) => Number(a) - Number(b) },
@@ -3532,7 +3751,228 @@
     if (proc) proc.classList.toggle('hidden', !!msiSearchTerm);
   }
 
-  // ─────── View toggle (Topics ↔ LeetCode ↔ Companies ↔ System Design) with URL-hash routing ───────
+  // ─────── Networking view: Study Guide cards + Q&A drills + recall cards ───────
+  let netSearchTerm = '';
+  let activeNetLayer = null;      // active guide-card layer, lowercased (null = all)
+  let activeNetSection = null;    // active Q&A section id (null = all)
+  let netSubtab = 'guide';        // 'guide' | 'qa' | 'drill'
+  (function renderNetworking() {
+    if (typeof networkingGuide === 'undefined') return;
+    const guideEl = document.getElementById('net-guide-content');
+    const qaEl = document.getElementById('net-qa-content');
+    const drillEl = document.getElementById('net-drill-content');
+    const netFilters = document.getElementById('net-filters');
+    if (!guideEl || !qaEl || !drillEl) return;
+    const stripTags = h => h.replace(/<[^>]*>/g, ' ');
+
+    // ── Study Guide: one expandable card per topic ──
+    networkingGuide.forEach((card, i) => {
+      const section = document.createElement('section');
+      section.className = 'section net-card';
+      section.id = card.id;
+      section.dataset.layer = card.layer.toLowerCase();
+      section.dataset.search = (card.title + ' ' + card.tagline + ' ' + card.layer + ' ' +
+        card.tags.join(' ') + ' ' + stripTags(card.explain || '') + ' ' +
+        card.blocks.map(b => b.t + ' ' + stripTags(b.h)).join(' ')).toLowerCase();
+
+      const tagsHTML = card.tags.map(t => `<span class="sd-tag">${escapeHtml(t)}</span>`).join('');
+      // The plain-English framing leads the card body, before the detail blocks —
+      // it's the sentence to reach for when asked to explain the topic cold.
+      const explainHTML = card.explain
+        ? `<div class="net-explain"><div class="net-explain-label">In plain English</div>${card.explain}</div>`
+        : '';
+      const bodyHTML = explainHTML + card.blocks.map(b => `
+        <div class="sd-block"><div class="sd-block-title">${escapeHtml(b.t)}</div>
+        <div class="sd-block-body">${b.h}</div></div>`).join('');
+
+      section.innerHTML = `
+        <div class="net-card-head">
+          <div class="net-card-icon">${card.icon}</div>
+          <div class="net-card-meta">
+            <div class="section-num">Card ${String(i + 1).padStart(2, '0')}<span class="net-layer-pill">${escapeHtml(card.layer)}</span></div>
+            <h2 class="section-title">${escapeHtml(card.title)}</h2>
+            <p class="section-desc">${escapeHtml(card.tagline)}</p>
+            <div class="sd-tags">${tagsHTML}</div>
+          </div>
+          <div class="net-card-toggle">+</div>
+        </div>
+        <div class="net-card-body">${bodyHTML}</div>`;
+      guideEl.appendChild(section);
+    });
+
+    // ── Q&A drills: one section per group, rows sorted easy → hard ──
+    const diffRank = { easy: 0, medium: 1, hard: 2 };
+    networkingQuestions.forEach((group, i) => {
+      const section = document.createElement('section');
+      section.className = 'section net-qa-section';
+      section.id = group.id;
+      section.dataset.section = group.id;
+      section.dataset.name = group.title.toLowerCase();
+
+      let rowsHTML = `
+        <div class="q-row q-head"><div>#</div><div>Level</div><div>Question</div><div></div></div>`;
+      const sortedQs = [...group.questions].sort((a, b) => diffRank[a.d] - diffRank[b.d]);
+      sortedQs.forEach((q, qi) => {
+        rowsHTML += `
+          <div class="q-row q-data" data-q="${escapeHtml(q.q.toLowerCase())}" data-a="${escapeHtml(stripTags(q.a).toLowerCase())}">
+            <div class="q-num">${String(qi + 1).padStart(2, '0')}</div>
+            <div class="q-diff ${q.d}"><span class="pill">${q.d}</span></div>
+            <div class="q-text">${escapeHtml(q.q)}</div>
+            <div class="q-toggle">+</div>
+            <div class="q-answer">${q.a}</div>
+          </div>`;
+      });
+
+      section.innerHTML = `
+        <div class="section-header">
+          <div class="section-num">Set ${String(i + 1).padStart(2, '0')} · Networking</div>
+          <h2 class="section-title">${escapeHtml(group.title)}</h2>
+          <p class="section-desc">${escapeHtml(group.desc)}</p>
+        </div>
+        <div class="q-table">${rowsHTML}</div>`;
+      qaEl.appendChild(section);
+    });
+
+    // ── Recall cards: prompt visible, answer covered until the row is clicked ──
+    networkingDrill.forEach(group => {
+      const section = document.createElement('section');
+      section.className = 'section net-drill-section';
+      section.id = group.id;
+      section.dataset.search = (group.title + ' ' +
+        group.items.map(it => it.p + ' ' + it.a).join(' ')).toLowerCase();
+
+      const rowsHTML = group.items.map(it => `
+        <div class="net-drill-row" data-search="${escapeHtml((it.p + ' ' + it.a).toLowerCase())}">
+          <div class="net-drill-p">${escapeHtml(it.p)}</div>
+          <div class="net-drill-a">${escapeHtml(it.a)}</div>
+        </div>`).join('');
+
+      section.innerHTML = `
+        <div class="section-header">
+          <h2 class="section-title">${escapeHtml(group.title)}</h2>
+          <p class="section-desc">${group.items.length} cards. Click a row to reveal the answer.</p>
+        </div>
+        <div class="net-drill-table">${rowsHTML}</div>`;
+      drillEl.appendChild(section);
+    });
+
+    // Expand/collapse — cards toggle from their header only, so body text stays
+    // selectable; Q&A rows use the same "ignore clicks inside the answer" rule
+    // as every other view.
+    guideEl.querySelectorAll('.net-card').forEach(card => {
+      card.querySelector('.net-card-head').addEventListener('click', () => card.classList.toggle('expanded'));
+    });
+    qaEl.querySelectorAll('.q-row.q-data').forEach(row => {
+      row.addEventListener('click', (e) => {
+        if (e.target.closest('.q-answer')) return;
+        row.classList.toggle('expanded');
+      });
+    });
+    drillEl.querySelectorAll('.net-drill-row').forEach(row => {
+      row.addEventListener('click', () => row.classList.toggle('revealed'));
+    });
+
+    // Filter controls — the layer dropdown belongs to the Study Guide, the
+    // section dropdown to the Q&A drills. Both render once and are swapped by
+    // the sub-tab handler (the .lc-filter-row[hidden] rule performs the swap).
+    if (netFilters) {
+      const layerTotals = {};
+      networkingGuide.forEach(c => { layerTotals[c.layer] = (layerTotals[c.layer] || 0) + 1; });
+      let layerHTML = `<div class="lc-filter-row" id="net-layer-row"><label class="lc-filter-label" for="net-layer-select">Layer</label>` +
+        `<select id="net-layer-select" class="lc-select" aria-label="Filter guide cards by layer">` +
+        `<option value="">All (${networkingGuide.length})</option>`;
+      Object.keys(layerTotals).forEach(name => {
+        layerHTML += `<option value="${escapeHtml(name.toLowerCase())}">${escapeHtml(name)} (${layerTotals[name]})</option>`;
+      });
+      layerHTML += `</select></div>`;
+
+      let sectionHTML = `<div class="lc-filter-row" id="net-section-row" hidden><label class="lc-filter-label" for="net-section-select">Set</label>` +
+        `<select id="net-section-select" class="lc-select" aria-label="Filter questions by set">` +
+        `<option value="">All sets (${networkingQuestions.reduce((a, g) => a + g.questions.length, 0)})</option>`;
+      networkingQuestions.forEach(g => {
+        sectionHTML += `<option value="${escapeHtml(g.id)}">${escapeHtml(g.title)} (${g.questions.length})</option>`;
+      });
+      sectionHTML += `</select></div>`;
+
+      netFilters.innerHTML = layerHTML + sectionHTML;
+      netFilters.addEventListener('change', (e) => {
+        if (e.target.closest('#net-layer-select')) {
+          activeNetLayer = e.target.value || null;
+        } else if (e.target.closest('#net-section-select')) {
+          activeNetSection = e.target.value || null;
+        } else {
+          return;
+        }
+        applyNetworkingFilters();
+      });
+    }
+
+    // Sub-tab toggle (Study Guide ↔ Q&A Drills ↔ Recall Cards)
+    document.querySelectorAll('.net-subtab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        netSubtab = btn.dataset.net;
+        document.querySelectorAll('.net-subtab').forEach(b => {
+          const on = b === btn;
+          b.classList.toggle('active', on);
+          b.setAttribute('aria-selected', String(on));
+        });
+        guideEl.hidden = netSubtab !== 'guide';
+        qaEl.hidden = netSubtab !== 'qa';
+        drillEl.hidden = netSubtab !== 'drill';
+        const layerRow = document.getElementById('net-layer-row');
+        const sectionRow = document.getElementById('net-section-row');
+        if (layerRow) layerRow.hidden = netSubtab !== 'guide';
+        if (sectionRow) sectionRow.hidden = netSubtab !== 'qa';
+        applyNetworkingFilters();
+        window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+      });
+    });
+  })();
+
+  /**
+   * Filter the active Networking sub-tab.
+   * Guide: the layer dropdown and search both filter whole cards.
+   * Q&A: the set dropdown picks a section; search narrows individual rows and
+   * hides a section only when search yields zero rows in it.
+   * Drill: search filters individual rows, and a section disappears when none
+   * of its rows match.
+   */
+  function applyNetworkingFilters() {
+    if (netSubtab === 'guide') {
+      document.querySelectorAll('.net-card').forEach(card => {
+        const layerMatch = !activeNetLayer || card.dataset.layer === activeNetLayer;
+        const searchMatch = !netSearchTerm || (card.dataset.search || '').includes(netSearchTerm);
+        card.classList.toggle('hidden', !(layerMatch && searchMatch));
+      });
+    } else if (netSubtab === 'qa') {
+      document.querySelectorAll('.net-qa-section').forEach(section => {
+        if (activeNetSection && section.dataset.section !== activeNetSection) {
+          section.classList.add('hidden');
+          return;
+        }
+        let visible = 0;
+        section.querySelectorAll('.q-row.q-data').forEach(row => {
+          const hit = !netSearchTerm || (row.dataset.q || '').includes(netSearchTerm) ||
+            (row.dataset.a || '').includes(netSearchTerm) || section.dataset.name.includes(netSearchTerm);
+          row.classList.toggle('hidden', !hit);
+          if (hit) visible++;
+        });
+        section.classList.toggle('hidden', !!netSearchTerm && visible === 0);
+      });
+    } else {
+      document.querySelectorAll('.net-drill-section').forEach(section => {
+        let visible = 0;
+        section.querySelectorAll('.net-drill-row').forEach(row => {
+          const hit = !netSearchTerm || (row.dataset.search || '').includes(netSearchTerm);
+          row.classList.toggle('hidden', !hit);
+          if (hit) visible++;
+        });
+        section.classList.toggle('hidden', visible === 0);
+      });
+    }
+  }
+
+  // ─────── View toggle (Topics ↔ LeetCode ↔ Companies ↔ System Design ↔ Networking) with URL-hash routing ───────
   const viewBtns  = document.querySelectorAll('.view-btn');
   const topicsView = document.getElementById('topics-view');
   const leetView   = document.getElementById('leetcode-view');
@@ -3541,14 +3981,16 @@
   const sdView     = document.getElementById('system-design-view');
   const msiView    = document.getElementById('msi-view');
   const companiesView = document.getElementById('companies-view');
+  const netView    = document.getElementById('networking-view');
   const searchInput = document.getElementById('search');
-  const VIEW_EL = { topics: topicsView, leetcode: leetView, companies: companiesView, systemdesign: sdView };
-  const VIEW_HASH = { topics: '', leetcode: '#leetcode', companies: '#companies', systemdesign: '#systemdesign' };
+  const VIEW_EL = { topics: topicsView, leetcode: leetView, companies: companiesView, systemdesign: sdView, networking: netView };
+  const VIEW_HASH = { topics: '', leetcode: '#leetcode', companies: '#companies', systemdesign: '#systemdesign', networking: '#networking' };
   const VIEW_PLACEHOLDER = {
     topics: 'Search questions...',
     leetcode: 'Search problems...',
     companies: 'Search company prep...',
     systemdesign: 'Search system design...',
+    networking: 'Search networking prep...',
   };
 
   // ─────── Companies view: one sub-tab per company track ───────
@@ -3610,7 +4052,7 @@
    * LeetCode view, no hash for the Topics view. Pass `pushHash: false` to skip
    * this (used on initial load + on hashchange to avoid loops).
    *
-   * @param {'topics'|'leetcode'|'companies'|'systemdesign'} view - Which view to show.
+   * @param {'topics'|'leetcode'|'companies'|'systemdesign'|'networking'} view - Which view to show.
    * @param {{pushHash?: boolean}} [opts] - Optional flags. pushHash defaults to true.
    */
   function setView(view, opts = {}) {
@@ -3651,6 +4093,8 @@
     setCompany('supermicro', { pushHash: false });
   } else if (location.hash === '#systemdesign' || location.hash === '#sd') {
     setView('systemdesign', { pushHash: false });
+  } else if (location.hash === '#networking' || location.hash === '#net') {
+    setView('networking', { pushHash: false });
   } else if (location.hash === '#msi') {
     setView('companies', { pushHash: false });
     setCompany('msi', { pushHash: false });
@@ -3669,6 +4113,8 @@
       setCompany('supermicro', { pushHash: false });
     } else if (location.hash === '#systemdesign' || location.hash === '#sd') {
       setView('systemdesign', { pushHash: false });
+    } else if (location.hash === '#networking' || location.hash === '#net') {
+      setView('networking', { pushHash: false });
     } else if (location.hash === '#msi') {
       setView('companies', { pushHash: false });
       setCompany('msi', { pushHash: false });
@@ -3704,6 +4150,10 @@
       // System Design view: filter the active sub-tab (concepts rows or case cards)
       sdSearchTerm = term;
       applySystemDesignFilters();
+    } else if (!netView.hidden) {
+      // Networking view: filter the active sub-tab (guide cards, Q&A rows, drill rows)
+      netSearchTerm = term;
+      applyNetworkingFilters();
     } else {
       // Topics view: update search term and re-apply the combined filter (search + chip)
       topicsSearchTerm = term;

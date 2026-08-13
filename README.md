@@ -8,11 +8,11 @@ Live site: https://java-interview-prep-blush.vercel.app
 
 Five views, toggled from the header:
 
-- **Topics** — 262 interview Q&As across 13 Java/Spring topics (collections, concurrency, JVM, Spring Boot, JPA, testing, …), each expandable with a suggested answer.
-- **LeetCode** — 200 popular problems grouped into 16 buckets (Arrays & Hashing → Math & Bit Manipulation), each with a paraphrased statement (upgraded to the official one on demand), approach, complexity, named-algorithm explainers, an editable Java solution, and a server-synced reviewed checkbox.
-- **Garmin Behavioral** — 9 behavioral question chains with STAR answers and follow-ups.
-- **Supermicro** — 36 technical Q&As across 7 topics for the System Engineer track (server architecture, BMC/IPMI/Redfish, Linux, storage & RAID, networking, scripting), built from real interview reports and job postings.
-- **System Design** — 46 concept Q&As across 8 themes, plus 12 full case-study walkthroughs.
+- **Topics** — 321 interview Q&As across 22 sections: 262 across 13 core Java/Spring topics (collections, concurrency, JVM, Spring Boot, JPA, testing, …) plus 59 in the bonus sections (message queues, Redis, SQL, Docker, Kubernetes, …), each expandable with a suggested answer.
+- **LeetCode** — 225 popular problems grouped into 16 buckets (Arrays & Hashing → Math & Bit Manipulation), each with a paraphrased statement (upgraded to the official one on demand), approach, complexity, named-algorithm explainers, an editable Java solution, and a server-synced reviewed checkbox.
+- **Companies** — per-company prep behind sub-tabs: **Garmin** (behavioral question chains with STAR answers and follow-ups), **Supermicro** (36 technical Q&As across 7 System-Engineer topics), and **MSI** (interview-process card plus 48 Q&As on C#/.NET, Angular and SQL Server).
+- **System Design** — 46 concept Q&As across 8 themes, plus 20 full case-study walkthroughs.
+- **Networking** — network-engineer prep scoped to OSI layers 1–3, written for a reader with no networking background (every card opens with a plain-English framing, every acronym is expanded, and there's a glossary card decoding all 80 of them): 33 study-guide cards (Ethernet frame, IPv4 header, switch learning, STP and the other L2 control protocols, router forwarding, ICMP, routing protocols, subnetting, troubleshooting), 37 Q&A drills including a subnetting practice set, and a 58-card recall drill with the answers covered.
 
 Extras:
 
