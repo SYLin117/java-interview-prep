@@ -348,6 +348,16 @@ const networkingGuide = [
 </ul>
 <p>A switch fixes both by sending each frame <strong>only out the port where the destination actually is</strong>. Two conversations between four machines can then happen simultaneously and privately.</p>
 <p>Which raises the interesting question, and the one you'll be asked: <em>how does it know where anything is?</em> Nobody configures it. You plug it in and it just works.</p>` },
+      { t: 'How IPv6 changed the header', h: `<p>He asked about IP packet formats, so it's worth 30 seconds on what the successor looks like — the comparison shows you understand <em>why</em> the IPv4 fields exist.</p>
+<table class="net-table"><thead><tr><th>IPv4</th><th>IPv6</th><th>Why it changed</th></tr></thead><tbody>
+<tr><td>20 bytes, variable (options push it to 60)</td><td><strong>40 bytes, fixed</strong></td><td>A fixed size means a router doesn't have to parse a length field before it can find anything. Faster in hardware</td></tr>
+<tr><td>Header checksum</td><td><strong>Removed entirely</strong></td><td>Recomputing it at every hop cost real time, and layer 2's FCS plus layer 4's checksum already protect the data</td></tr>
+<tr><td>TTL</td><td>Hop Limit — same thing, honest name</td><td>It was always a hop count, never a timer</td></tr>
+<tr><td>Protocol</td><td>Next Header</td><td>Chains to optional extension headers instead of stuffing options into the main header</td></tr>
+<tr><td>Identification, Flags, Fragment Offset</td><td><strong>Moved out</strong>, into an extension header</td><td>Routers may not fragment at all in IPv6 — only the sending host can — so those fields don't belong in every packet</td></tr>
+<tr><td>32-bit addresses</td><td>128-bit addresses</td><td>The reason for the whole exercise</td></tr>
+</tbody></table>
+<p>The one-line summary if they ask: <em>"IPv6 made the header fixed-length and dropped the checksum and fragmentation fields, so routers do less work per packet — the address size was the motivation, but the simplification is what makes it faster."</em></p>` },
       { t: 'The insight: it learns by eavesdropping', h: `<p>Here's the trick, and it's genuinely clever in its simplicity.</p>
 <p><strong>Every frame carries the sender's address.</strong> So the switch doesn't need to ask anything or be told anything — it just reads the source address of everything that goes past and writes down where it came from:</p>
 <pre class="net-pre">a frame from aa:aa arrived on port 1
@@ -416,6 +426,40 @@ B (bb:bb) -- Fa0/2                Fa0/4 -- D (dd:dd)</pre>
 </ol>
 <p>What you're left with is a tree: exactly one active path between any two points. The blocked ports keep <em>listening</em> to the messages though — so when a link fails and the tree changes shape, a blocked port can be brought back into service and the redundancy pays off.</p>
 <p>That last part is why STP is a <em>control</em> protocol rather than a config setting: it's continuously re-deciding, not deciding once.</p>` },
+      { t: 'Worked example — three switches, work out which port blocks', h: `<p>Same idea as the switch-learning walkthrough: do it on paper until the order of operations is automatic. Three switches in a triangle, every link 1 Gbps so every link costs <strong>4</strong>.</p>
+<pre class="net-pre">                    +-------+
+                    |  SW1  |  priority 4096  &lt;- root
+                    +-+---+-+
+                      |   |
+                Gi0/1 |   | Gi0/2
+                      |   |
+                +-----+   +-----+
+                |               |
+             +--+--+  Gi0/3  +--+--+
+             | SW2 +---------+ SW3 |
+             +-----+  Gi0/3  +-----+
+
+  SW1  MAC 00:00:00:00:00:11   priority 4096
+  SW2  MAC 00:00:00:00:00:22   priority 32768 (default)
+  SW3  MAC 00:00:00:00:00:33   priority 32768 (default)
+  every link 1 Gbps, so every link costs 4</pre>
+<p><strong>Step 1 — elect the root.</strong> SW1 is configured with priority 4096; the other two are at the default 32768. Lowest bridge ID wins and priority is compared first, so <strong>SW1 is root</strong> and the MAC addresses never come into it.</p>
+<p><strong>Step 2 — each non-root switch picks one root port</strong>, the lowest total cost back to the root:</p>
+<ul>
+<li><strong>SW2</strong>: direct to SW1 costs 4. Going the long way via SW3 costs 4 + 4 = 8. So its root port is <strong>Gi0/1</strong>, facing SW1</li>
+<li><strong>SW3</strong>: identical reasoning. Root port is <strong>Gi0/2</strong>, facing SW1</li>
+</ul>
+<p><strong>Step 3 — each segment picks one designated port.</strong> Every port on the root bridge is automatically designated, which settles the two segments touching SW1. That leaves the SW2–SW3 link, where neither end is the root and <em>both</em> have cost 4 to reach it — a tie. The tiebreak is lowest bridge ID, and SW2's MAC (…22) beats SW3's (…33), so <strong>SW2's Gi0/3 is designated</strong>.</p>
+<p><strong>Step 4 — everything left over blocks.</strong> SW3's Gi0/3 is neither a root port nor a designated port, so it goes into blocking.</p>
+<table class="net-table"><thead><tr><th>Switch</th><th>Port</th><th>Role</th><th>State</th></tr></thead><tbody>
+<tr><td>SW1</td><td>both</td><td>Designated</td><td>Forwarding</td></tr>
+<tr><td>SW2</td><td>Gi0/1 → SW1</td><td>Root port</td><td>Forwarding</td></tr>
+<tr><td>SW2</td><td>Gi0/3 → SW3</td><td>Designated</td><td>Forwarding</td></tr>
+<tr><td>SW3</td><td>Gi0/2 → SW1</td><td>Root port</td><td>Forwarding</td></tr>
+<tr><td><strong>SW3</strong></td><td><strong>Gi0/3 → SW2</strong></td><td><strong>Alternate</strong></td><td><strong>Blocking</strong></td></tr>
+</tbody></table>
+<p><strong>What that costs you:</strong> traffic from SW2 to SW3 now travels SW2 → SW1 → SW3, even though a direct cable exists between them. That's the price of a loop-free topology, and it's precisely why you place the root where your capacity is rather than letting the default election pick an access switch.</p>
+<p><strong>What happens when a link dies:</strong> if the SW1–SW3 link fails, SW3 stops hearing root BPDUs on Gi0/2. Its blocked Gi0/3 is promoted and starts forwarding, restoring connectivity through SW2. With plain 802.1D that takes 30 to 50 seconds of timers; with RSTP it's sub-second, because that port was already designated an <em>alternate</em> — a pre-computed backup — rather than just "blocked".</p>` },
       { t: 'How the tree gets built', h: `<p><strong>1. Elect the root bridge.</strong> Every switch sends <strong>BPDUs</strong> — <em>Bridge Protocol Data Units</em>, small messages that say "here is my ID and my cost to reach the root" — to the reserved multicast address <code>01:80:C2:00:00:00</code>, every 2 seconds, each one initially claiming to be the root itself. Lowest <strong>Bridge ID</strong> wins.</p>
 <pre class="net-pre">Bridge ID = [ Priority 4 bits ][ Extended System ID 12 bits ][ MAC 48 bits ]
               default 32768        = VLAN number             switch's own</pre>
@@ -539,6 +583,33 @@ switchport nonegotiate        # and stop sending DTP frames</pre>` },
 <li>It builds the frame with <strong>destination MAC = the router</strong>, but the packet inside with <strong>destination IP = the server</strong></li>
 </ol>
 <p>That mismatch — frame addressed to the router, packet addressed to the far-away server — <em>is</em> the two-envelope model in action. And it explains a very common real fault: give a host the wrong subnet mask and it will misjudge what's local, ARP for a gateway that isn't on its subnet, get no answer, and be unable to reach anything off-network while local traffic works fine.</p>` },
+      { t: 'Worked example — two routers, with the actual routing tables', h: `<p>The abstract version is the seven steps. This is the same thing with real tables, which is what makes it stick.</p>
+<pre class="net-pre">  PC-A                R1                      R2               Server-B
+ 10.1.1.10          .1 | .1               .2 | .1              10.3.3.20
+     |                 |                     |                     |
+     +--- 10.1.1.0/24 -+-- 172.16.1.0/30 ----+--- 10.3.3.0/24 -----+</pre>
+<p><strong>R1's routing table</strong></p>
+<pre class="net-pre">C   10.1.1.0/24      directly connected, Gi0/0
+C   172.16.1.0/30    directly connected, Gi0/1
+O   10.3.3.0/24      [110/20] via 172.16.1.2, Gi0/1</pre>
+<p><strong>R2's routing table</strong></p>
+<pre class="net-pre">C   172.16.1.0/30    directly connected, Gi0/0
+C   10.3.3.0/24      directly connected, Gi0/1
+O   10.1.1.0/24      [110/20] via 172.16.1.1, Gi0/0</pre>
+<p>Now follow one packet from PC-A to 10.3.3.20:</p>
+<ol>
+<li><strong>PC-A decides it's remote.</strong> It masks 10.3.3.20 with its own /24 and gets 10.3.3.0, which isn't its own 10.1.1.0. So it can't deliver directly and must use its gateway. It ARPs for <strong>10.1.1.1</strong> — the gateway, not the server — and builds a frame to R1's MAC carrying a packet addressed to 10.3.3.20, TTL 64</li>
+<li><strong>R1 forwards.</strong> The frame is addressed to its own MAC, so it accepts and strips it. Longest prefix match on 10.3.3.20 hits <code>10.3.3.0/24 via 172.16.1.2</code>. TTL 64 → 63, checksum recomputed. It looks up 172.16.1.2 in its ARP cache to get R2's MAC, then builds a <em>brand new</em> frame: source = R1's Gi0/1 MAC, destination = R2's Gi0/0 MAC. The packet inside is untouched</li>
+<li><strong>R2 forwards — and this hop is different.</strong> Longest prefix match hits <code>10.3.3.0/24 directly connected</code>. Because the destination network is attached rather than reached through a next hop, R2 ARPs for <strong>10.3.3.20 itself</strong>. TTL 63 → 62. New frame: source = R2's Gi0/1 MAC, destination = Server-B's MAC</li>
+<li><strong>Server-B accepts.</strong> The destination MAC is its own, and so is the destination IP, so it strips both headers and hands the payload up the stack</li>
+</ol>
+<p><strong>Three things to notice, because they're the whole answer:</strong></p>
+<ul>
+<li>The IP source and destination were <strong>identical on all three wires</strong> — 10.1.1.10 to 10.3.3.20 throughout</li>
+<li>Both MAC addresses were <strong>completely different on each of the three wires</strong>, and none of them belonged to the two machines actually communicating except on the first and last hop</li>
+<li>TTL went <strong>64 → 63 → 62</strong>, so the server can tell the sender is two router hops away</li>
+</ul>
+<p>And the asymmetry worth spotting: the last router ARPs for the <em>destination host</em>, whereas every router before it ARPs for the <em>next router</em>. That's just what "directly connected" means in the table — there is no next hop left.</p>` },
       { t: 'The seven steps', h: `<ol>
 <li><strong>Receive the frame.</strong> Check the destination MAC — if it isn't the router's own interface MAC (or a broadcast/multicast it cares about), discard. Verify the FCS</li>
 <li><strong>De-encapsulate.</strong> Strip the Ethernet header and trailer. Read the EtherType, see <code>0x0800</code>, hand the payload to the IP process</li>
@@ -548,18 +619,13 @@ switchport nonegotiate        # and stop sending DTP frames</pre>` },
 <li><strong>Resolve the next hop's MAC.</strong> The routing table gives an exit interface and a next-hop IP. The router checks its ARP cache for that next-hop IP; if it's missing, it sends an ARP request and queues the packet</li>
 <li><strong>Re-encapsulate and transmit.</strong> Build a new Ethernet header: <strong>source MAC = the router's outgoing interface, destination MAC = the next hop's MAC</strong>. Recompute the FCS. Send</li>
 </ol>` },
-      { t: 'The end-to-end walk — memorize this table', h: `<p>This is the single best answer for demonstrating you understand L2 vs L3, and it's the most likely question in the set he described.</p>
-<p><strong>PC-A (10.1.1.10) sends to Server-B (10.3.3.20), through two routers.</strong></p>
-<pre class="net-pre">PC-A ---- [R1] ---- [R2] ---- Server-B
-10.1.1.10  .1  .1        .2   10.3.3.20
-           MAC:R1a  R1b  R2a  R2b</pre>
+      { t: 'The compact version — memorise this table', h: `<p>Same journey as the worked example above, reduced to the artifact worth carrying into the room. If you can reproduce this from memory you can answer any "what changes hop to hop" question:</p>
 <table class="net-table"><thead><tr><th>Hop</th><th>Src MAC</th><th>Dst MAC</th><th>Src IP</th><th>Dst IP</th><th>TTL</th></tr></thead><tbody>
 <tr><td>PC-A → R1</td><td>PC-A</td><td><strong>R1a</strong></td><td>10.1.1.10</td><td>10.3.3.20</td><td>64</td></tr>
 <tr><td>R1 → R2</td><td><strong>R1b</strong></td><td><strong>R2a</strong></td><td>10.1.1.10</td><td>10.3.3.20</td><td>63</td></tr>
 <tr><td>R2 → Server</td><td><strong>R2b</strong></td><td><strong>Server-B</strong></td><td>10.1.1.10</td><td>10.3.3.20</td><td>62</td></tr>
 </tbody></table>
-<p>Say this out loud: <strong>the MAC addresses change at every hop, the IP addresses never change, and the TTL drops by one each time.</strong> That sentence is the whole of L2 versus L3 in one line.</p>
-<p>Practise saying just the bold parts out loud: <em>MACs change every hop, IPs never change, TTL drops by one.</em></p>` },
+<p>Every bold value changes. Nothing in the two IP columns does. Say it out loud as one sentence: <strong>the MAC addresses change at every hop, the IP addresses never change, and the TTL drops by one each time.</strong></p>` },
       { t: 'Routing table anatomy', h: `<pre class="net-pre">      Codes: C - connected, S - static, O - OSPF, D - EIGRP, B - BGP
 
 O     10.3.3.0/24 [110/20] via 172.16.1.2, 00:14:22, GigabitEthernet0/1
@@ -1816,88 +1882,146 @@ const networkingDrill = [
     id: 'drill-frames',
     title: 'Frames & Switching',
     items: [
-      { p: 'Ethernet frame size range', a: '64 to 1518 bytes (1522 with a VLAN tag)' },
-      { p: 'EtherType for IPv4 / ARP', a: '0x0800 / 0x0806' },
-      { p: 'FCS covers', a: 'The whole frame, CRC32' },
-      { p: 'First 24 bits of a MAC', a: 'OUI — the vendor' },
-      { p: 'Switch learns from', a: 'Source MAC of arriving frames' },
-      { p: 'MAC aging default', a: '300 seconds' },
-      { p: 'Unknown destination MAC', a: 'Flood within the VLAN' },
-      { p: '802.1Q is', a: 'VLAN tagging on trunks' },
-      { p: 'LACP standard', a: '802.3ad' },
-      { p: 'ARP resolves', a: 'IP → MAC, local segment only' },
-      { p: 'LLDP is', a: 'Link Layer Discovery Protocol, 802.1AB — who is plugged in where (CDP is Cisco\'s)' },
-      { p: 'DTP risk', a: 'A host can talk a port into becoming a trunk — VLAN hopping. Turn it off' },
-      { p: 'VTP risk', a: 'A higher revision number overwrites every switch\'s VLAN list' },
-      { p: 'DHCP snooping stops', a: 'A rogue DHCP server, and builds the IP↔MAC↔port binding table' },
-      { p: 'Dynamic ARP Inspection stops', a: 'ARP spoofing, by checking replies against that binding table' }
+      { p: 'Ethernet frame size range', a: '64 to 1518 bytes (1522 with a VLAN tag)',
+        why: "64 is a leftover from half-duplex collision timing; 1518 is 1500 of payload plus 18 bytes of header and trailer." },
+      { p: 'EtherType for IPv4 / ARP', a: '0x0800 / 0x0806',
+        why: "It tells the receiver which protocol to hand the payload to. Without it the bytes that follow are meaningless." },
+      { p: 'FCS covers', a: 'The whole frame, CRC32',
+        why: "Mismatch means silent discard and an error counter. Nothing at layer 2 asks for a resend — that is TCP's job." },
+      { p: 'First 24 bits of a MAC', a: 'OUI — the vendor',
+        why: "The last 24 identify the device. The whole address is flat with no hierarchy, which is exactly why MACs cannot be routed." },
+      { p: 'Switch learns from', a: 'Source MAC of arriving frames',
+        why: "The source is evidence — the frame demonstrably arrived from that port. The destination is only the sender's guess." },
+      { p: 'MAC aging default', a: '300 seconds',
+        why: "So a laptop moved to a different port is not unreachable forever. It gets relearned the moment it speaks." },
+      { p: 'Unknown destination MAC', a: 'Flood within the VLAN',
+        why: "Wasteful but self-correcting: the destination's reply teaches the switch where it is, so it happens once per device." },
+      { p: '802.1Q is', a: 'VLAN tagging on trunks',
+        why: "4 bytes inserted after the source MAC. Access ports stay untagged, because the PC has no idea VLANs exist." },
+      { p: 'LACP standard', a: '802.3ad',
+        why: "Bundles cables so spanning tree sees one link and blocks none. A single conversation still rides one cable." },
+      { p: 'ARP resolves', a: 'IP → MAC, local segment only',
+        why: "For an off-subnet destination you ARP for the gateway instead, and send to its MAC with the far host's IP inside." },
+      { p: 'LLDP is', a: 'Link Layer Discovery Protocol, 802.1AB — who is plugged in where (CDP is Cisco\'s)',
+        why: "Answers what is on the other end of this cable, in one command, without a torch and a trip to the rack." },
+      { p: 'DTP risk', a: 'A host can talk a port into becoming a trunk — VLAN hopping. Turn it off',
+        why: "A trunk carries every VLAN, so a port talked into becoming one hands over the server and management VLANs." },
+      { p: 'VTP risk', a: 'A higher revision number overwrites every switch\'s VLAN list',
+        why: "Higher revision always wins, with no check on whether the sender matters. A stale lab switch can empty the whole domain." },
+      { p: 'DHCP snooping stops', a: 'A rogue DHCP server, and builds the IP↔MAC↔port binding table',
+        why: "The binding table it builds is what Dynamic ARP Inspection and IP Source Guard both depend on." },
+      { p: 'Dynamic ARP Inspection stops', a: 'ARP spoofing, by checking replies against that binding table',
+        why: "Without it, anything on the network can claim to be the gateway and read everyone's traffic." }
     ]
   },
   {
     id: 'drill-stp',
     title: 'Spanning Tree',
     items: [
-      { p: 'STP purpose', a: 'Prevent L2 loops — Ethernet has no TTL' },
-      { p: 'BPDU destination', a: '01:80:C2:00:00:00' },
-      { p: 'Bridge ID =', a: 'Priority + extended system ID + MAC' },
-      { p: 'STP timers', a: 'Hello 2 s, forward delay 15 s, max age 20 s' },
-      { p: '802.1D convergence', a: '30 to 50 seconds' },
-      { p: 'RSTP standard', a: '802.1w' },
-      { p: 'RSTP port states', a: 'Discarding, learning, forwarding' },
-      { p: 'STP path cost for 1 Gbps', a: '4' },
-      { p: 'UDLD catches', a: 'A fiber working one direction only — STP would unblock and loop' },
-      { p: 'BPDU Guard does', a: 'Err-disables a PortFast port that receives a BPDU (someone plugged in a switch)' }
+      { p: 'STP purpose', a: 'Prevent L2 loops — Ethernet has no TTL',
+        why: "Ethernet has no TTL, so nothing kills a looping frame. It doubles every lap and saturates the network in seconds." },
+      { p: 'BPDU destination', a: '01:80:C2:00:00:00',
+        why: "A reserved multicast address, so switches process it themselves rather than forwarding it on like ordinary traffic." },
+      { p: 'Bridge ID =', a: 'Priority + extended system ID + MAC',
+        why: "Lowest wins. Priority defaults to 32768 everywhere, so the tiebreak is the MAC — and the oldest switch wins by accident." },
+      { p: 'STP timers', a: 'Hello 2 s, forward delay 15 s, max age 20 s',
+        why: "Those three are what add up to the 30-to-50-second convergence, which is the entire reason RSTP exists." },
+      { p: '802.1D convergence', a: '30 to 50 seconds',
+        why: "Blocking to listening to learning to forwarding, waiting out a timer at each step before any traffic passes." },
+      { p: 'RSTP standard', a: '802.1w',
+        why: "Under a second, by using proposal and agreement handshakes between switches instead of waiting out timers." },
+      { p: 'RSTP port states', a: 'Discarding, learning, forwarding',
+        why: "802.1D's blocking and listening collapse into a single discarding state." },
+      { p: 'STP path cost for 1 Gbps', a: '4',
+        why: "100 Mbps is 19 and 10 Gbps is 2 — faster links cost less, so the fastest path to the root wins." },
+      { p: 'UDLD catches', a: 'A fiber working one direction only — STP would unblock and loop',
+        why: "A blocked port stops hearing BPDUs, concludes the redundant path is gone, and unblocks straight into a loop." },
+      { p: 'BPDU Guard does', a: 'Err-disables a PortFast port that receives a BPDU (someone plugged in a switch)',
+        why: "PortFast skips the loop check so servers boot fast; BPDU Guard is what makes skipping it safe." }
     ]
   },
   {
     id: 'drill-ip',
     title: 'IP & Routing',
     items: [
-      { p: 'IP header size', a: '20 bytes, up to 60 with options' },
-      { p: 'Protocol numbers 1 / 6 / 17 / 89', a: 'ICMP / TCP / UDP / OSPF' },
-      { p: 'Why recompute the IP checksum', a: 'TTL changed at this hop' },
-      { p: 'TTL hits 0', a: 'Drop, send ICMP Time Exceeded' },
-      { p: 'Across a router hop, what changes', a: 'MACs and TTL. IPs do not' },
-      { p: 'Routing table tiebreaker order', a: 'Longest prefix → AD → metric' },
-      { p: 'OSPF administrative distance', a: '110' },
-      { p: 'Static route AD', a: '1' },
-      { p: 'OSPF metric', a: 'Cost = reference bandwidth / link bandwidth' },
-      { p: 'OSPF full adjacency state', a: 'Full' },
-      { p: 'Distance vector vs link state', a: "Neighbors' tables vs full topology map" },
-      { p: 'BGP port / transport', a: 'TCP 179' },
-      { p: 'ICMP is', a: 'Internet Control Message Protocol — the error and diagnostics channel, IP protocol 1' },
-      { p: 'ICMP types 8 / 0', a: 'Echo request / echo reply — that pair is ping' },
-      { p: 'ICMP type 11', a: 'Time Exceeded — TTL hit 0. What traceroute reads' },
-      { p: 'ICMP type 3 code 4', a: 'Fragmentation needed but DF set — what PMTUD depends on' },
-      { p: 'RIB vs FIB', a: 'Routing table in software vs the hardware copy that forwards packets' }
+      { p: 'IP header size', a: '20 bytes, up to 60 with options',
+        why: "IHL counts 32-bit words and is 5 unless options are present, which is almost always." },
+      { p: 'Protocol numbers 1 / 6 / 17 / 89', a: 'ICMP / TCP / UDP / OSPF',
+        why: "Same idea as EtherType one layer down: it says what is inside so the receiver knows which code to hand it to." },
+      { p: 'Why recompute the IP checksum', a: 'TTL changed at this hop',
+        why: "It covers the header only, so any change to the header invalidates it — and TTL changes at every hop." },
+      { p: 'TTL hits 0', a: 'Drop, send ICMP Time Exceeded',
+        why: "That reply is exactly what traceroute reads to identify each hop along the path." },
+      { p: 'Across a router hop, what changes', a: 'MACs and TTL. IPs do not',
+        why: "MACs only mean something on one wire, so they get rewritten. IPs identify the endpoints, so they never do." },
+      { p: 'Routing table tiebreaker order', a: 'Longest prefix → AD → metric',
+        why: "Specificity beats trust: a RIP /24 beats a static /16, because AD is never even reached." },
+      { p: 'OSPF administrative distance', a: '110',
+        why: "Connected 0, static 1, eBGP 20, EIGRP 90, OSPF 110, RIP 120. Lower means more trusted." },
+      { p: 'Static route AD', a: '1',
+        why: "Only a connected route is trusted more. A floating static uses a high AD like 200 so it stays out until the primary dies." },
+      { p: 'OSPF metric', a: 'Cost = reference bandwidth / link bandwidth',
+        why: "The default reference is 100 Mbps, so anything faster ties at cost 1 unless you raise the reference bandwidth." },
+      { p: 'OSPF full adjacency state', a: 'Full',
+        why: "Down, Init, 2-Way, ExStart, Exchange, Loading, Full. Stuck in EXSTART almost always means an MTU mismatch." },
+      { p: 'Distance vector vs link state', a: "Neighbors' tables vs full topology map",
+        why: "Gossip you cannot verify, versus everyone holding the same map and running Dijkstra for themselves." },
+      { p: 'BGP port / transport', a: 'TCP 179',
+        why: "TCP, because it has to deliver a table of roughly a million routes reliably." },
+      { p: 'ICMP is', a: 'Internet Control Message Protocol — the error and diagnostics channel, IP protocol 1',
+        why: "It carries no user data at all — it exists so a router or host can report why something could not be delivered." },
+      { p: 'ICMP types 8 / 0', a: 'Echo request / echo reply — that pair is ping',
+        why: "Type 8 goes out, type 0 comes back. That is the whole of ping." },
+      { p: 'ICMP type 11', a: 'Time Exceeded — TTL hit 0. What traceroute reads',
+        why: "Send TTL 1, then 2, then 3, and each expiry reply names one more hop in order." },
+      { p: 'ICMP type 3 code 4', a: 'Fragmentation needed but DF set — what PMTUD depends on',
+        why: "Block ICMP and this message never arrives, so the sender never shrinks its packets and large transfers hang." },
+      { p: 'RIB vs FIB', a: 'Routing table in software vs the hardware copy that forwards packets',
+        why: "That split is why a router keeps forwarding at full speed while OSPF recalculates in the background." }
     ]
   },
   {
     id: 'drill-addressing',
     title: 'Addressing & Subnetting',
     items: [
-      { p: 'Usable hosts in /26', a: '62' },
-      { p: 'Mask for /27', a: '255.255.255.224' },
-      { p: 'Block size for /28', a: '16' },
-      { p: 'Private ranges', a: '10/8, 172.16/12, 192.168/16' },
-      { p: '169.254.x.x means', a: 'No DHCP response (APIPA)' },
-      { p: 'IPv6 standard subnet', a: '/64' },
-      { p: 'DHCP steps', a: 'Discover, Offer, Request, Ack' }
+      { p: 'Usable hosts in /26', a: '62',
+        why: "64 total addresses, minus the network address and the broadcast address." },
+      { p: 'Mask for /27', a: '255.255.255.224',
+        why: "Block size is 256 minus 224, so 32 — subnets start at 0, 32, 64, 96 and so on." },
+      { p: 'Block size for /28', a: '16',
+        why: "The mask octet is 240, and 256 minus 240 is 16. Boundaries fall at 0, 16, 32, 48." },
+      { p: 'Private ranges', a: '10/8, 172.16/12, 192.168/16',
+        why: "172.16/12 ends at 172.31.255.255, not 172.16.255.255. That is the one people get wrong." },
+      { p: '169.254.x.x means', a: 'No DHCP response (APIPA)',
+        why: "Not a hint but a statement: the client asked and nothing answered, so it assigned itself an address." },
+      { p: 'IPv6 standard subnet', a: '/64',
+        why: "Always, not usually. The bottom 64 bits are the interface ID, and SLAAC assumes that split." },
+      { p: 'DHCP steps', a: 'Discover, Offer, Request, Ack',
+        why: "Discover and Request are broadcasts, which is why a server on another subnet needs ip helper-address on the router." }
     ]
   },
   {
     id: 'drill-transport',
     title: 'Transport, TLS & Ports',
     items: [
-      { p: 'Default MTU / MSS', a: '1500 / 1460' },
-      { p: 'CLOSE_WAIT means', a: "App didn't close the socket" },
-      { p: 'TIME_WAIT means', a: 'We closed first, waiting 2×MSL' },
-      { p: 'SNI is for', a: 'Choosing the right cert on a shared IP' },
-      { p: 'Keystore vs truststore', a: 'My identity vs who I trust' },
-      { p: 'Security group vs NACL', a: 'Stateful + instance vs stateless + subnet' },
-      { p: 'Oracle listener port', a: '1521' },
-      { p: 'WebLogic admin port', a: '7001' },
-      { p: 'LDAPS port', a: '636' }
+      { p: 'Default MTU / MSS', a: '1500 / 1460',
+        why: "1500 minus 20 bytes of IP header and 20 bytes of TCP header." },
+      { p: 'CLOSE_WAIT means', a: "App didn't close the socket",
+        why: "The peer sent FIN and your code never called close. It leaks file descriptors until the process dies." },
+      { p: 'TIME_WAIT means', a: 'We closed first, waiting 2×MSL',
+        why: "Normal and self-clearing. Thousands of them on a busy client or proxy is not a problem by itself." },
+      { p: 'SNI is for', a: 'Choosing the right cert on a shared IP',
+        why: "It is sent in the clear, because the server has to choose a certificate before encryption can start." },
+      { p: 'Keystore vs truststore', a: 'My identity vs who I trust',
+        why: "Swapping these two is the single most common Java SSL mistake." },
+      { p: 'Security group vs NACL', a: 'Stateful + instance vs stateless + subnet',
+        why: "Stateless means you must allow the ephemeral range, 1024 to 65535, inbound for return traffic." },
+      { p: 'Oracle listener port', a: '1521',
+        why: "Completely fair game given your background — as is 7001." },
+      { p: 'WebLogic admin port', a: '7001',
+        why: "7002 is the HTTPS equivalent." },
+      { p: 'LDAPS port', a: '636',
+        why: "Plain, unencrypted LDAP is 389." }
     ]
   }
 ];

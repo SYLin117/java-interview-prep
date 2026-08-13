@@ -1151,6 +1151,17 @@
      invisible — clicking the row reveals it. */
   .net-drill-row:not(.revealed) .net-drill-a { color: transparent; }
   .net-drill-row.revealed .net-drill-a { background: transparent; padding-left: 0; user-select: text; }
+  /* The one-line "why" behind the answer. Hidden while covered so the grey bar
+     stays one line tall; it unfolds when the row is revealed. */
+  .net-drill-why { display: none; }
+  .net-drill-row.revealed .net-drill-why {
+    display: block;
+    margin-top: 0.3rem;
+    font-size: 0.85rem;
+    font-weight: 400;
+    line-height: 1.55;
+    color: var(--text-dim);
+  }
   .net-drill-hint {
     font-size: 0.82rem;
     color: var(--text-dim);
@@ -3841,10 +3852,13 @@
       section.dataset.search = (group.title + ' ' +
         group.items.map(it => it.p + ' ' + it.a).join(' ')).toLowerCase();
 
+      // `why` is a one-line anchor revealed with the answer, so missing a card
+      // teaches something instead of just showing the fact again.
       const rowsHTML = group.items.map(it => `
-        <div class="net-drill-row" data-search="${escapeHtml((it.p + ' ' + it.a).toLowerCase())}">
+        <div class="net-drill-row" data-search="${escapeHtml((it.p + ' ' + it.a + ' ' + (it.why || '')).toLowerCase())}">
           <div class="net-drill-p">${escapeHtml(it.p)}</div>
-          <div class="net-drill-a">${escapeHtml(it.a)}</div>
+          <div class="net-drill-a"><span class="net-drill-ans">${escapeHtml(it.a)}</span>${
+            it.why ? `<span class="net-drill-why">${escapeHtml(it.why)}</span>` : ''}</div>
         </div>`).join('');
 
       section.innerHTML = `
