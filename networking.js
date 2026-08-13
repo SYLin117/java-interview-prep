@@ -45,30 +45,7 @@ const networkingGuide = [
 <li><strong>If another candidate answers first</strong>, don't repeat them. Add the one thing they left out, or say you'd approach it the same way and name the exception.</li>
 <li><strong>When you don't know:</strong> "I haven't worked with that. My understanding is X, but I'd want to verify it." Then stop talking.</li>
 <li>He's testing whether you <em>prepared</em>, not whether you're already a network engineer. Precision on frames, MAC learning, STP and routing is the entire assignment.</li>
-</ul>` },
-      { t: 'Study order', h: `<p><strong>If you have 5 hours</strong></p>
-<ol>
-<li>The priority material — Ethernet frame, IP header, switch learning, STP, router forwarding, routing protocols — <strong>2.5 h</strong>. Draw the frame and the IP header from memory until you can do both cold.</li>
-<li>Subnetting — <strong>1 h</strong>. He didn't name it, but it's L3 and it will come up.</li>
-<li>Switching &amp; routing reinforcement — <strong>45 min</strong>.</li>
-<li>The Q&amp;A drills out loud, timed — <strong>45 min</strong>.</li>
-</ol>
-<p><strong>If you have 2 hours</strong></p>
-<ol>
-<li>Ethernet frame + IP header — 30 min. Draw both, twice</li>
-<li>Switch learning, including the worked example — 20 min</li>
-<li>STP: root election, why loops kill a LAN — 25 min</li>
-<li>Router forwarding + the end-to-end MAC/IP walk table — 25 min</li>
-<li>Priority Q&amp;A out loud — 20 min</li>
-</ol>
-<p><strong>If you have 60 minutes</strong></p>
-<ol>
-<li>The end-to-end walk table: MACs change, IPs don't, TTL drops — 10 min</li>
-<li>Ethernet frame fields and IP header fields — 15 min</li>
-<li>Learn / flood / forward / filter, plus the worked example — 10 min</li>
-<li>STP: why loops are fatal, how root is elected — 10 min</li>
-<li>Five Q&amp;A out loud — 15 min</li>
-</ol>` }
+</ul>` }
     ]
   },
   {
@@ -181,7 +158,17 @@ const networkingGuide = [
     explain: `Layer 1 is just "how do we physically move a 1 or a 0 from here to there" — copper, light, connectors, voltage. It has no idea what a message is. It moves signals, and that's all.`,
     tags: ['cabling', 'fiber', 'duplex', 'PoE'],
     blocks: [
-      { t: 'What L1 does', h: `<p>L1 moves <strong>bits</strong>. It defines connectors, voltages, light, encoding and timing. No addressing, and no idea what a frame is.</p>` },
+      { t: 'Start here — what Layer 1 actually has to solve', h: `<p>Strip everything else away and layer 1 has one job: you have a <strong>bit</strong>, a 1 or a 0, and two machines that might be three metres or thirty kilometres apart. Something physical has to represent that bit and carry it across.</p>
+<p>On copper that's a change in <strong>voltage</strong>. On fiber it's a pulse of <strong>light</strong>. The receiving end samples the wire at agreed intervals and decides, each time, "that was a 1" or "that was a 0".</p>
+<p>Which immediately creates a problem: <em>sampling at agreed intervals</em> requires both ends to agree on when the intervals are. That's why every Ethernet frame begins with a <strong>preamble</strong> — seven bytes of alternating 1010101010… that carry no information at all. They exist so the receiver can lock onto the sender's rhythm before any real data shows up. It's a run-up, like a conductor counting the band in.</p>` },
+      { t: 'Why 100 metres, and why the pairs are twisted', h: `<p>Two things degrade a signal as it travels:</p>
+<ul>
+<li><strong>Attenuation</strong> — it simply gets weaker. Push it far enough and the receiver can no longer tell a weak 1 from a 0</li>
+<li><strong>Noise</strong> — copper is an antenna. Motors, fluorescent lights, other cables in the same bundle all induce stray voltage</li>
+</ul>
+<p>100 metres is the distance at which Ethernet's designers could still guarantee the receiver gets it right. It isn't a physical wall — it's the point where the standard stops promising.</p>
+<p>The twisting is a genuinely elegant fix. Each pair carries the <em>same</em> signal in opposite polarity, and the receiver reads the <strong>difference</strong> between the two wires. Interference hits both wires of a twisted pair almost identically — so when you subtract one from the other, the signal doubles and the noise cancels. That's the whole reason the cable is twisted, and it's a good thing to be able to say in one sentence.</p>
+<p>Fiber sidesteps all of it: light in glass, no electrical pickup at all, and far less attenuation. That's why it runs between buildings and across factory floors full of welding equipment.</p>` },
       { t: 'Copper (twisted pair)', h: `<table class="net-table"><thead><tr><th>Category</th><th>Speed</th><th>Distance</th></tr></thead><tbody>
 <tr><td>Cat5e</td><td>1 Gbps</td><td>100 m</td></tr>
 <tr><td>Cat6</td><td>1 Gbps (10G to 55 m)</td><td>100 m</td></tr>
@@ -218,6 +205,27 @@ const networkingGuide = [
     explain: `A frame is the envelope Ethernet puts around your data for <em>one hop across one local network</em>. This card is what's printed on that envelope: who it's for, who sent it, what kind of thing is inside, and a checksum proving it didn't get scrambled on the way.`,
     tags: ['frame', 'MAC', '802.1Q', 'EtherType'],
     blocks: [
+      { t: 'Start here — the four questions a frame has to answer', h: `<p>Several devices share a network. When a signal starts arriving at your network card, you know nothing. The frame format exists to answer four questions, in the order you need them:</p>
+<ol>
+<li><strong>Where does this message start?</strong> — the preamble and start delimiter</li>
+<li><strong>Is it for me?</strong> — the destination address, read first so you can stop listening early</li>
+<li><strong>What kind of thing is inside?</strong> — the EtherType, so you know which piece of software to hand it to</li>
+<li><strong>Did it survive the trip?</strong> — the checksum at the end</li>
+</ol>
+<p>Everything in the table below is one of those four jobs. If you can say <em>why</em> each field exists rather than just what it's called, you're ahead of most candidates.</p>` },
+      { t: 'Walk through it in the order the bits arrive', h: `<p>Imagine you're the network card and the bits are landing one at a time:</p>
+<ol>
+<li><strong>Preamble (7 bytes)</strong> — 1010101010… Meaningless content, pure timing. Your clock locks onto the sender's</li>
+<li><strong>SFD (1 byte)</strong> — the pattern breaks: …10101<strong>011</strong>. Those two 1s in a row mean "run-up over, real data starts on the very next bit"</li>
+<li><strong>Destination MAC (6 bytes)</strong> — the first thing that carries meaning, and it's first <em>on purpose</em>. If it isn't your address and isn't a broadcast, you can stop right here and discard, instead of reading 1500 more bytes. A cut-through switch exploits the same ordering from the other side: it knows where to send the frame after 6 bytes and can start forwarding while the rest is still arriving</li>
+<li><strong>Source MAC (6 bytes)</strong> — who sent it. Your NIC mostly ignores this; the <em>switch</em> in the middle cares enormously, because this is the only field it learns from</li>
+<li><strong>802.1Q tag (4 bytes, optional)</strong> — present only on links between switches. Says which VLAN this frame belongs to</li>
+<li><strong>EtherType (2 bytes)</strong> — "what's inside". <code>0x0800</code> means an IP packet, so hand the payload to the IP code. <code>0x0806</code> means ARP. Without this field the receiver would have no idea what to do with the bytes that follow</li>
+<li><strong>Payload (46–1500 bytes)</strong> — the actual thing being carried, almost always an IP packet. Under 46 bytes it gets padded, because of the minimum frame size</li>
+<li><strong>FCS (4 bytes)</strong> — you computed a checksum over everything as it arrived; now compare it with the sender's. Mismatch means corruption, so you drop the frame silently and bump an error counter. Nothing at this layer asks for a retransmit — that's TCP's problem, several layers up</li>
+</ol>
+<p>Then a 12-byte gap of silence so the next frame is distinguishable from this one, and it starts again.</p>
+<p><strong>The one thing to carry away:</strong> this entire envelope is stripped off and rewritten from scratch at every router along the path. It is addressing for <em>one hop only</em>.</p>` },
       { t: 'The frame', h: `<pre class="net-pre">+----------+-----+---------+---------+----------+-----------+-------------+-----+
 | Preamble | SFD |  Dest   | Source  | 802.1Q   | Type/Len  |   Payload   | FCS |
 |  7 bytes | 1 B | MAC 6 B | MAC 6 B | (4 B opt)|   2 B     | 46-1500 B   | 4 B |
@@ -262,6 +270,32 @@ const networkingGuide = [
     explain: `If the frame is the envelope for one hop, the IP packet is the envelope for the whole journey — it carries the real source and destination from end to end. One field, TTL, counts down at every router so a packet that gets lost in a loop eventually dies instead of circling forever.`,
     tags: ['IPv4', 'TTL', 'checksum', 'fragmentation'],
     blocks: [
+      { t: 'Start here — why IP exists at all when we already have MAC addresses', h: `<p>This is the question that unlocks layer 3, and it's worth being able to answer directly.</p>
+<p>Every network card already has a unique address burned into it. So why invent a second addressing system?</p>
+<p>Because <strong>MAC addresses are flat</strong>. <code>00:1A:2B:3C:4D:5E</code> tells you the manufacturer and nothing else — not what building it's in, not what country, not what network. There is no relationship between two MAC addresses that sit next to each other numerically. So a router trying to reach an arbitrary device would need a table with an entry for every network card on earth, and no way to compress it.</p>
+<p><strong>IP addresses are hierarchical</strong>, and that changes everything. <code>10.1.1.5</code> lives inside <code>10.1.1.0/24</code>, which lives inside <code>10.1.0.0/16</code>, which lives inside <code>10.0.0.0/8</code>. A router can hold <em>one</em> table entry that says "anything starting 10.1 goes that way" and correctly handle 65,000 addresses it has never heard of.</p>
+<p>That's the entire reason layer 3 exists: addresses you can <strong>summarize</strong>, so routing tables stay small enough to be possible. If they ask "why do we need IP when we have MAC?", that's the answer, and it's one sentence: <em>MAC addresses can't be summarized, so they can't scale past a single local network.</em></p>` },
+      { t: 'How to read the header — group the fields by job', h: `<p>Twelve fields is a lot to memorise as a flat list. They cluster into four jobs:</p>
+<ul>
+<li><strong>"What am I and how big?"</strong> — Version, IHL, Total Length. Housekeeping so the receiver can parse the rest</li>
+<li><strong>"How should I be treated?"</strong> — DSCP/ECN. Priority marking; this is how voice traffic gets preference over a backup job</li>
+<li><strong>"How do I get put back together?"</strong> — Identification, Flags, Fragment Offset. Only used when a packet had to be split</li>
+<li><strong>"How do I get there safely?"</strong> — TTL, Protocol, Header Checksum, Source, Destination</li>
+</ul>
+<p>The sender writes this header <strong>once</strong>. Every router along the path reads it and changes exactly two things: <strong>TTL goes down by one</strong>, and <strong>the checksum is recomputed because TTL changed</strong>. Nothing else is touched. Being able to state that crisply is most of what this topic is testing.</p>` },
+      { t: 'Fragmentation, walked through once', h: `<p>You have a 1500-byte packet, and the next link can only carry 1400. Something has to give.</p>
+<ol>
+<li>The router splits the payload into two pieces that each fit</li>
+<li>It copies the IP header onto both pieces, keeping the <strong>same Identification value</strong> — that's the label saying "these belong together"</li>
+<li>It sets the <strong>MF (More Fragments)</strong> flag on every piece except the last one</li>
+<li>It sets the <strong>Fragment Offset</strong> on each piece to say where in the original this chunk belongs, counted in 8-byte units</li>
+</ol>
+<p>The receiving <em>host</em> — not any router in between — collects pieces with matching Identification, sorts them by offset, and reassembles. Routers never reassemble; they'd have no idea whether more pieces were coming.</p>
+<p>Two consequences that get asked about:</p>
+<ul>
+<li>Fragmentation is expensive and fragile — lose one fragment and the whole original packet is lost. So senders normally set <strong>DF (Don't Fragment)</strong> and discover the largest safe size instead (that's Path MTU Discovery)</li>
+<li><strong>IPv6 removed router fragmentation entirely.</strong> Only the sending host may fragment, which is why Path MTU Discovery matters even more there</li>
+</ul>` },
       { t: 'The header', h: `<pre class="net-pre"> 0                   1                   2                   3
  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-------+-------+---------------+-------------------------------+
@@ -307,6 +341,21 @@ const networkingGuide = [
     explain: `A switch starts out knowing nothing. It learns purely by eavesdropping: every frame that arrives tells it "whoever sent this is reachable out of this port." Once it has learned an address it sends frames to that one port instead of shouting to everybody — and that is the entire difference between a switch and the hub it replaced.`,
     tags: ['CAM table', 'flooding', 'aging'],
     blocks: [
+      { t: 'Start here — the problem a switch was invented to solve', h: `<p>Before switches there were <strong>hubs</strong>. A hub is an electrical repeater: whatever arrives on one port is blasted out every other port. Simple, and bad in two ways.</p>
+<ul>
+<li><strong>No privacy</strong> — every machine received every conversation and was trusted to ignore what wasn't addressed to it</li>
+<li><strong>Collisions</strong> — only one device could transmit at a time. If two started at once the signals garbled each other, both had to stop, wait a random interval, and retry. The more machines you added, the worse it got</li>
+</ul>
+<p>A switch fixes both by sending each frame <strong>only out the port where the destination actually is</strong>. Two conversations between four machines can then happen simultaneously and privately.</p>
+<p>Which raises the interesting question, and the one you'll be asked: <em>how does it know where anything is?</em> Nobody configures it. You plug it in and it just works.</p>` },
+      { t: 'The insight: it learns by eavesdropping', h: `<p>Here's the trick, and it's genuinely clever in its simplicity.</p>
+<p><strong>Every frame carries the sender's address.</strong> So the switch doesn't need to ask anything or be told anything — it just reads the source address of everything that goes past and writes down where it came from:</p>
+<pre class="net-pre">a frame from aa:aa arrived on port 1
+   therefore  ->  aa:aa is reachable via port 1</pre>
+<p>That inference is airtight. The frame demonstrably came from that direction, so the sender must be that way.</p>
+<p>Now flip it: why does it <strong>never</strong> learn from the destination address? Because the destination field says where a frame is <em>going</em>, which proves nothing about where that device actually is — the sender is guessing too. Only the source field is evidence. This is a favourite interview question and the reasoning is the answer.</p>
+<p><strong>And when it doesn't know yet?</strong> It floods — sends the frame out every port except the one it arrived on. Wasteful, but correct, and self-correcting: the destination replies, and that reply teaches the switch where the destination is. So a switch is fully "trained" after roughly one exchange with each device.</p>
+<p><strong>Why entries expire.</strong> People move laptops. If an entry lived forever, a laptop unplugged from port 3 and moved to port 8 would become unreachable — the switch would keep sending its traffic to an empty port. So an entry unused for <strong>300 seconds</strong> is discarded, and the device is simply relearned when it next speaks.</p>` },
       { t: 'The four verbs', h: `<p><strong>Learning</strong> — for every frame that arrives, the switch reads the <strong>source MAC</strong> and records <code>MAC → ingress port → VLAN</code> in its <strong>CAM table</strong> (<em>Content-Addressable Memory</em> — this is just the hardware name for what everyone calls the MAC address table). It <em>never</em> learns from the destination field.</p>
 <p><strong>Forwarding decision</strong> — look up the <strong>destination MAC</strong>:</p>
 <ul>
@@ -346,8 +395,27 @@ B (bb:bb) -- Fa0/2                Fa0/4 -- D (dd:dd)</pre>
     explain: `Two switches joined by two cables is a loop, and a loop on Ethernet is fatal — one broadcast circles forever and multiplies at every switch until the network is dead. STP's job is to spot the loop and deliberately switch one link off, holding it in reserve until the main one fails.`,
     tags: ['STP', 'RSTP', 'BPDU', 'broadcast storm'],
     blocks: [
-      { t: 'Why it exists', h: `<p>Ethernet frames have <strong>no TTL field</strong>. Put two switches together with two cables and one broadcast frame circulates forever, gets duplicated at every switch, and multiplies exponentially. Within seconds the links saturate, CPUs peg, and MAC tables thrash because the same source MAC keeps arriving on different ports. That's a <strong>broadcast storm</strong>, and it takes down the entire L2 domain, not just the looped link.</p>
-<p>You still want the second cable for redundancy. STP (802.1D) lets you have it by putting the redundant path in a blocking state and activating it only when the primary fails.</p>` },
+      { t: 'Start here — why one extra cable can destroy an entire network', h: `<p>You want two cables between your two switches, so that if one fails the other carries on. Completely reasonable — it's the same instinct as running two servers.</p>
+<p>On Ethernet, doing that naively takes the whole network down. Here's the exact sequence:</p>
+<ol>
+<li>A PC sends one broadcast frame — an ARP request, say. Switch A must flood it out every port, including <em>both</em> cables to switch B</li>
+<li>Switch B receives two copies. Broadcasts get flooded, so it sends each copy out all its other ports — including back to A along the other cable</li>
+<li>Switch A receives those, floods them again…</li>
+</ol>
+<p>The frame count <strong>doubles every lap</strong>, and a lap takes microseconds. Within seconds the links are saturated, both switches' CPUs are pegged, and nothing else gets through. That's a <strong>broadcast storm</strong>.</p>
+<p>It gets worse. Because copies of the same frame keep arriving on different ports, each switch keeps rewriting its address table — "aa:aa is on port 1… no, port 2… no, port 1" — so even unicast forwarding stops working. This is <strong>MAC flapping</strong>, and it's why the whole VLAN dies, not just the looped link.</p>
+<p><strong>The root cause, in one sentence:</strong> an Ethernet frame has no TTL. Nothing in the frame counts down, so nothing ever kills a frame that's going in circles. IP has TTL precisely because its designers learned this lesson; Ethernet predates that and never got one.</p>` },
+      { t: 'How the switches agree on what to switch off — with no central authority', h: `<p>So you want the redundant cable present but idle. Somebody has to decide which links to disable — and there's no controller, no admin, and no switch with a global view. They have to work it out among themselves by passing messages.</p>
+<p>The algorithm is a distributed spanning tree, and it's the same idea you'd recognise from graph theory: <em>a tree has no cycles</em>. If you can reduce the network graph to a tree, loops are impossible by construction.</p>
+<p>Four steps:</p>
+<ol>
+<li><strong>Elect a root.</strong> Every switch starts by claiming to be the root and announcing its ID. Lowest ID wins, and switches stop claiming once they hear someone better. The choice is <em>arbitrary</em> — what matters is only that everyone agrees on the same reference point. (Arbitrary is why you should override it: by default the oldest switch in the building wins, and that's usually the worst one for the job.)</li>
+<li><strong>Every switch finds its own best path back to the root</strong> by adding up link costs. The port along that path becomes its <strong>root port</strong> — its one way "up" the tree</li>
+<li><strong>Every network segment elects one designated port</strong> — the port responsible for carrying traffic from that segment toward the root</li>
+<li><strong>Every remaining port blocks.</strong> Any port that is neither a root port nor a designated port would create a cycle, so it stops forwarding</li>
+</ol>
+<p>What you're left with is a tree: exactly one active path between any two points. The blocked ports keep <em>listening</em> to the messages though — so when a link fails and the tree changes shape, a blocked port can be brought back into service and the redundancy pays off.</p>
+<p>That last part is why STP is a <em>control</em> protocol rather than a config setting: it's continuously re-deciding, not deciding once.</p>` },
       { t: 'How the tree gets built', h: `<p><strong>1. Elect the root bridge.</strong> Every switch sends <strong>BPDUs</strong> — <em>Bridge Protocol Data Units</em>, small messages that say "here is my ID and my cost to reach the root" — to the reserved multicast address <code>01:80:C2:00:00:00</code>, every 2 seconds, each one initially claiming to be the root itself. Lowest <strong>Bridge ID</strong> wins.</p>
 <pre class="net-pre">Bridge ID = [ Priority 4 bits ][ Extended System ID 12 bits ][ MAC 48 bits ]
               default 32768        = VLAN number             switch's own</pre>
@@ -397,8 +465,17 @@ spanning-tree loopguard         # if BPDUs stop arriving on a blocking port, kee
     explain: `A switch on its own can't tell that someone plugged both ends of a cable into it, that a fiber broke in one direction, or that the laptop on port 12 is pretending to be the DHCP server. Every protocol on this card bolts one of those safety checks onto the switch.`,
     tags: ['LLDP', 'DTP', 'VTP', 'UDLD', 'port security'],
     blocks: [
-      { t: 'Why Layer 2 needs a "control plane" at all', h: `<p>A switch by itself is dumb in a very specific way: it forwards frames and that's it. It has no way to notice that someone plugged both ends of a cable into the same switch, that a fiber is broken in one direction, or that the laptop on port 12 is pretending to be the DHCP server. Every protocol on this card exists to bolt one of those checks onto the switch.</p>
-<p>If it helps, the software analogy is exact: the <strong>data plane</strong> is your request handler — it just serves traffic as fast as it can. The <strong>control plane</strong> is service discovery, health checks and config distribution — the background conversations that decide <em>what the data plane is allowed to do</em>.</p>` },
+      { t: 'Start here — what "control protocol" means and why layer 2 needs any', h: `<p>Forwarding a frame is the easy part. A switch reads a destination address, looks it up, sends it out a port. That's the <strong>data plane</strong>, and it's essentially a hash table lookup.</p>
+<p>What the data plane cannot do is notice that the situation has changed. It can't tell that someone created a loop, that a fiber is broken in one direction, that a rogue device is handing out addresses, or that the neighbouring switch is new. Those all require switches to <em>talk to each other and to make decisions</em> — a <strong>control plane</strong>.</p>
+<p>Every protocol on this card is one of those conversations. Group them by what they're for and the list stops feeling like trivia:</p>
+<ul>
+<li><strong>Keep the topology sane</strong> — STP/RSTP (no loops), UDLD (catch a half-dead link)</li>
+<li><strong>Make better use of the links</strong> — LACP (bundle several into one)</li>
+<li><strong>Know what's out there</strong> — LLDP/CDP (who is plugged into which port)</li>
+<li><strong>Distribute configuration</strong> — DTP, VTP (both Cisco, both best turned off or constrained)</li>
+<li><strong>Don't trust the edge</strong> — port security, BPDU guard, DHCP snooping, DAI, 802.1X</li>
+</ul>
+<p>If you can name those five purposes, you can answer "what L2 control protocols do you know?" without reciting a list.</p>` },
       { t: 'Discovery — LLDP and CDP: "what is on the other end of this cable?"', h: `<ul>
 <li><strong>LLDP</strong> — <em>Link Layer Discovery Protocol</em>, the IEEE open standard (802.1AB). Every switch periodically announces itself out of every port: "I am switch <code>core-sw-01</code>, this is port <code>Gi1/0/12</code>, here's my model and my management IP." Neighbors record what they hear. That's how a network diagram gets built without anyone walking to the rack</li>
 <li><strong>CDP</strong> — <em>Cisco Discovery Protocol</em>. Same idea, older, Cisco-only. In a mixed-vendor network you use LLDP</li>
@@ -446,6 +523,22 @@ switchport nonegotiate        # and stop sending DTP frames</pre>` },
     explain: `A router's job at each hop: check the packet is still alive, look up where the destination lives, put a <em>fresh</em> local envelope on it addressed to the next router, and send it on. The outer envelope is replaced at every hop; the packet inside is never touched. Say that sentence and you've shown you understand layer 2 versus layer 3.`,
     tags: ['forwarding', 'longest prefix match', 'TTL', 'ARP'],
     blocks: [
+      { t: 'Start here — the two-envelope model', h: `<p>If you take one idea from this entire guide, make it this one. It answers half the layer 2 versus layer 3 questions on its own.</p>
+<p><strong>Every packet travels inside two envelopes at once.</strong></p>
+<ul>
+<li>The <strong>outer envelope</strong> is the Ethernet frame. It says: <em>"get this to the next device on this particular wire."</em> It is addressed with MAC addresses, which only mean anything on that one wire</li>
+<li>The <strong>inner envelope</strong> is the IP packet. It says: <em>"get this to 10.3.3.20, wherever in the world that is."</em> It is addressed with IP addresses, which mean the same thing everywhere</li>
+</ul>
+<p>A router's job is to <strong>throw away the outer envelope, read the inner one, and put a brand-new outer envelope on</strong> addressed to whatever comes next. The inner envelope is never modified — apart from TTL ticking down.</p>
+<p>So when they ask "what changes as a packet crosses two routers?", the answer is: <em>the MAC addresses are rewritten at every hop because they only have local meaning; the IP addresses never change because they identify the actual endpoints; and the TTL drops by one each time.</em> Say that and you've demonstrated you understand the layer split.</p>` },
+      { t: 'The question underneath it: how did the PC know where to send the frame?', h: `<p>Here's the puzzle that trips people up. Your PC is <code>10.1.1.10</code> and wants to reach <code>10.3.3.20</code>, which is in another city. The PC has no idea where that is. So what does it physically put on the wire?</p>
+<ol>
+<li>The PC compares the destination with <strong>its own subnet mask</strong>. Its network is 10.1.1.0/24; the destination 10.3.3.20 doesn't fall inside it. Conclusion: <strong>this is not local</strong></li>
+<li>Not local means the PC cannot deliver it directly — there is no cable to that machine. Its only option is to hand the packet to something that knows more, which is its <strong>default gateway</strong></li>
+<li>So it sends an ARP request for <em>the gateway's</em> MAC address — not the server's. The server's MAC would be useless; it isn't on this wire</li>
+<li>It builds the frame with <strong>destination MAC = the router</strong>, but the packet inside with <strong>destination IP = the server</strong></li>
+</ol>
+<p>That mismatch — frame addressed to the router, packet addressed to the far-away server — <em>is</em> the two-envelope model in action. And it explains a very common real fault: give a host the wrong subnet mask and it will misjudge what's local, ARP for a gateway that isn't on its subnet, get no answer, and be unable to reach anything off-network while local traffic works fine.</p>` },
       { t: 'The seven steps', h: `<ol>
 <li><strong>Receive the frame.</strong> Check the destination MAC — if it isn't the router's own interface MAC (or a broadcast/multicast it cares about), discard. Verify the FCS</li>
 <li><strong>De-encapsulate.</strong> Strip the Ethernet header and trailer. Read the EtherType, see <code>0x0800</code>, hand the payload to the IP process</li>
@@ -466,7 +559,7 @@ switchport nonegotiate        # and stop sending DTP frames</pre>` },
 <tr><td>R2 → Server</td><td><strong>R2b</strong></td><td><strong>Server-B</strong></td><td>10.1.1.10</td><td>10.3.3.20</td><td>62</td></tr>
 </tbody></table>
 <p>Say this out loud: <strong>the MAC addresses change at every hop, the IP addresses never change, and the TTL drops by one each time.</strong> That sentence is the whole of L2 versus L3 in one line.</p>
-<p><em>Follow-up they may ask:</em> how did PC-A know to send the frame to R1's MAC when the packet is addressed to 10.3.3.20? PC-A ANDs the destination with its own subnet mask, sees the result differs from its own network, concludes the destination is remote, and therefore ARPs for its <strong>default gateway</strong> instead. The frame goes to the gateway's MAC while the packet keeps the server's IP.</p>` },
+<p>Practise saying just the bold parts out loud: <em>MACs change every hop, IPs never change, TTL drops by one.</em></p>` },
       { t: 'Routing table anatomy', h: `<pre class="net-pre">      Codes: C - connected, S - static, O - OSPF, D - EIGRP, B - BGP
 
 O     10.3.3.0/24 [110/20] via 172.16.1.2, 00:14:22, GigabitEthernet0/1
@@ -521,6 +614,27 @@ O     10.3.3.0/24 [110/20] via 172.16.1.2, 00:14:22, GigabitEthernet0/1
     explain: `Routers need to learn where every network in the company lives without a human typing it in. The protocol families differ in <em>what they tell each other</em>: "here's my whole list of destinations, trust me" (distance vector) versus "here's what I'm directly plugged into, work out the map yourself" (link state).`,
     tags: ['OSPF', 'BGP', 'RIP', 'EIGRP', 'AD'],
     blocks: [
+      { t: 'Start here — what a router actually knows, and what it has to be told', h: `<p>Out of the box, a router knows exactly one thing: <strong>the networks it is directly plugged into</strong>. If it has three interfaces, it knows three networks. Everything else in the world is unknown, and a packet for an unknown destination gets dropped.</p>
+<p>So the whole subject of routing protocols is one question: <em>how does a router learn about networks it isn't attached to?</em></p>
+<p>Two answers:</p>
+<ul>
+<li><strong>Static routes</strong> — you type them in. Perfectly fine for small or simple setups, and completely predictable. But it doesn't scale, and crucially it doesn't <em>react</em>: if the link you pointed at goes down, the route stays in the table, cheerfully pointing at a hole</li>
+<li><strong>Dynamic routing protocols</strong> — routers talk to each other and work it out, continuously. More moving parts, but self-healing</li>
+</ul>` },
+      { t: 'The two philosophies, and why the difference matters', h: `<p>Every dynamic protocol is one of two designs. This is the comparison most likely to be asked, so it's worth understanding rather than memorising.</p>
+<p><strong>Distance vector — "I'll tell you my whole list, trust me."</strong></p>
+<p>Each router periodically hands its neighbours its entire table of destinations, with a distance for each. Neighbours add their own cost and pass it on. The nickname is <em>routing by rumour</em>, and it's fair: a router has no idea what the network looks like, only what it's been told. If a neighbour is wrong, it's wrong too. It's slow to converge and needs a pile of anti-loop mechanisms — split horizon, route poisoning, hold-down timers — precisely because nobody can independently check a claim. <strong>RIP</strong> is the example.</p>
+<p><strong>Link state — "I'll tell everyone what I'm plugged into, you work it out."</strong></p>
+<p>Each router announces only what it knows first-hand: its own directly-connected links and their state. Those announcements are flooded to <em>every</em> router in the area. So every router ends up holding an identical map of the whole topology — and then each one independently runs <strong>Dijkstra's shortest path algorithm</strong> over that map to compute its own best route to everywhere. <strong>OSPF</strong> is the example.</p>
+<p>The trade is exactly what you'd expect from the software equivalent: gossip versus everyone getting a copy of the graph. Link state costs more memory and CPU and needs the flooding to be scoped (that's what OSPF "areas" are for), but every router can verify things for itself, so it converges in seconds instead of minutes and doesn't form loops.</p>
+<p><strong>Path vector</strong> is a third design, used only by BGP between organisations. It advertises the full list of networks a route passed through, which lets each organisation apply <em>policy</em> — "never send my traffic through that competitor" — rather than just picking the fastest path.</p>` },
+      { t: 'When a router has several answers, how does it pick?', h: `<p>Real routers often learn about the same destination more than once. The tie-breaks happen in a strict order, and confusing the first two is the single most common mistake:</p>
+<ol>
+<li><strong>Longest prefix match</strong> — the most <em>specific</em> route always wins, no matter where it came from. A /24 beats a /16 beats a /8 beats the default route. This is decided before anything else is even considered, so a /24 learned from the least trusted protocol still beats a /16 you typed in by hand. <em>Specificity beats trust</em></li>
+<li><strong>Administrative distance</strong> — only consulted when two sources offer the <em>exact same</em> prefix. It's a trust ranking: directly connected 0, static 1, OSPF 110, RIP 120. Lower means more believable</li>
+<li><strong>Metric</strong> — if both routes came from the same protocol, use that protocol's own idea of cost (OSPF uses bandwidth, RIP counts hops)</li>
+<li><strong>Load balance</strong> — if everything ties, use both paths (ECMP), hashed per conversation so a single TCP session stays on one path and doesn't arrive out of order</li>
+</ol>` },
       { t: 'The three families', h: `<table class="net-table"><thead><tr><th>Family</th><th>How it works</th><th>Knows</th><th>Examples</th><th>Convergence</th></tr></thead><tbody>
 <tr><td><strong>Distance vector</strong></td><td>Tells neighbors its whole table, periodically — "routing by rumor"</td><td>Direction + distance only</td><td>RIP (EIGRP is advanced DV)</td><td>Slow</td></tr>
 <tr><td><strong>Link state</strong></td><td>Floods link status to everyone; each router builds the full map and computes its own tree</td><td>Complete topology</td><td>OSPF, IS-IS</td><td>Fast</td></tr>
@@ -538,7 +652,7 @@ O     10.3.3.0/24 [110/20] via 172.16.1.2, 00:14:22, GigabitEthernet0/1
 <tr><td>iBGP</td><td>200</td></tr>
 <tr><td>Unreachable</td><td>255</td></tr>
 </tbody></table>
-<p>Lookup order overall: <strong>longest prefix match → administrative distance → metric → ECMP load balance</strong>.</p>` },
+<p>Remember: this table is only consulted when two sources offer the <em>same</em> prefix. Specificity is decided first.</p>` },
       { t: "RIP (know it, don't use it)", h: `<p>Hop-count metric, max 15 hops (16 = unreachable), 30-second updates, AD 120. Loop prevention via split horizon, route poisoning and hold-down timers. Its only real value in an interview is as the contrast to OSPF: it picks a 15-hop gigabit path over a 2-hop path because it can't see bandwidth.</p>` },
       { t: 'OSPF (the one to actually know)', h: `<ul>
 <li>Link-state, open standard, AD <strong>110</strong>, IP protocol number 89, metric is <strong>cost = reference bandwidth / interface bandwidth</strong> (default reference 100 Mbps, so anything above 100 Mbps ties at cost 1 unless you raise the reference)</li>
@@ -576,19 +690,25 @@ ip route 10.5.0.0 255.255.0.0 172.16.9.2 200  # floating static, AD 200, backup 
     explain: `One physical switch, but the finance PCs and the factory machines must not be able to see each other. A VLAN is that dividing line drawn in software — same hardware, separate networks, and traffic can only cross between them by going through a router.`,
     tags: ['VLAN', '802.1Q', 'trunk', 'SVI'],
     blocks: [
-      { t: 'What a VLAN is', h: `<p>A VLAN is a logically separate L2 broadcast domain running on shared physical switches. VLAN 1 is the default — don't use it for user traffic.</p>
+      { t: 'Start here — the problem VLANs solve', h: `<p>You have one switch in a factory office and three groups of machines plugged into it: office PCs, production equipment, and the servers. You'd like them separated — the production gear should never be able to reach the internet, and a visitor's laptop should never see the servers.</p>
+<p>The obvious solution is three separate switches, physically unconnected. It works, and it's expensive and inflexible: three sets of hardware, three sets of uplinks, and moving someone between groups means re-patching cables.</p>
+<p>A <strong>VLAN</strong> is that separation done in software. One physical switch, but each port is labelled with a group number, and the switch simply refuses to forward a frame from a port in group 10 to a port in group 30. As far as the machines are concerned they are on genuinely separate networks — a broadcast in one is never heard in the other.</p>
+<p>Because it's just a label, moving someone between groups is a config change, not a cable change. And because traffic between VLANs must pass through a router, that's the natural place to put your security rules.</p>` },
+      { t: 'The part that confuses everyone: access ports, trunks, and tagging', h: `<p>One switch with VLANs is easy. The complication starts when you have <em>two</em> switches and VLAN 10 exists on both.</p>
+<p>The cable between them has to carry traffic for VLAN 10, VLAN 20 and VLAN 30 all mixed together. When a frame arrives at the far switch, how does it know which VLAN the frame belonged to?</p>
+<p>It doesn't — unless you write it down. So on that link, each frame gets a <strong>4-byte 802.1Q tag</strong> inserted into it carrying the VLAN number. That's the entire mechanism.</p>
 <ul>
-<li><strong>Access port</strong> — carries exactly one VLAN, untagged, faces an end device (PC, printer, server NIC)</li>
-<li><strong>Trunk port</strong> — carries multiple VLANs between switches, tagged with <strong>802.1Q</strong> (a 4-byte tag inserted after the source MAC, holding a 12-bit VLAN ID → 4094 usable VLANs)</li>
-<li><strong>Native VLAN</strong> — the one VLAN sent untagged on a trunk. Must match on both ends or you get VLAN hopping and odd cross-talk. Mismatch is a top-5 real-world switching bug</li>
-<li><strong>Voice VLAN</strong> — the phone tags voice and passes PC traffic untagged on the same port</li>
+<li>An <strong>access port</strong> faces an end device — a PC, a printer, a server. It carries exactly one VLAN and the frames are <strong>untagged</strong>, because the PC neither knows nor cares that VLANs exist. The switch adds the tag on the way in and strips it on the way out</li>
+<li>A <strong>trunk port</strong> faces another switch. It carries many VLANs and the frames are <strong>tagged</strong>, because the far end needs to be told which is which</li>
+<li>The <strong>native VLAN</strong> is the one exception — one VLAN per trunk is sent untagged, for historical compatibility. If the two ends disagree about which VLAN that is, traffic silently leaks between the two, which is a genuinely nasty bug to find. It's a top-five real-world switching fault</li>
 </ul>` },
-      { t: 'Inter-VLAN routing', h: `<p>Needs an L3 device:</p>
+      { t: 'Getting between VLANs — and why a switch alone cannot do it', h: `<p>VLANs are separate <em>broadcast domains</em>, meaning separate layer 2 networks. Two devices in different VLANs cannot reach each other by MAC address, because they aren't on the same wire even though they're in the same box.</p>
+<p>So traffic between them has to be <strong>routed</strong> — a layer 3 decision. Two ways to provide that:</p>
 <ul>
-<li><strong>Router on a stick</strong> — one physical link, subinterfaces per VLAN (<code>interface g0/0.10</code>, <code>encapsulation dot1Q 10</code>). Fine for small sites, bottlenecked by the single link</li>
-<li><strong>L3 switch with SVIs</strong> — <code>interface vlan 10</code> with an IP. How real networks do it; routing happens in ASIC at line rate</li>
+<li><strong>Router on a stick</strong> — a single cable to a router, carrying all VLANs tagged, with a virtual subinterface per VLAN. Every packet between two VLANs goes up that cable and back down it, so the cable carries the traffic twice. Fine for a small site, an obvious bottleneck for a big one</li>
+<li><strong>L3 switch with SVIs</strong> — the switch itself does the routing, in hardware, at full speed. You give it a virtual interface per VLAN (<code>interface vlan 10</code>) with an IP address, and that address becomes the default gateway for everything in VLAN 10. This is how real campus networks are built</li>
 </ul>
-<p><strong>SVI</strong> = Switched Virtual Interface = the VLAN interface that acts as the gateway for that subnet.</p>` },
+<p>Worth saying out loud: <strong>a switch does not break up broadcast domains — only a layer 3 boundary does.</strong> Adding switches gives you more ports, not more isolation. Adding VLANs plus routing gives you isolation.</p>` },
       { t: 'MAC table vs ARP table', h: `<table class="net-table"><thead><tr><th></th><th>MAC / CAM table</th><th>ARP table</th></tr></thead><tbody>
 <tr><td>Lives on</td><td>Switch</td><td>Any IP host, including routers</td></tr>
 <tr><td>Maps</td><td>MAC → port</td><td>IP → MAC</td></tr>
@@ -613,13 +733,17 @@ ip route 10.5.0.0 255.255.0.0 172.16.9.2 200  # floating static, AD 200, backup 
     explain: `Bond several cables between two switches so they behave as one fat link, for bandwidth and for redundancy. The catch worth volunteering: one conversation still only rides one cable, so four 1-gig links do not make a single file transfer four times faster.`,
     tags: ['LACP', '802.3ad', 'EtherChannel'],
     blocks: [
+      { t: 'Start here — and the misconception it is really testing', h: `<p>Two switches, one cable between them, and that cable is now the bottleneck for everything. Obvious fix: run four cables. But four cables between two switches is four loops, and STP will dutifully switch three of them off.</p>
+<p><strong>Link aggregation</strong> is how you tell both switches "treat these four cables as one logical link". STP then sees a single link and blocks nothing, and you get four times the capacity plus redundancy — if one cable dies, the bundle keeps running on the rest.</p>
+<p><strong>Now the part that gets asked.</strong> Does a single file transfer go four times faster?</p>
+<p><strong>No.</strong> The switch decides which physical cable to use by <em>hashing</em> the conversation — some combination of source and destination address or port. The point of hashing is that the same conversation always maps to the same cable, because if you sprayed one TCP stream across four cables the packets would arrive out of order and TCP would treat that as loss.</p>
+<p>So four 1-gig links give you 4 gigabits <strong>of aggregate capacity across many conversations</strong>, while any single conversation is still capped at 1 gigabit. If one nightly backup job is your problem, aggregation will not fix it and a single faster link will.</p>` },
       { t: 'The protocols', h: `<p>Bundle multiple physical links into one logical link for bandwidth and redundancy.</p>
 <ul>
 <li><strong>LACP (802.3ad)</strong> — the open standard, negotiates dynamically (<code>active</code> / <code>passive</code>)</li>
 <li><strong>PAgP</strong> — Cisco proprietary</li>
 <li><strong>Static / "on"</strong> — no negotiation; misconfiguration causes loops</li>
 </ul>` },
-      { t: 'The gotcha worth volunteering', h: `<p>Traffic is hashed <strong>per flow</strong> (src/dst MAC, IP, or port), so a <strong>single TCP session never exceeds one member link's speed</strong>. Four 1G links give you 4G of aggregate capacity across many flows, not a 4G single transfer. If one big backup job is the problem, aggregation won't fix it — a faster single link will.</p>` }
     ]
   },
   {
@@ -631,6 +755,17 @@ ip route 10.5.0.0 255.255.0.0 172.16.9.2 200  # floating static, AD 200, backup 
     explain: `Seven layers is just a way of saying "each level solves one problem and hands the rest down." Your HTTP call knows nothing about cables; the cable knows nothing about HTTP. Each layer wraps the one above it in its own envelope — which is exactly what you already do with a request body inside an HTTP request inside a TLS session.`,
     tags: ['OSI', 'encapsulation', 'PDU'],
     blocks: [
+      { t: 'Start here — why anyone split networking into layers', h: `<p>The layer model isn't a description of how packets physically work; it's a <strong>design discipline</strong>, and you already use the same one.</p>
+<p>When you write a REST endpoint you don't think about TCP retransmission. When you write TCP you don't think about copper voltages. Each level solves exactly one problem and trusts the level below to solve its own. That's all layering means.</p>
+<p>The payoff is substitutability: because Ethernet only has to deliver a payload between two devices on a wire, you can swap Ethernet for Wi-Fi and nothing above notices. Because IP only has to get a packet to a destination address, you can run it over Ethernet, Wi-Fi, or a satellite link and TCP doesn't care.</p>
+<p>Practical version for the interview: <strong>if you can say which layer a problem lives at, you've already halved the search space.</strong> "Both hosts have link lights and can ping each other but the application times out" is not a layer 1, 2, or 3 problem — no matter what the app team says.</p>` },
+      { t: 'The three layers you actually need cold', h: `<p>Seven layers is the classroom answer. In practice, three of them do almost all the work, and those three are the entire scope of your interview:</p>
+<table class="net-table"><thead><tr><th>Layer</th><th>Addresses by</th><th>Scope</th><th>Device</th><th>The one-line job</th></tr></thead><tbody>
+<tr><td><strong>L1 Physical</strong></td><td>nothing</td><td>one cable</td><td>cable, transceiver</td><td>Turn bits into signals and back</td></tr>
+<tr><td><strong>L2 Data Link</strong></td><td>MAC address</td><td><em>one local network</em></td><td>switch</td><td>Get a frame to the right device on this wire</td></tr>
+<tr><td><strong>L3 Network</strong></td><td>IP address</td><td><em>the whole internet</em></td><td>router</td><td>Get a packet across networks to its final destination</td></tr>
+</tbody></table>
+<p>The column that matters most is <strong>scope</strong>. Layer 2 addressing is meaningful on one wire and meaningless one hop later — which is why it gets rewritten at every hop. Layer 3 addressing is meaningful end to end — which is why it doesn't. Nearly every "what changes hop to hop" question is testing whether you understand that one distinction.</p>` },
       { t: 'OSI', h: `<table class="net-table"><thead><tr><th>OSI</th><th>Name</th><th>PDU</th><th>Devices</th><th>Protocols</th></tr></thead><tbody>
 <tr><td>7</td><td>Application</td><td>Data</td><td>—</td><td>HTTP, DNS, SMTP, LDAP, FTP</td></tr>
 <tr><td>6</td><td>Presentation</td><td>Data</td><td>—</td><td>TLS, JPEG, ASCII</td></tr>
@@ -658,6 +793,29 @@ ip route 10.5.0.0 255.255.0.0 172.16.9.2 200  # floating static, AD 200, backup 
     explain: `TCP is a phone call: you connect, you confirm every sentence was heard, you hang up properly. UDP is a postcard: write it, send it, never find out if it arrived. The socket states are just the status line of that phone call, and knowing two of them tells you whether a bug is yours or the network's.`,
     tags: ['TCP', 'UDP', 'handshake', 'sockets'],
     blocks: [
+      { t: 'Start here — what TCP adds, and why you would ever refuse it', h: `<p>IP makes no promises. A packet may arrive, may not, may arrive twice, may arrive out of order. That is deliberate — it keeps routers simple and fast, and it means the network doesn't have to remember anything about your conversation.</p>
+<p>Someone has to add the guarantees, and that someone is the two endpoints. <strong>TCP</strong> is that layer:</p>
+<ul>
+<li><strong>Ordering</strong> — every byte is numbered, so the receiver can reassemble in the right order regardless of arrival order</li>
+<li><strong>Delivery</strong> — the receiver acknowledges what it got; anything unacknowledged is sent again</li>
+<li><strong>Flow control</strong> — the receiver advertises how much buffer space it has left, so a fast sender can't drown a slow receiver</li>
+<li><strong>Congestion control</strong> — the sender watches for loss and backs off, so the <em>network</em> in between doesn't collapse</li>
+</ul>
+<p>All of that costs a setup handshake, state on both ends, and delay whenever something has to be retransmitted.</p>
+<p><strong>So why would anyone choose UDP?</strong> Because for some traffic, a late packet is worse than a missing one. On a voice call, retransmitting audio from 200 ms ago is useless — you'd rather have the small gap. DNS uses UDP because a query and its answer fit in one packet each, and setting up a connection would triple the cost of the lookup. The rule of thumb: <em>TCP when correctness matters more than latency, UDP when latency matters more than correctness.</em></p>` },
+      { t: 'The handshake, and what each failure mode tells you', h: `<p>Three messages to open a connection:</p>
+<pre class="net-pre">Client                          Server
+  |--- SYN ----------------------&gt;|   "I want to talk, my sequence starts at x"
+  |&lt;-- SYN-ACK -------------------|   "Fine, mine starts at y, and I got your x"
+  |--- ACK ---------------------&gt;|   "Got your y"
+                          ESTABLISHED</pre>
+<p>This is worth more to you than it looks, because <strong>which part fails tells you where the problem is</strong>, and it separates "the network" from "the service" in about two seconds:</p>
+<table class="net-table"><thead><tr><th>What you observe</th><th>What it means</th></tr></thead><tbody>
+<tr><td><strong>Instant "connection refused"</strong> (a RST comes back)</td><td>The packet arrived, the host is alive and reachable — there is simply nothing listening on that port. Wrong port, or the service is down. <em>Not a network problem</em></td></tr>
+<tr><td><strong>Hangs, then times out</strong> (no reply at all)</td><td>Something is silently discarding your packet — a firewall rule, a security group, a wrong address, or a dead host. <em>This is the network-shaped one</em></td></tr>
+<tr><td><strong>Connects but stalls mid-transfer</strong></td><td>The handshake is small; large packets are not. Classic MTU / Path MTU Discovery blackhole</td></tr>
+</tbody></table>
+<p><code>nc -zv host 1521</code> or <code>telnet host 7001</code> gets you that answer immediately, and it's the first thing to reach for when someone says "the network is broken".</p>` },
       { t: 'The comparison', h: `<table class="net-table"><thead><tr><th></th><th>TCP</th><th>UDP</th></tr></thead><tbody>
 <tr><td>Connection</td><td>Yes (handshake)</td><td>No</td></tr>
 <tr><td>Ordering</td><td>Guaranteed (sequence numbers)</td><td>None</td></tr>
@@ -668,11 +826,7 @@ ip route 10.5.0.0 255.255.0.0 172.16.9.2 200  # floating static, AD 200, backup 
 <tr><td>Use cases</td><td>HTTP, SSH, DB, LDAP</td><td>DNS, DHCP, VoIP, video, SNMP, syslog</td></tr>
 </tbody></table>
 <p>DNS is the classic trick: <strong>UDP/53</strong> for normal queries, <strong>TCP/53 for zone transfers and responses over 512 bytes</strong>.</p>` },
-      { t: 'Three-way handshake and teardown', h: `<pre class="net-pre">Client                         Server
-  |------ SYN (seq=x) ---------&gt;|
-  |&lt;-- SYN-ACK (seq=y, ack=x+1)-|
-  |------ ACK (ack=y+1) -------&gt;|
-        connection ESTABLISHED</pre>
+      { t: 'Closing a connection takes four messages, not three', h: `<p>Each side shuts down its own direction independently, so a close is four messages rather than three — one side can still be sending after the other has finished.</p>
 <pre class="net-pre">  |------ FIN ----------------&gt;|
   |&lt;----- ACK -----------------|
   |&lt;----- FIN -----------------|
@@ -687,12 +841,6 @@ ip route 10.5.0.0 255.255.0.0 172.16.9.2 200  # floating static, AD 200, backup 
 <li><strong>FIN_WAIT_2</strong> — you sent FIN, the peer ACKed but never sent its own FIN</li>
 </ul>
 <p><strong>Interview gold:</strong> "CLOSE_WAIT means the application didn't call close(). TIME_WAIT means we initiated the close and we're waiting out the 2×MSL timer."</p>` },
-      { t: 'Why the handshake matters to you', h: `<p>A WebLogic managed server that won't join a cluster, an Oracle listener refusing connections on 1521, a Spring Boot app timing out to an external API — all diagnosed by asking: <em>did we get past SYN?</em> <code>telnet host port</code> or <code>nc -zv host port</code> answers that in two seconds.</p>
-<ul>
-<li><strong>Connection refused (RST)</strong> → host reachable, nothing listening on that port</li>
-<li><strong>Connection timeout (no response)</strong> → firewall dropping, wrong IP, or host down</li>
-</ul>
-<p>Immediate reject vs hang is the single fastest way to split "network" from "service".</p>` }
     ]
   },
   {
@@ -704,13 +852,23 @@ ip route 10.5.0.0 255.255.0.0 172.16.9.2 200  # floating static, AD 200, backup 
     explain: `Every link has a maximum packet size. If something along the path can't fit your packet, it's supposed to send back a "too big" message — but firewalls often block that message, so the sender never learns and just keeps retrying. That's why the symptom is so distinctive: small requests work, large ones hang forever.`,
     tags: ['MTU', 'MSS', 'PMTUD', 'VPN'],
     blocks: [
+      { t: 'Start here — why a packet size limit exists, and what breaks', h: `<p>Every link has a maximum size of thing it will carry. On Ethernet that's <strong>1500 bytes</strong> of payload, and it's an arbitrary decision made decades ago that everything now depends on.</p>
+<p>Take 20 bytes for the IP header and 20 for the TCP header, and you're left with <strong>1460 bytes</strong> of actual data per packet. That's the MSS.</p>
+<p>The trouble starts when the path isn't uniform. Your Ethernet takes 1500, but somewhere in the middle there's a VPN tunnel that wraps every packet in another ~50-60 bytes of encryption overhead, so it can only pass 1440 of yours. Now what?</p>
+<p>The designed answer is <strong>Path MTU Discovery</strong>, and it's a conversation:</p>
+<ol>
+<li>Your sender marks packets "Don't Fragment" and sends full-size ones</li>
+<li>The tunnel router can't fit one, and it isn't allowed to split it, so it drops it and sends back <strong>ICMP Type 3 Code 4</strong>: "too big, the most I can take is 1440"</li>
+<li>Your sender reads that, shrinks its packets, and everything works</li>
+</ol>
+<p><strong>Now break it.</strong> A security-minded admin somewhere blocks all ICMP, thinking of ping floods. Step 2's message never arrives. Your sender gets no feedback at all — it just sees packets vanish, so it retransmits the same too-big packet forever.</p>
+<p>The symptom that produces is so specific it's diagnostic: <strong>the connection opens fine and small requests work perfectly, but anything large hangs.</strong> Because the handshake packets are tiny and get through; it's only once real data starts flowing at full size that everything disappears. If you hear "it works over the LAN but not the VPN", or "logins work but file downloads hang", check MTU first.</p>` },
       { t: 'The numbers', h: `<ul>
 <li><strong>MTU</strong> = largest frame payload the link carries. Ethernet default <strong>1500 bytes</strong></li>
 <li><strong>MSS</strong> = largest TCP payload = MTU − IP header (20) − TCP header (20) = <strong>1460</strong> on standard Ethernet</li>
 <li><strong>Jumbo frames</strong> = 9000 MTU, used on storage and backup networks. Must be consistent end to end or you get silent blackholing</li>
 </ul>` },
-      { t: 'Path MTU Discovery', h: `<p>The sender sets the <strong>DF</strong> (Don't Fragment) bit; a router that can't fit the packet returns <strong>ICMP Type 3 Code 4</strong> "Fragmentation Needed". If a firewall blocks ICMP, PMTUD breaks and you get the classic symptom: <strong>small requests work, large ones hang</strong> — the TCP handshake succeeds, then the connection dies mid-transfer.</p>
-<p>That shows up over VPN tunnels constantly (IPsec adds ~50–60 bytes of overhead). Fix: lower the MTU on the tunnel interface, or clamp MSS to ~1360.</p>
+      { t: 'Finding the real path MTU, and fixing it', h: `<p>Send progressively smaller packets with fragmentation forbidden until one gets through:</p>
 <pre class="net-pre">ping -M do -s 1472 8.8.8.8      # Linux: 1472 + 28 = 1500
 ping -f -l 1472 8.8.8.8         # Windows</pre>
 <p>Drop the size until it passes; that value plus 28 is your path MTU.</p>` }
@@ -725,12 +883,22 @@ ping -f -l 1472 8.8.8.8         # Windows</pre>
     explain: `IP addresses tell you where something lives across the whole internet; MAC addresses only mean anything on your local wire. ARP is the shout that translates one into the other: "who has 192.168.1.50? Tell me your hardware address so I can actually put a frame on the wire."`,
     tags: ['ARP', 'gratuitous ARP', 'spoofing'],
     blocks: [
-      { t: 'How it works', h: `<pre class="net-pre">Host A wants 192.168.1.50
-A broadcasts: "Who has 192.168.1.50? Tell 192.168.1.10"  (dest MAC ff:ff:ff:ff:ff:ff)
-Host B unicasts back: "192.168.1.50 is at 00:1a:2b:3c:4d:5e"
-A caches it (default ~4 hours Linux, 2 min Windows)</pre>
-<p>If the destination is <strong>off-subnet</strong>, the host ARPs for its <strong>default gateway</strong> instead, and sends the frame to the router's MAC with the remote host's IP still in the IP header.</p>
-<p>Commands: <code>arp -a</code>, <code>ip neigh show</code>, <code>arp -d &lt;ip&gt;</code> to clear one entry.</p>` },
+      { t: 'Start here — the gap ARP fills', h: `<p>You have two addressing systems that don't know about each other. Your application says "connect to 192.168.1.50" — an IP address. But to actually put electricity on the wire, your network card must build an Ethernet frame, and an Ethernet frame is addressed with a <strong>MAC address</strong>. You don't have one.</p>
+<p>Nothing in the IP address tells you the MAC address; they're unrelated systems. So you have to ask. That's ARP, and the mechanism is delightfully blunt:</p>
+<ol>
+<li>You shout at everyone. A broadcast frame to <code>ff:ff:ff:ff:ff:ff</code>, which every device on the local network must receive and read: <em>"Who has 192.168.1.50? Tell 192.168.1.10."</em></li>
+<li>Every machine checks whether that's their address. All but one silently ignore it</li>
+<li>The one that owns it replies <em>directly</em> to you — no need to broadcast the answer: <em>"192.168.1.50 is at 00:1a:2b:3c:4d:5e."</em></li>
+<li>You cache it, so you don't have to shout again for the next few hours</li>
+</ol>
+<p>Now you can build the frame and send it. Every conversation on every local network you've ever used began with this exchange.</p>` },
+      { t: 'The important half: what happens when the destination is not local', h: `<p>ARP only works on the local wire — a broadcast doesn't cross a router, and a machine in another city cannot hear you shout.</p>
+<p>So when your PC works out that the destination is on a different network, it does something that looks strange until you've seen the two-envelope model: <strong>it ARPs for the default gateway instead</strong>, then sends a frame addressed to the router while the packet inside stays addressed to the far-away server.</p>
+<p>Two practical consequences worth knowing:</p>
+<ul>
+<li>Your ARP cache mostly contains one entry that matters — your gateway's. Everything leaving your network goes to that MAC address</li>
+<li><strong>Stale ARP is the first suspect whenever a failover doesn't take effect.</strong> If a clustered service moves its shared IP address to a different machine, everyone's cached mapping now points at a machine that no longer owns it. The new owner is supposed to send a <em>gratuitous ARP</em> — an unsolicited "I have this address now" announcement — to fix everyone's cache. When that doesn't happen or gets filtered, traffic keeps going to the dead node until the caches time out</li>
+</ul>` },
       { t: 'The three variants worth naming', h: `<ul>
 <li><strong>Gratuitous ARP</strong> — an unsolicited announcement of your own IP/MAC. Used on failover so switches update their tables when a VIP moves. If a load balancer or cluster VIP fails over and traffic doesn't follow, stale ARP is the first suspect</li>
 <li><strong>Proxy ARP</strong> — a router answers ARP on behalf of a host in another subnet</li>
@@ -747,6 +915,22 @@ A caches it (default ~4 hours Linux, 2 min Windows)</pre>
     explain: `DNS turns a name into an address. Nearly every DNS incident you'll ever see is really a <em>caching</em> incident — somebody changed a record and the old answer is still sitting in a cache somewhere with time left on its clock.`,
     tags: ['DNS', 'TTL', 'dig'],
     blocks: [
+      { t: 'Start here — how a name becomes an address', h: `<p>Nobody memorises addresses, so there's a global distributed database mapping names to them. What makes DNS interesting is that no single machine holds that database — it's split up by <em>delegation</em>.</p>
+<p>Read a name right to left and you're reading the chain of authority: <code>www.example.com</code> means "the <strong>www</strong> record, inside <strong>example</strong>, inside <strong>com</strong>, inside the root".</p>
+<p>So a lookup that isn't cached anywhere walks that chain:</p>
+<ol>
+<li>Your machine asks its configured <strong>resolver</strong> (from DHCP, or 8.8.8.8) — "what is www.example.com?" — and expects a final answer</li>
+<li>The resolver asks a <strong>root</strong> server. The root doesn't know, but it knows who runs <code>.com</code></li>
+<li>It asks the <strong>.com</strong> servers. They don't know either, but they know which nameservers are <em>authoritative</em> for <code>example.com</code></li>
+<li>It asks those, and they answer for real, because they hold the actual records</li>
+<li>The answer comes back to you, and gets <strong>cached at every step</strong> for however many seconds the record's TTL says</li>
+</ol>
+<p>The vocabulary distinction they might poke at: your machine makes a <strong>recursive</strong> request ("go find out and don't come back until you know"), while the resolver does <strong>iterative</strong> queries ("who do I ask next?"). Your machine does one round trip; the resolver does several on your behalf.</p>` },
+      { t: 'The thing that actually goes wrong: caching', h: `<p>Almost every DNS incident you will ever see is really a caching incident, and it's worth being able to say so.</p>
+<p>Each record carries a <strong>TTL</strong> — how many seconds anyone may keep the answer before asking again. That's what makes DNS survivable at internet scale, and it's also what makes changes take effect unevenly.</p>
+<p>The classic symptom: <em>"we moved the server, and half the users are on the new one and half are still hitting the old one."</em> That's not a mystery — those users' resolvers cached the old answer and still have time left on the clock. Nothing is broken; you're watching TTLs expire.</p>
+<p>Which gives you the operational rule worth stating in an interview: <strong>lower the TTL to something short like 300 seconds a day or two <em>before</em> a planned migration</strong>, so when you make the switch the world follows within five minutes instead of a day. Then put it back up afterwards.</p>
+<p>One extra that's yours specifically: <strong>the JVM caches DNS too</strong>, independently of the OS. Older JVMs cached a successful lookup <em>forever</em>. That's bitten a lot of people during cloud failovers — the infrastructure moved correctly and the Java process kept talking to an address that no longer existed.</p>` },
       { t: 'Record types', h: `<table class="net-table"><thead><tr><th>Type</th><th>Purpose</th></tr></thead><tbody>
 <tr><td>A</td><td>hostname → IPv4</td></tr>
 <tr><td>AAAA</td><td>hostname → IPv6</td></tr>
@@ -758,13 +942,6 @@ A caches it (default ~4 hours Linux, 2 min Windows)</pre>
 <tr><td>SRV</td><td>service location: port + host, used by LDAP/AD/SIP</td></tr>
 <tr><td>SOA</td><td>zone authority + serial + TTLs</td></tr>
 </tbody></table>` },
-      { t: 'Resolution flow', h: `<pre class="net-pre">1. Browser cache
-2. OS cache (Windows: DNS Client service; Linux: nscd/systemd-resolved, often none)
-3. /etc/hosts or C:\\Windows\\System32\\drivers\\etc\\hosts
-4. Configured recursive resolver (DHCP-provided or 8.8.8.8)
-5. Resolver: root (.) -&gt; TLD (.com) -&gt; authoritative (example.com) -&gt; answer
-6. Answer cached for TTL seconds at each layer</pre>
-<p>The client makes an <strong>iterative</strong> ask to the resolver; the resolver does the <strong>recursive</strong> work.</p>` },
       { t: 'Commands', h: `<pre class="net-pre">dig example.com A +short
 dig @8.8.8.8 example.com          # query a specific server, bypass the local resolver
 dig example.com +trace            # full delegation path from root - best debugging tool
@@ -791,15 +968,20 @@ ipconfig /flushdns                # Windows</pre>` },
     explain: `How a device that knows nothing gets an IP address, a gateway and a DNS server — four broadcast messages and it's on the network. And if you ever see an address starting <code>169.254</code>, that is the device saying "I asked and nobody answered."`,
     tags: ['DHCP', 'DORA', 'relay', 'APIPA'],
     blocks: [
-      { t: 'The exchange', h: `<pre class="net-pre">DISCOVER  client broadcast (0.0.0.0 -&gt; 255.255.255.255, UDP 67)
-OFFER     server offers an address
-REQUEST   client broadcasts acceptance (so other servers withdraw their offers)
-ACK       server confirms, sends lease + gateway + DNS + domain</pre>
-<p>Lease renewal starts at <strong>T1 (50% of the lease)</strong>, unicast to the original server.</p>` },
-      { t: 'The two facts that get asked', h: `<ul>
-<li>Broadcasts don't cross routers, so a DHCP server on another subnet needs an <strong>IP helper-address</strong> (DHCP relay) configured on the router or SVI. Classic question: <em>"new VLAN, nobody gets an IP"</em> → missing <code>ip helper-address</code></li>
-<li><strong>169.254.x.x</strong> = APIPA / link-local. It means the client never heard from a DHCP server. Check the switchport VLAN, the relay, and the scope for exhaustion</li>
-</ul>` }
+      { t: 'Start here — the bootstrapping problem', h: `<p>A machine has just powered on. It has no IP address, doesn't know the address of any server, doesn't know its gateway, doesn't know anything. It needs to be given all of that — but it can't send a normal request, because sending a normal request requires already having an address.</p>
+<p>DHCP solves it by starting from broadcast, which is the one thing you can do with no address at all:</p>
+<ol>
+<li><strong>DISCOVER</strong> — the client shouts to the whole local network, from source address <code>0.0.0.0</code> to <code>255.255.255.255</code>: "is there a DHCP server out there?"</li>
+<li><strong>OFFER</strong> — a server replies with an address it's willing to lend</li>
+<li><strong>REQUEST</strong> — the client formally asks for that one. This is also a <em>broadcast</em>, deliberately: it tells any other DHCP servers that offered "I'm not taking yours, you can have it back"</li>
+<li><strong>ACK</strong> — the server confirms, and includes the rest of the settings: subnet mask, default gateway, DNS servers, domain, and how long the lease lasts</li>
+</ol>
+<p>Remember it as <strong>DORA</strong>. The address is a <em>lease</em>, not a gift — the client starts trying to renew at halfway through, quietly and directly to the server that issued it.</p>` },
+      { t: 'The two things that break, and how to recognise both instantly', h: `<p><strong>1. "We built a new VLAN and nobody gets an address."</strong></p>
+<p>Step 1 was a broadcast — and <strong>routers do not forward broadcasts</strong>. That's the whole point of a broadcast domain. So if the DHCP server lives on a different subnet from the client, it never hears the shout.</p>
+<p>The fix is to tell the router to help: <code>ip helper-address</code> on the VLAN interface makes the router catch DHCP broadcasts and forward them as unicast to the real server. Miss that one line and everything else can be perfect while nobody gets an address. This is such a reliable interview question that it's worth having the phrase "missing ip helper-address" ready.</p>
+<p><strong>2. An address starting 169.254.</strong></p>
+<p>That's <strong>APIPA</strong>, and it isn't a DHCP address at all — it's what a machine assigns itself when nobody answered. So it's not a hint, it's a definitive statement: <em>the DHCP conversation never completed.</em> Three things to check, in order: is the switchport in the VLAN you think it is, is the relay configured, and has the address pool run out?</p>` },
     ]
   },
   {
@@ -811,6 +993,13 @@ ACK       server confirms, sends lease + gateway + DNS + domain</pre>
     explain: `The classic opening question in this industry, and a free layup: it lets you walk the entire stack in three minutes. It's also the one place where your application-side experience is an advantage rather than a gap, because steps 4 through 8 are where you've actually lived.`,
     tags: ['end-to-end', 'DNS', 'TLS', 'HTTP'],
     blocks: [
+      { t: 'Start here — why this question is worth rehearsing', h: `<p>"What happens when you type a URL and press enter" is the most-asked opening question in the industry, and it is not a trick. It's an invitation: it lets you demonstrate the entire stack in three minutes, and the interviewer can stop you at any point to go deeper on whatever they care about.</p>
+<p>Two things make an answer good rather than adequate:</p>
+<ul>
+<li><strong>Go in order and don't skip layers.</strong> The value is in showing the chain — name to address, address to route, route to connection, connection to encryption, encryption to request</li>
+<li><strong>Say which parts you know deeply.</strong> Ending with "and steps 4 through 8 are where I've spent most of my debugging time" turns a recital into a conversation about your actual experience, which is where you want to be</li>
+</ul>
+<p>Rehearse it out loud until it flows. It's the one answer you can be certain you'll get to use.</p>` },
       { t: 'The script', h: `<ol>
 <li><strong>Parse the URL</strong> — scheme, host, port (443 default), path</li>
 <li><strong>DNS resolution</strong> — browser cache → OS cache → hosts file → recursive resolver → root/TLD/authoritative → A record returned</li>
@@ -835,6 +1024,25 @@ ACK       server confirms, sends lease + gateway + DNS + domain</pre>
     explain: `A subnet mask draws a line through an address: everything left of the line says <em>which network</em>, everything right says <em>which device on it</em>. All of subnetting is finding that line and counting. It's also the pass/fail part of a networking interview — being slow here undoes everything else.`,
     tags: ['CIDR', 'VLSM', 'RFC 1918'],
     blocks: [
+      { t: 'Start here — what a mask really does', h: `<p>An IP address is 32 bits. A <strong>subnet mask</strong> draws a line through it. Everything on the left says <em>which network</em>; everything on the right says <em>which device inside that network</em>.</p>
+<pre class="net-pre">10.1.1.5      with mask /24
+  10.1.1  .  5
+ ^network^  ^host^</pre>
+<p>That's genuinely all it is. <code>/24</code> means "the first 24 bits identify the network", leaving 8 bits for devices.</p>
+<p><strong>Why a device cares.</strong> It's the test every machine runs before sending anything: take the destination address, apply my own mask, and compare with my own network. Same result means <em>you're on my wire, I'll ARP for you and send directly</em>. Different result means <em>you're elsewhere, I'll hand this to my gateway</em>. That single comparison is why a wrong mask breaks connectivity in confusing, half-working ways.</p>
+<p><strong>Why two addresses are unusable in every subnet.</strong> The lowest one, with all host bits 0, names the network itself. The highest, with all host bits 1, is the broadcast address for it. Neither can belong to a device — which is where "minus 2" comes from in every host count.</p>` },
+      { t: 'The counting method — the only technique you need', h: `<p>Every subnetting question is the same four steps. Practice these until they're automatic, because interviewers time this one.</p>
+<ol>
+<li><strong>Find the interesting octet.</strong> The mask is made of 255s, then one interesting number, then 0s. /20 is 255.255.<strong>240</strong>.0, so the third octet is where the action is</li>
+<li><strong>Block size = 256 − that number.</strong> 256 − 240 = <strong>16</strong>. This is the single most useful number in subnetting: it's how far apart the subnet boundaries are</li>
+<li><strong>Count up in blocks</strong> until you pass your address. 0, 16, 32, 48… For 172.16.<strong>35</strong>.100, 35 sits between 32 and 48</li>
+<li><strong>Take the boundary below.</strong> Network is 172.16.<strong>32</strong>.0. Broadcast is one below the <em>next</em> boundary, so 172.16.<strong>47</strong>.255. Usable hosts are everything between: .32.1 through .47.254</li>
+</ol>
+<p>The masks only ever contain these eight numbers, paired with their block sizes. Memorise this row and you can do any question:</p>
+<table class="net-table"><thead><tr><th>Mask octet</th><td>128</td><td>192</td><td>224</td><td>240</td><td>248</td><td>252</td><td>254</td><td>255</td></tr></thead><tbody>
+<tr><th>Block size</th><td>128</td><td>64</td><td>32</td><td>16</td><td>8</td><td>4</td><td>2</td><td>1</td></tr>
+</tbody></table>
+<p>Sanity check to run every time: <strong>a network address always lands on a multiple of the block size.</strong> If your answer doesn't, you've miscounted.</p>` },
       { t: 'Memorize this table', h: `<table class="net-table"><thead><tr><th>CIDR</th><th>Mask</th><th>Block size</th><th>Total IPs</th><th>Usable hosts</th><th>/24s</th></tr></thead><tbody>
 <tr><td>/8</td><td>255.0.0.0</td><td>—</td><td>16,777,216</td><td>16,777,214</td><td>65536</td></tr>
 <tr><td>/16</td><td>255.255.0.0</td><td>—</td><td>65,536</td><td>65,534</td><td>256</td></tr>
@@ -854,17 +1062,6 @@ ACK       server confirms, sends lease + gateway + DNS + domain</pre>
 </tbody></table>
 <p>Usable = total − 2 (network address + broadcast address). *<strong>/31</strong> is the exception: RFC 3021 allows both addresses on point-to-point links. /30 is the traditional choice for router-to-router links.</p>
 <p>Octet values only ever come from <strong>128, 192, 224, 240, 248, 252, 254, 255</strong>. Learn those eight numbers and the block sizes 128/64/32/16/8/4/2/1 that pair with them.</p>` },
-      { t: 'The method', h: `<p>Given <strong>172.16.35.100/20</strong> — find network, broadcast, range, host count.</p>
-<ol>
-<li>/20 = 255.255.<strong>240</strong>.0. The interesting octet is the 3rd</li>
-<li>Block size = 256 − 240 = <strong>16</strong></li>
-<li>Subnets in the 3rd octet step by 16: 0, 16, 32, <strong>48</strong>, 64…</li>
-<li>35 falls between 32 and 48, so network = <strong>172.16.32.0</strong></li>
-<li>Broadcast = one below the next block = <strong>172.16.47.255</strong></li>
-<li>Usable = <strong>172.16.32.1 – 172.16.47.254</strong></li>
-<li>Hosts = 2^(32−20) − 2 = 4096 − 2 = <strong>4094</strong></li>
-</ol>
-<p>Same method every time: find the interesting octet, get the block size, count up to the address, take the boundary below it.</p>` },
       { t: 'Worked examples', h: `<p><strong>192.168.10.77/26</strong> — mask 255.255.255.192, block 64, boundaries 0/64/128/192. 77 is in the 64 block → network <strong>192.168.10.64</strong>, broadcast <strong>192.168.10.127</strong>, range <strong>.65 – .126</strong>, 62 hosts.</p>
 <p><strong>10.0.0.130/25</strong> — mask 255.255.255.128, block 128, boundaries 0/128. Network <strong>10.0.0.128</strong>, broadcast <strong>10.0.0.255</strong>, range <strong>.129 – .254</strong>, 126 hosts.</p>
 <p><strong>203.0.113.45/28</strong> — block 16, boundaries 0/16/32/48. Network <strong>203.0.113.32</strong>, broadcast <strong>203.0.113.47</strong>, range <strong>.33 – .46</strong>, 14 hosts.</p>
@@ -902,6 +1099,18 @@ ACK       server confirms, sends lease + gateway + DNS + domain</pre>
     explain: `Your home has one public address and twenty devices. NAT is the router rewriting the return address on the way out and remembering the swap, so replies find their way back to the right device. It's the reason you can't just reach a machine sitting behind someone's home router.`,
     tags: ['NAT', 'PAT', 'port forwarding'],
     blocks: [
+      { t: 'Start here — why your laptop does not have a real internet address', h: `<p>IPv4 has about 4 billion addresses, which sounded infinite in 1981 and ran out around 2011. Yet you have a phone, a laptop, a TV and a doorbell all online at home, on one address from your ISP.</p>
+<p><strong>NAT</strong> is the trick that makes that work. Your devices get private addresses (the <code>192.168.x.x</code> range) that are meaningless on the internet — millions of homes use identical ones. Your router rewrites them on the way out.</p>
+<p>The problem it has to solve: if three devices all talk to the same website, and the router replaces all three source addresses with its own single public one, how does it know which device a reply belongs to? It uses the <strong>port number</strong> as a discriminator, and remembers the swap:</p>
+<pre class="net-pre">192.168.1.10:51000  ->  203.0.113.7:40001
+192.168.1.11:51000  ->  203.0.113.7:40002
+192.168.1.12:49152  ->  203.0.113.7:40003</pre>
+<p>A reply to port 40002 gets rewritten back to 192.168.1.11:51000 and delivered. That's <strong>PAT</strong>, also called NAT overload, and it's what essentially every home and small office runs.</p>` },
+      { t: 'What NAT breaks, and the security claim to push back on', h: `<p><strong>Inbound connections stop working.</strong> The table above is built by outbound traffic — an entry only exists because someone inside started a conversation. If a stranger tries to connect <em>in</em>, the router receives a packet for a port it has no entry for, and has no idea which internal device it belongs to. So it drops it.</p>
+<p>That's why reaching a machine at home takes deliberate effort: a port forward (a permanent hand-written table entry), a VPN, or a tunnel the inside device opens outward first.</p>
+<p>It also breaks any protocol that writes IP addresses <em>inside</em> its own messages rather than only in the header — FTP in active mode and SIP are the usual examples. The address in the payload is the private one, which is nonsense to the outside world. Firewalls carry special-case handlers (ALGs) to peek inside and rewrite those too.</p>
+<p><strong>And the interview trap: "doesn't NAT act as a firewall?"</strong></p>
+<p>Say no, and say why: <em>NAT is an address translator that happens to drop unsolicited inbound traffic as a side effect of not knowing where to send it.</em> It makes no decisions about what should be allowed, it inspects nothing, and any device inside can still open an outbound connection to anywhere — which is how most compromises actually work. Useful side effect, not a security control.</p>` },
       { t: 'The four flavors', h: `<ul>
 <li><strong>Static NAT</strong> — one private IP ↔ one public IP, permanent. Used for inbound servers</li>
 <li><strong>Dynamic NAT</strong> — a pool of public IPs, first come first served</li>
@@ -909,8 +1118,6 @@ ACK       server confirms, sends lease + gateway + DNS + domain</pre>
 <li><strong>Port forwarding / destination NAT</strong> — an inbound public:port mapped to an internal host</li>
 </ul>
 <p>The router keeps a translation table: <code>inside_local:port ↔ inside_global:port</code>. Return traffic gets matched against it and rewritten back.</p>` },
-      { t: 'Why NAT breaks things', h: `<p>The outside can't originate connections inward without an explicit mapping. That's why you need port forwarding, a VPN, or a reverse tunnel to reach a home server. It also breaks protocols that embed IPs in the payload (FTP active mode, SIP), which is why ALGs exist.</p>
-<p><strong>NAT is not a firewall.</strong> It's an address translator that happens to drop unsolicited inbound traffic.</p>` }
     ]
   },
   {
@@ -922,17 +1129,25 @@ ACK       server confirms, sends lease + gateway + DNS + domain</pre>
     explain: `IPv4 ran out of addresses; IPv6 has effectively unlimited ones. Concepts only for this interview: subnets are always /64, there is no broadcast at all, and ARP is replaced by a mechanism built on ICMP.`,
     tags: ['IPv6', 'SLAAC', 'NDP'],
     blocks: [
-      { t: 'What to know', h: `<ul>
-<li>128 bits, written as 8 groups of 4 hex digits. <code>::</code> compresses one run of zeros, exactly once — <code>2001:0db8:0000:0000:0000:ff00:0042:8329</code> → <code>2001:db8::ff00:42:8329</code></li>
-<li><strong>/64 is the standard subnet size</strong>, always. The bottom 64 bits are the interface ID</li>
-<li><strong>fe80::/10</strong> link-local, auto-configured on every interface, required for neighbor discovery</li>
-<li><strong>fc00::/7</strong> unique local (the RFC 1918 equivalent) · <strong>2000::/3</strong> global unicast</li>
-<li><strong>No broadcast.</strong> Multicast replaces it — <code>ff02::1</code> = all nodes, <code>ff02::2</code> = all routers</li>
-<li><strong>NDP replaces ARP</strong> (uses ICMPv6 neighbor solicitation/advertisement)</li>
-<li><strong>SLAAC</strong> — the host builds its own address from the router advertisement prefix. No DHCP required</li>
-<li><strong>No NAT by design</strong> (NAT66 exists but is discouraged). The address space is large enough to give everything a routable address</li>
-<li>Dual-stack is how migration actually happens</li>
-</ul>` }
+      { t: 'Start here — what actually changed, beyond longer addresses', h: `<p>The obvious change is size: 32 bits became 128, which is enough to give every device on earth a real, globally routable address with room to spare. But a few design decisions came with it, and those are what get asked about.</p>
+<ul>
+<li><strong>No broadcast, at all.</strong> IPv6 removed it and uses multicast instead — <code>ff02::1</code> reaches all nodes, <code>ff02::2</code> reaches all routers. The reasoning: a broadcast interrupts <em>every</em> device including the ones with no interest, which at scale is pure waste. Multicast only bothers the ones that subscribed</li>
+<li><strong>No ARP.</strong> Since ARP was built on broadcast, it had to go. Its replacement is <strong>NDP</strong> (Neighbor Discovery Protocol), which does the same job over ICMPv6 using multicast</li>
+<li><strong>Hosts can configure themselves.</strong> With <strong>SLAAC</strong>, a router advertises the network prefix and the host generates its own address in that prefix. No DHCP server required</li>
+<li><strong>No NAT by design.</strong> NAT existed because addresses were scarce; they aren't anymore, so every device can have a real address. (NAT66 exists and is discouraged.) This is philosophically the biggest change — it restores the original internet model where any host can address any other</li>
+<li><strong>Routers never fragment.</strong> Only the sending host may, which makes Path MTU Discovery mandatory rather than an optimisation</li>
+</ul>
+<p><strong>/64 is always the subnet size.</strong> Not usually — always. The bottom 64 bits identify the device, the top 64 identify the network, and that split is assumed by SLAAC and other mechanisms. Nobody subnets tighter to save space, because there is no space pressure.</p>
+<p>How migration actually happens: <strong>dual stack</strong>. Machines run both protocols simultaneously and prefer IPv6 when both work. There was never a flag day.</p>` },
+      { t: 'Address format and the prefixes to recognise', h: `<p>128 bits, written as 8 groups of 4 hex digits. A run of zero groups collapses to <code>::</code>, which may appear <strong>once</strong> in an address (twice would be ambiguous):</p>
+<pre class="net-pre">2001:0db8:0000:0000:0000:ff00:0042:8329
+2001:db8::ff00:42:8329          same address, compressed</pre>
+<table class="net-table"><thead><tr><th>Prefix</th><th>What it is</th><th>IPv4 equivalent</th></tr></thead><tbody>
+<tr><td><code>fe80::/10</code></td><td>Link-local — auto-configured on every interface, required for neighbor discovery</td><td>169.254.0.0/16, roughly</td></tr>
+<tr><td><code>fc00::/7</code></td><td>Unique local — private addressing</td><td>RFC 1918 ranges</td></tr>
+<tr><td><code>2000::/3</code></td><td>Global unicast — real, routable addresses</td><td>public IPv4</td></tr>
+<tr><td><code>ff02::1</code> / <code>ff02::2</code></td><td>All nodes / all routers on this link</td><td>broadcast</td></tr>
+</tbody></table>` }
     ]
   },
   {
@@ -944,6 +1159,16 @@ ACK       server confirms, sends lease + gateway + DNS + domain</pre>
     explain: `You will not be asked to configure a switch. You may well be asked what a command shows and how to read its output — especially which half of "up/up" is broken and what that tells you.`,
     tags: ['CLI', 'Cisco', 'show commands'],
     blocks: [
+      { t: 'Start here — you are being asked to read, not to configure', h: `<p>Nobody expects a software engineer to configure a switch from memory. What they may check is whether you can <strong>read output and say what it means</strong>, because that's what you'd actually be doing on day one.</p>
+<p>The single highest-value thing here is the two-part status in <code>show ip interface brief</code>. Every interface reports two states, and which one is broken points straight at a layer:</p>
+<ul>
+<li><strong>up / up</strong> — the cable is good <em>and</em> the protocol negotiated. Healthy</li>
+<li><strong>up / down</strong> — layer 1 is fine, layer 2 is not. The cable is physically connected and something is wrong above it: encapsulation mismatch, no keepalive, a missing clock rate on a serial link</li>
+<li><strong>down / down</strong> — layer 1. Cable, transceiver, the far end shut off, or speed/duplex negotiation failure</li>
+<li><strong>administratively down / down</strong> — nothing is broken. Somebody typed <code>shutdown</code> on this port</li>
+</ul>
+<p>Being able to walk those four states, and say which layer each implicates, is worth more than memorising twenty commands.</p>
+<p>The other high-value read is <strong>error counters</strong>. <em>CRC errors</em> mean frames are arriving corrupted — a bad cable, a failing transceiver, or a duplex mismatch. <em>Input errors and collisions on a link that should be full duplex</em> is almost diagnostic of a duplex mismatch: one side hard-coded, the other auto-negotiating and falling back to half.</p>` },
       { t: 'The commands', h: `<pre class="net-pre">show ip interface brief          # every interface, IP, admin status, line protocol
 show interfaces status           # port status, VLAN, duplex, speed
 show interfaces gi0/1            # errors, CRC, drops, duplex mismatches
@@ -958,13 +1183,6 @@ show cdp neighbors detail        # what's plugged into what (LLDP for multi-vend
 show running-config interface gi0/1
 show logging                     # syslog buffer
 show version                     # model, IOS version, uptime</pre>` },
-      { t: 'Reading show ip interface brief', h: `<ul>
-<li><code>up / up</code> — good</li>
-<li><code>up / down</code> — physical layer fine, protocol not (encapsulation mismatch, no keepalive, missing clock rate on serial)</li>
-<li><code>down / down</code> — cable, SFP, remote end shut, or speed/duplex negotiation failure</li>
-<li><code>administratively down / down</code> — someone typed <code>shutdown</code></li>
-</ul>
-<p>Counters worth knowing: <strong>CRC errors</strong> point to a bad cable, SFP, or duplex mismatch. <strong>Input errors + collisions on a full-duplex link</strong> almost always means duplex mismatch — one side hard-coded, one side auto.</p>` }
     ]
   },
   {
@@ -976,13 +1194,25 @@ show version                     # model, IOS version, uptime</pre>` },
     explain: `The method matters more than the tool. Establish the scope first (one user, or everyone?), then ask what changed, then work up or down the stack from wherever the evidence points. Saying that out loud is worth more than naming ten commands.`,
     tags: ['methodology', 'ping', 'traceroute', 'tcpdump'],
     blocks: [
-      { t: 'Methodology', h: `<ul>
-<li><strong>Bottom-up (L1→L7)</strong> — good when something is clearly broken. Start with link lights and cables</li>
-<li><strong>Top-down (L7→L1)</strong> — good when one application misbehaves and everything else works</li>
-<li><strong>Divide and conquer</strong> — start at L3 (<code>ping</code>) and go up or down based on the result. Fastest in practice</li>
-<li><strong>Follow the path</strong> — trace the packet hop by hop: host → switch → gateway → firewall → WAN → remote</li>
+      { t: 'Start here — the two questions to ask before touching anything', h: `<p>Tools are the easy part. What an interviewer is listening for is whether you have a <em>method</em>, because that's what distinguishes someone who fixes things from someone who changes things until the symptom moves.</p>
+<p>Two questions come before any command:</p>
+<p><strong>1. What is the scope?</strong> One user, one subnet, one application, or everyone? This alone usually identifies the layer:</p>
+<ul>
+<li>One user, everyone else fine → their machine, their port, their cable</li>
+<li>Everyone on one VLAN → that VLAN's gateway, its switch, its uplink</li>
+<li>Everyone, one application → the application or its dependencies, not the network</li>
+<li>Everyone, everything → core switch, firewall, WAN link, or routing</li>
 </ul>
-<p>The universal first question: <strong>what changed?</strong> Second: <strong>what's the actual scope?</strong> One user, one subnet, one application, or everyone. Scope tells you which layer to look at before you touch anything.</p>` },
+<p><strong>2. What changed?</strong> Networks don't spontaneously degrade. Something was deployed, a certificate expired, a lease ran out, a maintenance window happened, a cable was moved. Correlating the start time against the change log solves an enormous share of real incidents before you run anything.</p>
+<p>Then pick a direction and be explicit about it: <strong>bottom-up</strong> when something is obviously broken (start at cables and link lights), <strong>top-down</strong> when one app misbehaves and everything else is fine, or <strong>divide and conquer</strong> — start at layer 3 with a ping and go up or down depending on the result. That last one is fastest in practice, and naming it is enough.</p>` },
+      { t: 'Proving whether it is the network at all — your strongest angle', h: `<p>You will be asked some version of "the app team says it's the network." This is the question your background makes you <em>better</em> at than a typical candidate, so use it.</p>
+<p>The approach is to split the time and let the numbers decide:</p>
+<ol>
+<li><strong>Is the path healthy?</strong> <code>ping</code> and <code>mtr</code> give round-trip time and packet loss. If it's 2 ms with zero loss and the transaction takes 8 seconds, the network has been ruled out — with evidence rather than opinion</li>
+<li><strong>Where does the time go?</strong> <code>curl -w</code> breaks a single request into DNS lookup, TCP connect, TLS handshake, and time-to-first-byte. That one command tells you whether you're looking at a name resolution problem, a connectivity problem, a certificate problem, or the server simply thinking for a long time</li>
+<li><strong>If you need proof</strong>, capture packets at both ends. Retransmissions mean genuine loss in the network. A zero-window advertisement means the <em>receiving application</em> isn't reading fast enough — which is once again not the network</li>
+</ol>
+<p>The framing to offer: <em>"I'm not trying to prove it isn't the network, I'm trying to find out where the time actually goes — that ends the argument either way."</em> That's a senior answer, and it's true.</p>` },
       { t: 'Reachability', h: `<pre class="net-pre">ping -c 4 8.8.8.8              # L3 reachability + rough latency
 ping -c 100 -i 0.2 host        # sustained, look for loss patterns
 traceroute host                # UDP by default on Linux
@@ -1032,6 +1262,15 @@ route print                    # Windows</pre>` }
     explain: `The pattern-matching half of the job in one table: here's what the user reported, here's the usual culprit, here's the first thing to check. Interviewers love these because a real answer takes ten seconds.`,
     tags: ['diagnosis', 'symptoms'],
     blocks: [
+      { t: 'How to use this table', h: `<p>These are the patterns experienced people recognise instantly, and each one is a complete interview answer on its own. The useful way to study it is backwards: <strong>cover the middle column and work out the cause from the symptom</strong>, then check whether your first instinct matches.</p>
+<p>Several of them are worth knowing cold because the symptom is so specific it's effectively a diagnosis:</p>
+<ul>
+<li><strong>169.254.x.x</strong> — no DHCP reply, full stop. Not a hint, a statement</li>
+<li><strong>Instant refusal vs a long hang</strong> — refusal means the host is alive and nothing is listening; a hang means something is silently discarding packets. This distinction is the fastest way to separate "service problem" from "network problem"</li>
+<li><strong>Small requests fine, large ones hang</strong> — MTU, essentially always</li>
+<li><strong>Works by IP, fails by name</strong> — DNS, by definition, since connectivity is already proven</li>
+<li><strong>A failover happened but traffic didn't follow</strong> — stale ARP entries pointing at the old machine</li>
+</ul>` },
       { t: 'Symptom → likely cause → first check', h: `<table class="net-table"><thead><tr><th>Symptom</th><th>Likely cause</th><th>First check</th></tr></thead><tbody>
 <tr><td>169.254.x.x address</td><td>No DHCP reply</td><td>Switchport VLAN, <code>ip helper-address</code>, scope exhaustion</td></tr>
 <tr><td>Ping by IP works, name fails</td><td>DNS</td><td><code>dig @resolver</code>, /etc/hosts, search domain</td></tr>
@@ -1058,6 +1297,10 @@ route print                    # Windows</pre>` }
     explain: `A port number is just "which application on that machine". These are the well-known ones — pay particular attention to 1521 and 7001, because your own background makes those completely fair game.`,
     tags: ['ports', 'well-known'],
     blocks: [
+      { t: 'Start here — what a port number is for', h: `<p>An IP address gets a packet to the right <em>machine</em>. But a machine runs many things at once — a web server, a database, an SSH daemon. The <strong>port number</strong> is what says which of them this packet is for.</p>
+<p>So an address and port together — <code>10.1.1.5:1521</code> — identify a specific service on a specific machine. That pair is what a firewall rule matches on, what a load balancer targets, and what <code>nc -zv</code> tests.</p>
+<p>Ports below 1024 are the well-known ones, reserved for standard services. When your machine <em>initiates</em> a connection it picks an unused high-numbered port for itself, which is why return traffic arrives on something like 51000 — and why a stateless firewall needs the whole ephemeral range 1024–65535 opened inbound while a stateful one does not.</p>
+<p>Worth over-learning the two from your own world: <strong>1521 Oracle listener</strong> and <strong>7001 WebLogic admin</strong>. Given your background, those are completely fair game and knowing them instantly is a small credibility win.</p>` },
       { t: 'Well-known ports', h: `<table class="net-table"><thead><tr><th>Port</th><th>Service</th><th>Port</th><th>Service</th></tr></thead><tbody>
 <tr><td>20/21</td><td>FTP data / control</td><td>445</td><td>SMB</td></tr>
 <tr><td>22</td><td>SSH / SCP / SFTP</td><td>465/587</td><td>SMTPS / submission</td></tr>
@@ -1087,16 +1330,24 @@ route print                    # Windows</pre>` }
     explain: `A firewall rule list is read top to bottom, first match wins, and anything not explicitly allowed is denied at the end. The stateful-versus-stateless distinction decides one practical thing: whether you have to write the return-traffic rule yourself.`,
     tags: ['ACL', 'firewall', 'security group', 'NACL'],
     blocks: [
-      { t: 'Firewall types', h: `<ul>
-<li><strong>Stateless</strong> (packet filter / standard ACL) — evaluates each packet alone. You must write return rules explicitly</li>
-<li><strong>Stateful</strong> — tracks connections; return traffic for an allowed outbound flow is permitted automatically. Everything modern</li>
-<li><strong>NGFW / L7</strong> — inspects application content, does TLS interception, IPS, app identification</li>
+      { t: 'Start here — how a rule list is evaluated', h: `<p>A firewall or ACL is an ordered list of rules, and the evaluation model is the thing to understand, because it explains most misconfigurations:</p>
+<ol>
+<li>Check the packet against rule 1. Match? Apply it and <strong>stop</strong></li>
+<li>No match? Rule 2. And so on</li>
+<li>Reach the end with no match? <strong>Implicit deny</strong> — drop it</li>
+</ol>
+<p><strong>First match wins</strong> is the part that bites. A broad "deny everything from 10.0.0.0/8" sitting above a specific "permit 10.1.1.5" means the specific rule <em>never executes</em>. The list isn't a set of conditions to be considered together; it's a sequence, and order is the logic.</p>
+<p>The other half of every rule is <strong>direction</strong>, and it's relative to the interface, not to your mental picture. "Inbound" on a router's internal interface means traffic coming <em>from</em> the LAN <em>into</em> the router. Getting this backwards is a classic way to write a rule that does nothing.</p>` },
+      { t: 'Stateful vs stateless — the distinction with practical consequences', h: `<p>A conversation has two directions. The question is whether the firewall remembers that it allowed the first one.</p>
+<ul>
+<li><strong>Stateless</strong> — judges each packet in isolation, with no memory. If you allow your web server to send out on port 443, you must <em>separately</em> allow the replies coming back in. And replies come back to a random high-numbered port, so you end up allowing the whole ephemeral range 1024–65535 inbound, which is uncomfortably broad</li>
+<li><strong>Stateful</strong> — keeps a table of open conversations. You permit the outbound connection, and the return traffic for that specific conversation is allowed automatically because it's recognised as part of something you already approved. Everything modern works this way</li>
 </ul>
-<p>ACL rules: <strong>top-down, first match wins, implicit deny at the end.</strong> Order matters, and a permit after a broader deny never fires. Direction matters too — inbound vs outbound is relative to the interface.</p>` },
-      { t: 'Cloud vocabulary', h: `<ul>
-<li><strong>Security group</strong> — stateful, instance-level, allow rules only</li>
-<li><strong>NACL</strong> — stateless, subnet-level, allow <em>and</em> deny, numbered and evaluated in order. Because it's stateless you need an outbound rule for ephemeral ports (1024–65535) on return traffic. This is the most common AWS networking gotcha</li>
-</ul>` }
+<p>In cloud terms this is exactly the <strong>security group vs NACL</strong> question, which is worth being able to answer cleanly:</p>
+<ul>
+<li><strong>Security group</strong> — stateful, attached to an instance, allow rules only. Permit outbound 443 and replies just work</li>
+<li><strong>NACL</strong> — stateless, attached to a subnet, supports explicit deny, evaluated in number order. Because it's stateless you must add the inbound ephemeral-port rule yourself. Forgetting that is the single most common AWS networking mistake</li>
+</ul>` },
     ]
   },
   {
@@ -1108,6 +1359,21 @@ route print                    # Windows</pre>` }
     explain: `A load balancer takes one address and spreads requests across many servers. This is the card where your WebLogic experience is genuinely relevant experience — sticky sessions and health checks are problems you have already solved in production.`,
     tags: ['L4', 'L7', 'sticky sessions', 'health checks'],
     blocks: [
+      { t: 'Start here — one address, many servers', h: `<p>One server can only handle so much, and if it dies your service dies. So you run several and put something in front that spreads requests across them. That's a load balancer, and it does three distinct jobs worth separating in your head:</p>
+<ul>
+<li><strong>Distribute</strong> — round robin, least connections, or weighted, so no single server gets buried</li>
+<li><strong>Health check</strong> — notice a broken backend and stop sending it traffic, without anyone being paged</li>
+<li><strong>Terminate</strong> — often it handles TLS, so your application servers don't have to</li>
+</ul>
+<p><strong>L4 versus L7</strong> is a question of how much it looks at. An <strong>L4</strong> balancer sees only addresses and ports — fast, cheap, works with any protocol, but it can't tell one request from another. An <strong>L7</strong> balancer reads the HTTP request itself, so it can route by URL path, rewrite headers, terminate TLS, and pin a user to a server by cookie. More capability, more CPU.</p>` },
+      { t: 'The two things that go wrong — both of which you have already hit', h: `<p><strong>1. Sessions.</strong> If your application keeps user state in memory, a user bounced to a different server on their next request finds their session gone — they appear logged out at random. Three ways out, in ascending order of correctness:</p>
+<ul>
+<li><strong>Sticky sessions</strong> — the balancer pins a user to one server by cookie. Works, but now that server is a single point of failure for those users, and rolling restarts log people out</li>
+<li><strong>Session replication</strong> — servers copy session state to each other. What a WebLogic cluster does. Works, and gets expensive as the cluster grows</li>
+<li><strong>Externalise it</strong> — put sessions in Redis or a database so no server owns them and any server can serve any request. This is the architecturally right answer and worth saying so</li>
+</ul>
+<p><strong>2. Health checks that don't check anything.</strong> A TCP-connect check only proves a process is listening. An application that started fine but lost its database connection pool will happily accept connections and fail every request — and a shallow check keeps feeding it traffic. An HTTP check against a <code>/health</code> endpoint that actually touches its dependencies catches that. <strong>Always argue for the deep check</strong>; it's a good, concrete opinion to hold.</p>
+<p>One more that explains a lot of confusing logs: once traffic passes through a proxy, your application sees the <em>proxy's</em> IP address on every request. The original client address is preserved in the <strong>X-Forwarded-For</strong> header. If your logs or rate limiting show everything coming from one address, that's why.</p>` },
       { t: 'L4 vs L7', h: `<table class="net-table"><thead><tr><th></th><th>L4</th><th>L7</th></tr></thead><tbody>
 <tr><td>Sees</td><td>IP + port</td><td>HTTP headers, URL, cookies</td></tr>
 <tr><td>Speed</td><td>Faster, less CPU</td><td>Slower, more capable</td></tr>
@@ -1115,11 +1381,6 @@ route print                    # Windows</pre>` }
 <tr><td>Examples</td><td>AWS NLB, LVS, HAProxy TCP mode</td><td>AWS ALB, nginx, F5, Apache OHS</td></tr>
 </tbody></table>
 <p>Algorithms: round robin, weighted round robin, least connections, IP hash, least response time.</p>` },
-      { t: 'Session persistence, health checks, XFF', h: `<ul>
-<li><strong>Session persistence</strong> — a stateful app server holds session data in memory, so a user bounced to a different node loses their session. Options: sticky cookie (JSESSIONID with a route suffix), source-IP hash, or externalize sessions (in-memory replication in a WebLogic cluster, or Redis). Externalizing is the correct answer architecturally</li>
-<li><strong>Health checks</strong> — TCP connect (shallow, catches a dead process) vs HTTP GET /health (deep, catches a process that's up but broken, like an app that lost its DB connection pool). Always argue for the deep check</li>
-<li><strong>X-Forwarded-For</strong> — after a proxy the app sees the proxy's IP; XFF carries the original client IP. If your logs or rate limiting show every request from one IP, this is why</li>
-</ul>` }
     ]
   },
   {
@@ -1131,20 +1392,30 @@ route print                    # Windows</pre>` }
     explain: `The handshake that turns an ordinary TCP connection into an encrypted one, plus proof you're talking to who you think you are. Keystore is <em>my</em> identity; truststore is <em>who I trust</em> — and swapping those two is the single most common Java SSL mistake.`,
     tags: ['TLS', 'SNI', 'certificates', 'mTLS'],
     blocks: [
-      { t: 'The handshake, short version', h: `<ol>
-<li><strong>ClientHello</strong> — supported TLS versions, cipher suites, and <strong>SNI</strong> (which hostname it wants)</li>
-<li><strong>ServerHello</strong> — chosen version + cipher, server certificate + intermediate chain</li>
-<li><strong>Key exchange</strong> — ECDHE gives forward secrecy; the session key is never transmitted</li>
-<li><strong>Finished</strong>, then symmetric encryption (AES-GCM) for the actual data</li>
+      { t: 'Start here — what the handshake is actually achieving', h: `<p>Two strangers who have never communicated before need to agree on a secret key, over a wire that anyone can read, and one of them needs to prove it is who it claims to be. That's the whole problem TLS solves, and it's less obvious than it sounds.</p>
+<p>Roughly what happens:</p>
+<ol>
+<li><strong>ClientHello</strong> — "I speak TLS 1.2 and 1.3, here are the ciphers I support, and <strong>I'm looking for www.example.com</strong>." That last part is <strong>SNI</strong>, and it's sent in the clear <em>because it has to be</em> — one IP address may host hundreds of sites, and the server has to know which certificate to present before encryption can start</li>
+<li><strong>ServerHello + certificate</strong> — "let's use this cipher, and here's my certificate plus the intermediates that vouch for it"</li>
+<li><strong>The client validates</strong> — does the certificate chain up to a certificate authority I already trust? Does the hostname I asked for appear in it? Is it in date? Only if all three pass does anything continue</li>
+<li><strong>Key exchange</strong> — both sides derive a shared secret using ECDHE, in a way where an eavesdropper who recorded everything still can't compute it. The key is never transmitted</li>
+<li>From here, ordinary fast symmetric encryption for the actual data</li>
 </ol>
-<p>TLS 1.3 cuts this to one round trip and removes the old cipher suites.</p>` },
-      { t: 'What actually breaks', h: `<ul>
-<li><strong>Keystore</strong> = my identity, my private key + cert. <strong>Truststore</strong> = who I trust, CA certs. In Java: <code>javax.net.ssl.keyStore</code> and <code>trustStore</code></li>
-<li>Cert validation: chains to a trusted root, hostname matches <strong>CN or SAN</strong> (modern clients ignore CN entirely and require SAN), not expired, not revoked</li>
-<li>Common failures: missing intermediate cert (works in browsers that cache intermediates, fails in Java), self-signed cert not in the truststore, expired cert, hostname mismatch, no cipher in common</li>
-<li><strong>mTLS</strong> — the server also validates a client cert. Used for service-to-service and B2B integrations</li>
+<p>TLS 1.3 compresses this into a single round trip and deletes the older, weaker options entirely.</p>` },
+      { t: 'Keystore vs truststore — the distinction worth being crisp about', h: `<p>This is your territory already, and it's the most common Java SSL mistake, so it's worth stating precisely:</p>
+<ul>
+<li><strong>Keystore = my identity.</strong> My private key and my own certificate. This is what I present when someone asks me to prove who I am</li>
+<li><strong>Truststore = who I trust.</strong> Certificate authority certificates. This is what I check <em>other people's</em> certificates against</li>
 </ul>
-<p>Debug with <code>openssl s_client -connect host:443 -servername host -showcerts</code> and Java's <code>-Djavax.net.debug=ssl:handshake</code>.</p>` }
+<p>A server needs a keystore to serve TLS. A client needs a truststore to validate. In mutual TLS both sides need both.</p>
+<p>The failures you'll actually meet:</p>
+<ul>
+<li><strong>Missing intermediate certificate</strong> — and this one is nasty, because it <em>works in a browser</em> and fails in Java. Browsers cache intermediates they've seen elsewhere and quietly fill the gap; Java doesn't, so it can't build the chain and refuses. "It works in Chrome" is not evidence the certificate is correctly installed</li>
+<li><strong>Self-signed certificate not in the truststore</strong> — nothing vouches for it, so nothing trusts it</li>
+<li><strong>Hostname mismatch</strong> — the certificate is valid, just not for the name you asked for. Modern clients ignore the old Common Name field entirely and require the name in the <strong>SAN</strong> list</li>
+<li><strong>No cipher in common</strong> — usually an old client meeting a hardened server that dropped the legacy options</li>
+</ul>
+<p><code>openssl s_client -connect host:443 -servername host -showcerts</code> shows you the chain the server is really sending, which settles most of these in one command.</p>` },
     ]
   },
   {
@@ -1156,6 +1427,10 @@ route print                    # Windows</pre>` }
     explain: `An encrypted tunnel that makes a remote network behave as if it were local. The one fact that pays off in an interview: a tunnel adds overhead to every single packet, which is why "slow only over the VPN" is nearly always a packet-size problem rather than a bandwidth one.`,
     tags: ['IPsec', 'WireGuard', 'split tunnel'],
     blocks: [
+      { t: 'Start here — what a tunnel actually is', h: `<p>A VPN takes your packet, <strong>encrypts the whole thing, and puts it inside a brand-new packet</strong> addressed from your device to the VPN gateway. Anyone watching in between sees one ordinary encrypted packet between two known endpoints; they can't see the real source, destination, or contents. The gateway unwraps it and releases the original onto the internal network.</p>
+<p>That's why it's called a tunnel — the original packet travels as cargo, untouched, inside another one.</p>
+<p>And it's why the <strong>MTU</strong> problem is unavoidable rather than a bug: the outer wrapper is real bytes. IPsec adds roughly 50–60 of them to every single packet. Your 1500-byte packet is now 1560 and no longer fits, so either the sender must be told to send smaller ones or things start silently failing. That is the reason "slow only over the VPN" almost always turns out to be packet size rather than bandwidth.</p>
+<p><strong>Split tunnelling</strong> is the other design decision worth knowing: send only corporate-bound traffic through the tunnel and let everything else go direct. Faster and lighter on the concentrator, but security loses visibility of what else the machine is doing.</p>` },
       { t: 'The options', h: `<ul>
 <li><strong>IPsec</strong> — L3 tunnels, the site-to-site standard. IKE phase 1 (authenticate, build the management tunnel) then phase 2 (build the data SAs). Adds ~50–60 bytes of overhead, so MTU matters</li>
 <li><strong>SSL/TLS VPN</strong> — client remote access over 443, gets through restrictive firewalls</li>
@@ -1174,6 +1449,15 @@ route print                    # Windows</pre>` }
     explain: `Container networking in one line: by default each container gets a private address and shares the host's address to get out, which is why you have to explicitly publish a port to reach it from outside. Most networking candidates can't answer this — you can.`,
     tags: ['Docker', 'bridge', 'Kubernetes'],
     blocks: [
+      { t: 'Start here — why localhost inside a container is not your machine', h: `<p>A container gets its own network namespace: its own interfaces, its own routing table, its own idea of <code>localhost</code>. That single fact explains nearly every container networking surprise.</p>
+<p>In the default <strong>bridge</strong> mode, Docker creates a virtual switch on the host, gives each container a private address on it, and NATs outbound traffic through the host's address. So:</p>
+<ul>
+<li><strong>Outbound works immediately</strong> — the container reaches the internet the same way a device behind a home router does</li>
+<li><strong>Inbound does not</strong> — from outside there's no route to that private address, which is exactly the NAT situation. You have to publish a port (<code>-p 8080:8080</code>) to create the mapping, which is the container equivalent of a port forward</li>
+<li><strong><code>localhost</code> means the container itself</strong>, not the host and not another container. Reaching the host means <code>host.docker.internal</code> on Mac and Windows, or the gateway address on Linux</li>
+</ul>
+<p>One practical wrinkle worth knowing: containers on a <strong>user-defined</strong> bridge network can resolve each other by container name, because Docker runs a small DNS server for it. On the <em>default</em> bridge they cannot. That's why so many compose setups work and equivalent hand-run <code>docker run</code> commands don't.</p>
+<p>Kubernetes in one sentence, if it comes up: every pod gets its own routable address, a Service gives a stable virtual address in front of a changing set of pods, and Ingress is the layer 7 door into the cluster.</p>` },
       { t: 'Docker network modes', h: `<ul>
 <li><strong>bridge</strong> (default) — containers get a private IP on docker0 and NAT out through the host's IP. Inbound requires <code>-p 8080:8080</code> to publish</li>
 <li><strong>host</strong> — the container shares the host's network namespace: no isolation, no NAT, no port mapping needed</li>
@@ -1181,7 +1465,6 @@ route print                    # Windows</pre>` }
 <li><strong>overlay</strong> — multi-host, used by Swarm and Kubernetes</li>
 </ul>
 <p>User-defined bridge networks give containers <strong>DNS resolution by container name</strong>; the default bridge does not. And <code>localhost</code> inside a container is the container, not the host — use <code>host.docker.internal</code> (Mac/Windows) or the gateway IP.</p>` },
-      { t: 'Kubernetes in one line', h: `<p>Every pod gets a routable IP, Services provide a stable virtual IP with kube-proxy/iptables load balancing, and Ingress is the L7 entry point.</p>` }
     ]
   },
   {
@@ -1193,7 +1476,14 @@ route print                    # Windows</pre>` }
     explain: `Breadth, not depth. Enough vocabulary to hold a conversation about how a team finds out something broke, plus the two or three Wi-Fi facts that always come up.`,
     tags: ['SNMP', 'NetFlow', 'Wi-Fi'],
     blocks: [
-      { t: 'Monitoring', h: `<p><strong>SNMP</strong> (v2c community strings in clear text, v3 has auth + encryption; polling), <strong>NetFlow/sFlow/IPFIX</strong> (who talked to whom and how much), <strong>syslog</strong> (UDP 514, centralized), <strong>SPAN / port mirroring</strong> (copy traffic to an analyzer). Tools by name: SolarWinds, PRTG, Zabbix, LibreNMS, Grafana + Prometheus.</p>` },
+      { t: 'Start here — how anyone finds out something broke', h: `<p>Breadth topic, so the goal is being able to hold a conversation rather than run the tools. Four mechanisms cover essentially all of it, and they answer different questions:</p>
+<ul>
+<li><strong>SNMP</strong> — a monitoring server <em>polls</em> devices every minute or so: how much traffic on this port, what's the CPU, is this interface up? Answers <em>"how is it doing?"</em>. Version 2c sends its password in clear text, which is why v3 with authentication and encryption exists</li>
+<li><strong>NetFlow / sFlow / IPFIX</strong> — devices export records of who talked to whom, for how long, and how much. Answers <em>"who is using the bandwidth?"</em>, which polling can't tell you</li>
+<li><strong>Syslog</strong> — devices push events as they happen to a central collector: a link went down, a config changed, a port was err-disabled. Answers <em>"what happened, and exactly when?"</em>, which is the one that matters during an incident</li>
+<li><strong>SPAN / port mirroring</strong> — copy all traffic from one port to another where a capture tool is listening. Answers <em>"what is actually in these packets?"</em> when nothing else has resolved it</li>
+</ul>
+<p>The distinction to draw if asked: <strong>polling tells you the state, logging tells you the sequence.</strong> Diagnosing an outage almost always needs the sequence — which is why the first move on a core switch is <code>show logging</code> and correlating timestamps.</p>` },
       { t: 'Wireless', h: `<p><strong>2.4 GHz</strong> (3 non-overlapping channels 1/6/11, better range, more interference) vs <strong>5 GHz</strong> (many channels, more bandwidth, shorter range) vs <strong>6 GHz</strong> (Wi-Fi 6E). Standards: 802.11n/ac/ax (Wi-Fi 6)/be (Wi-Fi 7). Security: WPA2-PSK, WPA2-Enterprise (802.1X + RADIUS), WPA3-SAE. Common problems: co-channel interference, too-high transmit power causing sticky clients, roaming without 802.11k/r/v.</p>` }
     ]
   },
